@@ -218,11 +218,11 @@ const POSPage: React.FC = () => {
                     <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         Chấm công
                     </Button>
-                    <Button variant='destructive' onClick={handleLogout}>
-                        Đăng xuất
-                    </Button>
                     <Button variant='outline' onClick={() => setOpenDailyClosing(true)}>
                         Kết sổ
+                    </Button>
+                    <Button variant='destructive' onClick={handleLogout}>
+                        Đăng xuất
                     </Button>
                 </div>
             )}
