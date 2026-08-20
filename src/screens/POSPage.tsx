@@ -17,6 +17,8 @@ import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
 import OtherRevenue from '@/components/other-revenue/OtherRevenue.tsx'
 import ShiftAttendance from '@/components/ShiftAttendance.tsx'
+import { signOut } from 'next-auth/react'
+import { logoutAPI } from '@/api/auth'
 
 const POSPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string>('牛肉河粉')
@@ -131,6 +133,13 @@ const POSPage: React.FC = () => {
             console.error(err)
         }
     }
+    async function handleLogout() {
+        try {
+            await logoutAPI()
+        } finally {
+            await signOut({ callbackUrl: '/login' })
+        }
+    }
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
 
     return (
@@ -208,6 +217,9 @@ const POSPage: React.FC = () => {
                     </Button>
                     <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         Chấm công
+                    </Button>
+                    <Button variant='destructive' onClick={handleLogout}>
+                        Đăng xuất
                     </Button>
                     <Button variant='outline' onClick={() => setOpenDailyClosing(true)}>
                         Kết sổ
