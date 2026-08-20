@@ -4,6 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 const api = axios.create({
     baseURL: `${API_BASE_URL}/api/`,
+    withCredentials: true,
     headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',

@@ -3,6 +3,17 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/* Admin page titles use the page container padding; no extra title margin. */
+main.admin-content > div > div:first-child {
+  margin: 0 !important;
+}
+
+main.admin-content > div > div:first-child h1 {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  padding-block: 0.75rem;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
@@ -118,10 +129,10 @@ h1, h2 {
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
-  margin: 32px 0;
+  margin: 0;
   @media (max-width: 1024px) {
     font-size: 36px;
-    margin: 20px 0;
+    margin: 0;
   }
 }
 

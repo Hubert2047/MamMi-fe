@@ -2,8 +2,26 @@ import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { loginAPI } from '@/api/auth'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  secret: process.env.NEXTAUTH_SECRET,
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  debug: process.env.NODE_ENV === 'development',
+  cookies: {
+    sessionToken: {
+      name: `${isProduction ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+      },
+    },
+  },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
+  jwt: { maxAge: 30 * 24 * 60 * 60 },
+  pages: { signIn: '/login' },
   providers: [
     CredentialsProvider({
       name: 'Credentials',

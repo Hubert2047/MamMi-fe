@@ -14,3 +14,20 @@ export const getDiscounts = async (): Promise<Discount[]> => {
     return res.data.data
 }
 
+export type DiscountInput = Omit<Discount, '_id'>
+
+export const createDiscount = async (data: DiscountInput): Promise<Discount> => {
+    const res = await api.post('discounts', data)
+    return res.data.data
+}
+
+export const updateDiscount = async ({ id, data }: { id: string; data: Partial<DiscountInput> }): Promise<Discount> => {
+    const res = await api.put(`discounts/${id}`, data)
+    return res.data.data
+}
+
+export const deleteDiscount = async (id: string) => {
+    const res = await api.delete(`discounts/${id}`)
+    return res.data
+}
+

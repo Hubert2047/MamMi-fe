@@ -12,13 +12,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return
     if (pathname === '/pos' && !isAuthenticated) router.replace('/login')
-    if (pathname === '/login' && isAuthenticated) router.replace('/pos')
   }, [hydrated, isAuthenticated, pathname, router])
 
-  if (
-    pathname === '/pos' && (!hydrated || !isAuthenticated) ||
-    pathname === '/login' && isAuthenticated
-  ) {
+  if (pathname === '/pos' && (!hydrated || !isAuthenticated)) {
     return <div className="min-h-svh bg-background" />
   }
 

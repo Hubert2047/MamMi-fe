@@ -6,6 +6,7 @@ import { getNextOrderNumber, getOrders, getSalesByPayment, type IOrder, type Sal
 import { getRevenues, type Revenue } from '@/api/other-revenue'
 import { getClosingOfYesterday } from '@/api/daily-closing'
 import type { PaymentMethod } from '@/constants'
+import { useI18n } from '@/lib/i18n'
 
 export const queryKeys = {
   items: ['items'] as const,
@@ -19,9 +20,10 @@ export const queryKeys = {
 }
 
 export function useItems(active = true) {
+  const { locale } = useI18n()
   return useQuery<Item[], Error>({
-    queryKey: [...queryKeys.items, active],
-    queryFn: () => getItems(active),
+    queryKey: [...queryKeys.items, active, locale],
+    queryFn: () => getItems(active, locale),
     staleTime: 5 * 60 * 1000,
   })
 }

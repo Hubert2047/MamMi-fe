@@ -1,7 +1,6 @@
 'use client'
 
 import { useState} from 'react'
-import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner'
 import { signIn } from 'next-auth/react'
 export default function LoginPage() {
-    const router = useRouter()
-
     const [account, setAccount] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -31,9 +28,8 @@ export default function LoginPage() {
         if (!validate()) return
         setLoading(true)
         try {
-            const result = await signIn('credentials', { account, password, redirect: false })
-            if (!result || result.error) throw new Error('Invalid credentials')
-            router.replace('/pos')
+            const result = await signIn('credentials', { account, password, callbackUrl: '/' })
+            if (result?.error) throw new Error('Invalid credentials')
         } catch {
             toast.error('Sai tài khoản hoặc mật khẩu')
         } finally {

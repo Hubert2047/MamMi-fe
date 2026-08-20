@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { getPaymentMethodByType, getPriceByType } from '@/lib/utils.ts'
 import type { Item } from '@/api/item.ts'
 import type { BaseOrder } from '@/api/order'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 type Props = {
 
@@ -81,6 +82,8 @@ function PosHeader({
             </ToggleGroup>
 
             <div className='flex-1'></div>
+
+            <LanguageSwitcher />
 
             <div className='flex items-center space-x-2'>
                 <Label className='whitespace-nowrap'>Tổng tiền:</Label>

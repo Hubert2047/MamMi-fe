@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/auth'
 
 export default function HomePage() {
   const router = useRouter()
-  const { hydrated, isAuthenticated } = useAuth()
-  useEffect(() => { if (hydrated) router.replace(isAuthenticated ? '/pos' : '/login') }, [hydrated, isAuthenticated, router])
+  const { hydrated, isAuthenticated, user } = useAuth()
+  const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin'
+  useEffect(() => { if (hydrated) router.replace(isAuthenticated ? (isAdmin ? '/admin' : '/pos') : '/login') }, [hydrated, isAuthenticated, isAdmin, router])
   return <div className="min-h-svh bg-background" />
 }
