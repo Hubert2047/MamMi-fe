@@ -1,7 +1,6 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog.tsx";
-import {useQuery} from "@tanstack/react-query";
 import Loading from "@/components/Loading.tsx";
-import {getRevenues, type Revenue} from "@/api/other-revenue.ts";
+import {useRevenues} from "@/hooks/queries";
 import {OtherRevenueTable} from "@/components/other-revenue/OtherRevenueTable.tsx";
 
 type Props = {
@@ -10,11 +9,7 @@ type Props = {
 }
 
 function OtherRevenue({open, onClose}: Props) {
-    const {data: revenues = [], isLoading} = useQuery<Revenue[], Error>({
-        queryKey: ['revenues'],
-        queryFn: () => getRevenues(),
-        staleTime: 5 * 60 * 1000,
-    })
+    const {data: revenues = [], isLoading} = useRevenues()
     if (isLoading) {
         return <Loading/>
     }

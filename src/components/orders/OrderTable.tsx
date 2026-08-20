@@ -10,9 +10,10 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '../ui/alert-dialog'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
-import { cancelOrder, getOrders, type BaseOrder, type IOrder } from '@/api/order.ts'
+import { cancelOrder, type BaseOrder } from '@/api/order.ts'
+import { useOrders, queryKeys } from '@/hooks/queries'
 import { getOrderTypeString, getPaymentMethodString, getStatusString } from '@/lib/utils.ts'
 import Loading from '@/components/Loading.tsx'
 import { toast } from 'sonner'
@@ -36,16 +37,12 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const pageSize = 6
 
     const [days, setDays] = useState<number>(1)
-    const { data: orders = [], isLoading: isOrderLoading } = useQuery<IOrder[], Error>({
-        queryKey: ['orders', days],
-        queryFn: () => getOrders(days),
-        staleTime: 5 * 60 * 1000,
-    })
+    const { data: orders = [], isLoading: isOrderLoading } = useOrders(days)
 
     const cancelOrderMutation = useMutation({
         mutationFn: cancelOrder,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['orders'] }).then()
+            queryClient.invalidateQueries({ queryKey: queryKeys.orders(days) }).then()
             toast.success('Hủy thành công')
         },
         onError: () => {

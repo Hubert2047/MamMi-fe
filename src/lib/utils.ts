@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import type { PaymentMethod } from '@/constance'
+import type { PaymentMethod } from '@/constants'
 import type { BaseOrder, OrderItem } from '@/api/order'
 
 export function cn(...inputs: ClassValue[]) {

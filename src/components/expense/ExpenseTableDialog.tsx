@@ -1,7 +1,6 @@
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {ExpenseTable} from './ExpenseTable'
-import { useQuery} from '@tanstack/react-query'
-import {getExpenses, type Expense} from '@/api/expense'
+import { useExpenses } from '@/hooks/queries'
 import Loading from "@/components/Loading.tsx";
 
 type Props = {
@@ -9,11 +8,7 @@ type Props = {
     onClose: () => void
 }
 export default function ExpenseTableDialog({open, onClose}: Props) {
-    const {data: expenses = [], isLoading} = useQuery<Expense[], Error>({
-        queryKey: ['expenses'],
-        queryFn: () => getExpenses(),
-        staleTime: 5 * 60 * 1000,
-    })
+    const {data: expenses = [], isLoading} = useExpenses()
     if (isLoading) {
         return <Loading/>
     }

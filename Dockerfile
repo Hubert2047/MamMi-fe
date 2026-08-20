@@ -5,8 +5,12 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf 
-COPY --from=build /app/dist /usr/share/nginx/html
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/public ./public
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ENV PORT=80
+CMD ["node", "server.js"]

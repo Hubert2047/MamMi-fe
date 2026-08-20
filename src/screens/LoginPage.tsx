@@ -1,16 +1,16 @@
+'use client'
+
 import { useState} from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { TOKEN_STORAGE_KEY } from '@/constance'
 import { toast } from 'sonner'
-import { loginAPI } from '@/api/auth'
-import { useAuth } from '@/hooks/auth'
+import { signIn } from 'next-auth/react'
 export default function LoginPage() {
-    const navigate = useNavigate()
-    const { setAuth } = useAuth()
+    const router = useRouter()
 
     const [account, setAccount] = useState('')
     const [password, setPassword] = useState('')
@@ -31,12 +31,9 @@ export default function LoginPage() {
         if (!validate()) return
         setLoading(true)
         try {
-            const res = await loginAPI({ account, password })
-            const { accessToken, user } = res.data 
-
-            localStorage.setItem(TOKEN_STORAGE_KEY, accessToken)
-            setAuth({ user, token: accessToken })
-             navigate('/pos', { replace: true })
+            const result = await signIn('credentials', { account, password, redirect: false })
+            if (!result || result.error) throw new Error('Invalid credentials')
+            router.replace('/pos')
         } catch {
             toast.error('Sai tài khoản hoặc mật khẩu')
         } finally {
@@ -74,9 +71,9 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit} noValidate className='flex flex-col gap-4'>
                             {/* Account */}
                             <div className='flex flex-col gap-1.5'>
-                                <label htmlFor='account' className='text-sm font-medium text-slate-700'>
+                                <Label htmlFor='account' className='text-sm text-slate-700'>
                                     Tài khoản
-                                </label>
+                                </Label>
                                 <Input
                                     id='account'
                                     placeholder='Tên tài khoản'
@@ -86,16 +83,16 @@ export default function LoginPage() {
                                         setAccount(e.target.value)
                                         if (errors.account) setErrors((prev) => ({ ...prev, account: undefined }))
                                     }}
-                                    className={errors.account ? 'border-red-400 focus-visible:ring-red-300' : ''}
+                                    className={`!bg-white !text-slate-900 ${errors.account ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
                                 />
                                 {errors.account && <p className='text-xs text-red-500'>{errors.account}</p>}
                             </div>
 
                             {/* Password */}
                             <div className='flex flex-col gap-1.5'>
-                                <label htmlFor='password' className='text-sm font-medium text-slate-700'>
+                                <Label htmlFor='password' className='text-sm text-slate-700'>
                                     Mật khẩu
-                                </label>
+                                </Label>
                                 <div className='relative'>
                                     <Input
                                         id='password'
@@ -107,15 +104,17 @@ export default function LoginPage() {
                                             setPassword(e.target.value)
                                             if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
                                         }}
-                                        className={`pr-10 ${errors.password ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
+                                        className={`!bg-white !text-slate-900 pr-10 ${errors.password ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
                                     />
-                                    <button
+                                    <Button
+                                        variant='ghost'
+                                        size='icon-sm'
                                         type='button'
                                         onClick={() => setShowPassword((v) => !v)}
                                         aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                                        className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors'>
+                                        className='absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700'>
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
+                                    </Button>
                                 </div>
                                 {errors.password && <p className='text-xs text-red-500'>{errors.password}</p>}
                             </div>

@@ -7,6 +7,7 @@ import {toast} from 'sonner'
 import NumPad from './NumPad'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import Loading from "@/components/Loading.tsx";
+import axios from 'axios'
 
 type Props = {
     open: boolean
@@ -21,10 +22,11 @@ function ShiftAttendance({open, onClose}: Props) {
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['shift-attendances']}).then()
         },
-        onError: (error: any) => {
-            if (error?.response?.data?.message === "Already checked in today") {
+        onError: (error: unknown) => {
+            const message = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined
+            if (message === "Already checked in today") {
                 toast.error('Bạn đã chấm công vào làm rồi')
-            } else if (error?.response?.data?.message === "Employee not found") {
+            } else if (message === "Employee not found") {
                 toast.error('Không tồn tại mã số nhân viên')
             } else {
                 toast.error('Chấm công không thành công')
@@ -36,8 +38,9 @@ function ShiftAttendance({open, onClose}: Props) {
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['shift-attendances']}).then()
         },
-        onError: (error: any) => {
-            if (error?.response?.data?.message === "No check-in found for today") {
+        onError: (error: unknown) => {
+            const message = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined
+            if (message === "No check-in found for today") {
                 toast.error('Bạn chưa chấm công vào làm')
             } else {
                 toast.error('Chấm công không thành công')

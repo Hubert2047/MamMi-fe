@@ -1,0 +1,26 @@
+'use client'
+
+import { useEffect, type ReactNode } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/auth'
+
+export default function AuthGate({ children }: { children: ReactNode }) {
+  const { hydrated, isAuthenticated } = useAuth()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!hydrated) return
+    if (pathname === '/pos' && !isAuthenticated) router.replace('/login')
+    if (pathname === '/login' && isAuthenticated) router.replace('/pos')
+  }, [hydrated, isAuthenticated, pathname, router])
+
+  if (
+    pathname === '/pos' && (!hydrated || !isAuthenticated) ||
+    pathname === '/login' && isAuthenticated
+  ) {
+    return <div className="min-h-svh bg-background" />
+  }
+
+  return <>{children}</>
+}

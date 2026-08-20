@@ -1,16 +1,17 @@
+'use client'
+
 import React, { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { getItems, type Item } from '@/api/item'
-import { getNextOrderNumber, type BaseOrder, type OrderItem } from '@/api/order.ts'
+import { type Item } from '@/api/item'
+import { type BaseOrder, type OrderItem } from '@/api/order.ts'
 import ExpenseTableDialog from '@/components/expense/ExpenseTableDialog'
-import { useQuery } from '@tanstack/react-query'
 import PosOrderList from '@/components/orders/PosOrderList'
-import { DEFAULT_ORDER, DEFAULT_ORDER_ITEM } from '@/constance'
+import { DEFAULT_ORDER, DEFAULT_ORDER_ITEM } from '@/constants'
 import PosItemSection from '@/components/PosItemSection.tsx'
 import PosHeader from '@/components/PosHeader.tsx'
 import Loading from '@/components/Loading.tsx'
 import Checkout from '@/components/Checkout.tsx'
-import { type Discount, getDiscounts } from '@/api/discount.ts'
+import { useDiscounts, useItems, useNextOrderNumber } from '@/hooks/queries'
 import { OrderTable } from '@/components/orders/OrderTable.tsx'
 import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
@@ -34,21 +35,9 @@ const POSPage: React.FC = () => {
     const [openDailyClosing, setOpenDailyClosing] = useState(false)
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
-    const { data: items = [], isLoading: isItemsLoading } = useQuery<Item[], Error>({
-        queryKey: ['items'],
-        queryFn: () => getItems(true),
-        staleTime: 5 * 60 * 1000,
-    })
-    const { data: discounts = [] } = useQuery<Discount[], Error>({
-        queryKey: ['discounts'],
-        queryFn: getDiscounts,
-        staleTime: 5 * 60 * 1000,
-    })
-    const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useQuery<number, Error>({
-        queryKey: ['next-order-number'],
-        queryFn: getNextOrderNumber,
-        staleTime: Infinity,
-    })
+    const { data: items = [], isLoading: isItemsLoading } = useItems(true)
+    const { data: discounts = [] } = useDiscounts()
+    const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
     const itemsByCategory = useMemo(() => {
         const grouped: Record<string, Item[]> = {}

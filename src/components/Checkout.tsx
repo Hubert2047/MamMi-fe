@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
-import { DEFAULT_ORDER, PAYMENT_METHOD_ICONS, type PaymentMethod } from '@/constance'
+import { DEFAULT_ORDER, PAYMENT_METHOD_ICONS, type PaymentMethod } from '@/constants'
 import { type BaseOrder, createOrder } from '@/api/order.ts'
 import React, { useMemo, useState } from 'react'
 import { capitalize, generateKitchenReceiptHTML, generateReceiptHTML, printReceipt } from '@/lib/utils.ts'

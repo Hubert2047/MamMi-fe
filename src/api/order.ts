@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PaymentMethod } from '@/constance'
+import type { PaymentMethod } from '@/constants'
 
 export interface OrderItem {
     id: string

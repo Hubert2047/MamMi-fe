@@ -2,12 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useState } from 'react'
 import DailyClosingStep1 from '@/components/daily-closing/DailyClosingStep1.tsx'
 import DailyClosingStep2 from '@/components/daily-closing/DailyClosingStep2.tsx'
-import { getSalesByPayment, type SalesByPayment } from '@/api/order.ts'
-import { useQuery } from '@tanstack/react-query'
-import { type Expense, getExpenses } from '@/api/expense.ts'
-import type { PaymentMethod } from '@/constance'
-import { getRevenues, type Revenue } from '@/api/other-revenue'
-import { getClosingOfYesterday } from '@/api/daily-closing'
+import type { SalesByPayment } from '@/api/order.ts'
+import type { PaymentMethod } from '@/constants'
+import { useClosingOfYesterday, useExpenses, useRevenues, useSalesByPayment } from '@/hooks/queries'
 type Props = {
     open: boolean
     onClose: () => void
@@ -15,29 +12,10 @@ type Props = {
 
 function DailyClosing({ open, onClose }: Props) {
     const [currentStep, setCurrentStep] = useState(1)
-    const { data: salesData = {} as Record<PaymentMethod, SalesByPayment>, isLoading: isSalesLoading } = useQuery<
-        Record<PaymentMethod, SalesByPayment>,
-        Error
-    >({
-        queryKey: ['sale-by-payment'],
-        queryFn: getSalesByPayment,
-        staleTime: 5 * 60 * 1000,
-    })
-    const { data: expenses = [], isLoading: isExpenseLoading } = useQuery<Expense[], Error>({
-        queryKey: ['expenses'],
-        queryFn: () => getExpenses(),
-        staleTime: 5 * 60 * 1000,
-    })
-    const { data: otherRevenues = [] } = useQuery<Revenue[], Error>({
-        queryKey: ['revenues'],
-        queryFn: () => getRevenues(),
-        staleTime: 5 * 60 * 1000,
-    })
-     const { data: closingOfYesterday = { amount: 0 } } = useQuery<{ amount: number }, Error>({
-        queryKey: ['closing-of-yesterday'],
-        queryFn: () => getClosingOfYesterday(),
-        staleTime: 5 * 60 * 1000,
-    })
+    const { data: salesData = {} as Record<PaymentMethod, SalesByPayment>, isLoading: isSalesLoading } = useSalesByPayment()
+    const { data: expenses = [], isLoading: isExpenseLoading } = useExpenses()
+    const { data: otherRevenues = [] } = useRevenues()
+    const { data: closingOfYesterday = { amount: 0 } } = useClosingOfYesterday()
     const totalCashSales = salesData['cash']?.totalSales || 0
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.price, 0)
     const totalOtherRevenues = otherRevenues.reduce((sum, revenue) => sum + revenue.price, 0)
