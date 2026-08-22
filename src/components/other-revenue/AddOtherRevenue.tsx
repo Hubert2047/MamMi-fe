@@ -7,6 +7,7 @@ import {toast} from 'sonner'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {createRevenue} from "@/api/other-revenue.ts";
 import {Button} from "@/components/ui/button.tsx";
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     open: boolean
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export function AddOtherRevenue({open, onClose}: Props) {
+    const {t} = useI18n()
     const queryClient = useQueryClient()
     const [formData, setFormData] = useState({
         name: '',
@@ -24,7 +26,7 @@ export function AddOtherRevenue({open, onClose}: Props) {
         mutationFn: createRevenue,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['revenues']}).then()
-            toast.success('Lưu thành công', {
+            toast.success(t('createSuccess'), {
                 closeButton: true,
                 duration: 1500,
             })
@@ -32,7 +34,7 @@ export function AddOtherRevenue({open, onClose}: Props) {
             setFormData({name: '', price: '', note: ''})
         },
         onError: () => {
-            toast.error('Lưu thất bại')
+            toast.error(t('createFailure'))
         },
     })
 
@@ -45,12 +47,12 @@ export function AddOtherRevenue({open, onClose}: Props) {
         e.preventDefault()
 
         if (!formData.name) {
-            toast.warning('Tên không được bỏ trống')
+            toast.warning(t('requiredName'))
             return
         }
 
         if (!formData.price) {
-            toast.warning('Giá không được bỏ trống')
+            toast.warning(t('requiredPrice'))
             return
         }
 
@@ -69,17 +71,17 @@ export function AddOtherRevenue({open, onClose}: Props) {
             <DialogContent className='sm:max-w-sm'>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl'>Thêm thu nhập khác</DialogTitle>
+                        <DialogTitle className='text-black! font-bold! text-xl'>{t('addRevenueTitle')}</DialogTitle>
                     </DialogHeader>
 
                     <FieldGroup>
                         <Field>
-                            <Label htmlFor='name-1'>Tên</Label>
+                            <Label htmlFor='name-1'>{t('revenueName')}</Label>
                             <Input id='name-1' name='name' value={formData.name} onChange={handleChangeRevenue}/>
                         </Field>
 
                         <Field>
-                            <Label htmlFor='price-1'>Giá</Label>
+                            <Label htmlFor='price-1'>{t('price')}</Label>
                             <Input
                                 id='price-1'
                                 name='price'
@@ -90,18 +92,18 @@ export function AddOtherRevenue({open, onClose}: Props) {
                         </Field>
 
                         <Field>
-                            <Label htmlFor='note-1'>Chú thích</Label>
+                            <Label htmlFor='note-1'>{t('note')}</Label>
                             <Input id='note-1' name='note' value={formData.note} onChange={handleChangeRevenue}/>
                         </Field>
                     </FieldGroup>
 
                     <DialogFooter className='mt-4'>
                         <DialogClose asChild>
-                            <Button variant='outline'>Huỷ</Button>
+                            <Button variant='outline'>{t('cancel')}</Button>
                         </DialogClose>
 
                         <Button type='submit' disabled={createRevenueMutation.isPending}>
-                            {createRevenueMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                            {createRevenueMutation.isPending ? t('saving') : t('save')}
                         </Button>
                     </DialogFooter>
                 </form>

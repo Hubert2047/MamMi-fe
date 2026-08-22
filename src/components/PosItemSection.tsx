@@ -67,7 +67,7 @@ function PosItemSection({
             })
         },
         onError: () => {
-            toast.error('Cập nhật không thành công')
+            toast.error(t('updateFailure'))
         },
     })
     const selectItem = (item: Item) => {
@@ -125,7 +125,7 @@ function PosItemSection({
             id: currentOrder._id,
             data: { paymentMethod: currentOrder.paymentMethod },
         })
-        toast.success('Cập nhật đơn hàng thành công')
+        toast.success(t('updateSuccess'))
     }
     return (
         <>
@@ -170,7 +170,7 @@ function PosItemSection({
                     <div className='flex flex-col flex-1 justify-start gap-3'>
                         <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex items-center justify-between gap-3'><p className='min-w-0 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
                         <div className='variant flex justify-start items-center gap-4'>
-                            <Label className='block w-27 font-semibold text-start'>Số lượng:</Label>
+                            <Label className='block w-27 font-semibold text-start'>{t('quantity')}:</Label>
                             <Input
                                 id='amount'
                                 disabled={isDetail}
@@ -186,7 +186,7 @@ function PosItemSection({
                         {/* variants */}
                         {selectedItem.variants.length > 0 && (
                             <div className='variants flex justify-start items-center gap-4'>
-                                <Label className='block w-27 font-semibold text-start'>Loại:</Label>
+                                <Label className='block w-27 font-semibold text-start'>{t('variant')}:</Label>
                                 <RadioGroup
                                     value={selectedItem.variants.find((option) => option.id === currentOrderItem.variant || optionName(option) === currentOrderItem.variant)?.id || currentOrderItem.variant}
                                     onValueChange={(value) => {
@@ -206,7 +206,7 @@ function PosItemSection({
                         {/* note options */}
                         {selectedItem.noteOptions.length > 0 && (
                             <div className='note-options flex justify-start items-center gap-4'>
-                                <Label className='block w-22 font-semibold text-start'>Không thêm: </Label>
+                                <Label className='block w-22 font-semibold text-start'>{t('noAddons')}: </Label>
                                 <ToggleGroup
                                     size='lg'
                                     variant='outline'
@@ -229,7 +229,7 @@ function PosItemSection({
                         {/* add-on */}
                         {selectedItem.addons.length > 0 && (
                             <div className='add-on flex justify-start items-center mt-6 gap-4'>
-                                <Label className='block font-semibold text-start'>Thêm: </Label>
+                                <Label className='block font-semibold text-start'>{t('addons')}: </Label>
                                 <ToggleGroup
                                     size='lg'
                                     variant='outline'
@@ -262,7 +262,7 @@ function PosItemSection({
                             </div>
                         )}
                         <div className='note flex justify-start items-center gap-4'>
-                            <Label className='w-22 block font-semibold text-start'>Ghi chú: </Label>
+                            <Label className='w-22 block font-semibold text-start'>{t('note')}: </Label>
                             <Input
                                 id='note'
                                 disabled={isDetail}
@@ -276,11 +276,11 @@ function PosItemSection({
                         {isDetail && currentOrder.customer && (
                             <>
                                 <div className='flex justify-start items-center gap-4'>
-                                    <Label className='w-22 block font-semibold text-start'>Tên khách: </Label>
+                                    <Label className='w-22 block font-semibold text-start'>{t('customer')}: </Label>
                                     <Input id='name' value={currentOrder.customer.name} disabled />
                                 </div>
                                 <div className='flex justify-start items-center gap-4'>
-                                    <Label className='w-22 block font-semibold text-start'>Điện thoại: </Label>
+                                    <Label className='w-22 block font-semibold text-start'>{t('phone')}: </Label>
                                     <Input id='name' value={currentOrder.customer.phone} disabled />
                                 </div>
                             </>
@@ -290,7 +290,7 @@ function PosItemSection({
                             ['dine_in', 'takeaway'].includes(currentOrder.type) &&
                             ['cash', 'linepay', 'bank'].includes(currentOrder.paymentMethod) && (
                                 <div className='flex gap-2 items-center'>
-                                    <p className='font-semibold block w-25 text-start text-md'>Hình thức thanh toán</p>
+                                    <p className='font-semibold block w-25 text-start text-md'>{t('payment')}</p>
                                     <div className='flex justify-start items-center gap-4'>
                                         <ToggleGroup
                                             size='lg'

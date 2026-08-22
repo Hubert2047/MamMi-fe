@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import Loading from '@/components/Loading.tsx'
 import PendingOrder from '@/components/PendingOrder.tsx'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useI18n } from '@/lib/i18n'
 
 type Props = {
     isPendingOrder: boolean
@@ -41,6 +42,7 @@ function Checkout({
     handlePendingOrder,
     setIsCheckoutPendingOrder,
 }: Props) {
+    const { t } = useI18n()
     const [isPrint, setIsPrint] = useState(!isCheckoutPendingOrder)
     const queryClient = useQueryClient()
     const [cash, setCash] = useState<number>(totalPrice)
@@ -54,12 +56,12 @@ function Checkout({
                 .then()
         },
         onError: () => {
-            toast.error('Tạo đơn không thành công')
+            toast.error(t('createOrderFailure'))
         },
     })
     const handleCreateOrder = async (status: 'paid' | 'pending') => {
         if (cash < totalPrice) {
-            toast.error('Tiền khách đưa chưa đủ')
+            toast.error(t('insufficientCash'))
             return
         }
         const newOrder: BaseOrder = {
@@ -78,7 +80,7 @@ function Checkout({
         setCurrentOrder(DEFAULT_ORDER)
         setCurrentOrderNumber(nextOrder)
         setIsCheckoutPendingOrder(false)
-        toast.success(status === 'paid' ? 'Thanh toán thành công' : 'Đặt hàng thành công')
+        toast.success(status === 'paid' ? t('paidSuccess') : t('pendingSuccess'))
     }
 
     const cashBack = cash - totalPrice < 0 ? 0 : cash - totalPrice
@@ -114,7 +116,7 @@ function Checkout({
             ) : (
                 <>
                     <div className='discounts md:w-30 border border-[#ccc] rounded p-2'>
-                        <p className='text-xl'>Giảm giá</p>
+                        <p className='text-xl'>{t('discount')}</p>
                         <div className='flex justify-center pt-6'>
                             <ToggleGroup
                                 type='single'
@@ -141,7 +143,7 @@ function Checkout({
                         </div>
                     </div>
                     <div className='payment-method flex-1 border border-[#ccc] rounded p-2'>
-                        <p className='text-xl'>Phương thức thanh toán</p>
+                        <p className='text-xl'>{t('paymentMethodTitle')}</p>
                         <div className='flex justify-start items-center gap-4 pt-6 pl-2'>
                             <ToggleGroup
                                 size='lg'
@@ -171,7 +173,7 @@ function Checkout({
                         </div>
 
                         <div className='variant flex justify-start items-center gap-4 pt-4 pl-2'>
-                            <Label className='block w-max font-semibold'>Số tiền khách đưa:</Label>
+                            <Label className='block w-max font-semibold'>{t('cashGiven')}:</Label>
                             <Input
                                 id='amount'
                                 value={cash.toLocaleString()}
@@ -183,7 +185,7 @@ function Checkout({
                             />
                         </div>
                         <div className='variant flex justify-start items-center gap-4 pt-4 pl-2'>
-                            <Label className='block w-max font-semibold'>Số tiền trả lại khách:</Label>
+                            <Label className='block w-max font-semibold'>{t('cashBack')}:</Label>
                             <Input id='amount' value={cashBack} className='w-30' disabled />
                         </div>
                         {/* print option */}
@@ -193,7 +195,7 @@ function Checkout({
                                 checked={isPrint}
                                 onCheckedChange={(checked) => setIsPrint(!!checked)}
                             />
-                            <Label htmlFor='print-confirm'>In khi xác nhận</Label>
+                            <Label htmlFor='print-confirm'>{t('printOnConfirm')}</Label>
                         </div>
                         <div className='flex justify-start pt-8 gap-3'>
                             <NumPad
@@ -208,10 +210,10 @@ function Checkout({
                                 size='lg'
                                 className='bg-green-500 hover:bg-green-600'
                                 onClick={() => handleCreateOrder('paid')}>
-                                Thanh toán
+                                {t('pay')}
                             </Button>
                             <Button variant='outline' size='lg' onClick={() => handleOpenCheckout(false)}>
-                                Hủy
+                                {t('cancel')}
                             </Button>
                         </div>
                     </div>

@@ -2,6 +2,7 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/
 import Loading from "@/components/Loading.tsx";
 import {useRevenues} from "@/hooks/queries";
 import {OtherRevenueTable} from "@/components/other-revenue/OtherRevenueTable.tsx";
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     open: boolean
@@ -9,6 +10,7 @@ type Props = {
 }
 
 function OtherRevenue({open, onClose}: Props) {
+    const {t} = useI18n()
     const {data: revenues = [], isLoading} = useRevenues()
     if (isLoading) {
         return <Loading/>
@@ -21,7 +23,7 @@ function OtherRevenue({open, onClose}: Props) {
             }}>
             <DialogContent className="min-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle className='text-black! font-bold! text-xl text-center'>Bảng Thu nhập khác</DialogTitle>
+                    <DialogTitle className='text-black! font-bold! text-xl text-center'>{t('revenueTableTitle')}</DialogTitle>
                 </DialogHeader>
                 <OtherRevenueTable revenues={revenues}/>
             </DialogContent>

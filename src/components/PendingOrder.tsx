@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button.tsx'
 import React from 'react'
 import type { BaseOrder } from '@/api/order'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useI18n } from '@/lib/i18n'
 type Props = {
     isPrint: boolean
     currentOrder: BaseOrder
@@ -13,12 +14,13 @@ type Props = {
 }
 
 function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, handleCreateOrder }: Props) {
+    const { t } = useI18n()
     return (
         <div className='flex flex-col pt-2 px-4 pb-4 flex-1 gap-3'>
-            <p className='text-xl'>Thông tin đặt hàng</p>
+            <p className='text-xl'>{t('pendingOrderInfo')}</p>
             <div className='flex items-center space-x-2 pt-6'>
                 <Label htmlFor='name' className='whitespace-nowrap text-start w-24'>
-                    Tên người đặt
+                    {t('customerName')}
                 </Label>
                 <Input
                     id='name'
@@ -34,7 +36,7 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
             </div>
             <div className='flex items-center space-x-2 '>
                 <Label htmlFor='phone' className='whitespace-nowrap text-start w-24'>
-                    Số điện thoại
+                    {t('phone')}
                 </Label>
                 <Input
                     id='phone'
@@ -51,7 +53,7 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
             {/* print option */}
             <div className='flex justify-start items-center gap-4 pt-5 pl-2'>
                 <Checkbox id='print-confirm' checked={isPrint} onCheckedChange={(checked) => setIsPrint(!!checked)} />
-                <Label htmlFor='print-confirm'>In khi xác nhận</Label>
+                <Label htmlFor='print-confirm'>{t('printOnConfirm')}</Label>
             </div>
             <div className='flex justify-end ml-8'>
                 <Button
@@ -59,7 +61,7 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
                     variant='default'
                     size='lg'
                     onClick={() => handleCreateOrder('pending')}>
-                    Đặt hàng
+                    {t('placeOrder')}
                 </Button>
             </div>
         </div>

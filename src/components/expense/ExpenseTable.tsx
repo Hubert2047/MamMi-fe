@@ -18,6 +18,7 @@ import {Input} from "@/components/ui/input.tsx";
 import {EditExpenses} from "@/components/expense/EditExpenses.tsx";
 import {toast} from "sonner";
 import {AddExpenseDialog} from "@/components/expense/AddExpenseDialog.tsx";
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     expenses: Expense[]
@@ -25,6 +26,7 @@ type Props = {
 }
 
 export function ExpenseTable({expenses, showOnly = false}: Props) {
+    const {t} = useI18n()
     const queryClient = useQueryClient()
     const [openEdit, setOpenEdit] = useState<boolean>(false)
     const [addExpense, setAddExpense] = useState<boolean>(false)
@@ -53,10 +55,10 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
         mutationFn: deleteExpense,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['expenses']}).then()
-            toast.success('Xóa thành công')
+            toast.success(t('deleteSuccess'))
         },
         onError: () => {
-            toast.error('Xóa thất bại')
+            toast.error(t('deleteFailure'))
         },
     })
     const handleDelete = (id: string) => {
@@ -66,7 +68,7 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
         <div className="flex flex-col flex-1 overflow-clip">
             <div className="flex gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                    <span className='font-bold text-lg'>Tổng chi</span>
+                    <span className='font-bold text-lg'>{t('totalExpense')}</span>
                     <Input
                         value={totalPrice.toLocaleString()}
                         disabled
@@ -75,7 +77,7 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
                 </div>
                 <div className="flex items-center gap-2">
                     <Input
-                        placeholder="Tìm theo tên chi phí..."
+                        placeholder={t('searchExpense')}
                         value={search}
                         onChange={handleSearchChange}
                         className="w-48 ml-2"
@@ -85,21 +87,21 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
                             setSearch('');
                             setPage(1)
                         }}>
-                            Xóa
+                            {t('delete')}
                         </Button>
                     )}
                 </div>
                 {!showOnly && <Button className='bg-primary text-primary-foreground hover:bg-primary/90' onClick={() => {
                     setAddExpense(true)
-                }}>Thêm chi phí</Button>}
+                }}>{t('addExpense')}</Button>}
             </div>
             <Table>
                 <TableHeader className="sticky top-0  z-10">
                     <TableRow>
-                        <TableHead>Tên</TableHead>
-                        <TableHead>Giá</TableHead>
-                        <TableHead>Chú thích</TableHead>
-                        {!showOnly && <TableHead>Hành động</TableHead>}
+                        <TableHead>{t('expenseName')}</TableHead>
+                        <TableHead>{t('expensePrice')}</TableHead>
+                        <TableHead>{t('expenseNote')}</TableHead>
+                        {!showOnly && <TableHead>{t('expenseActions')}</TableHead>}
                     </TableRow>
                 </TableHeader>
 
@@ -107,7 +109,7 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
                     {paginatedOrders.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={8} className="text-center text-gray-400 py-8">
-                                Không tìm thấy chi phí
+                                {t('noExpenseFound')}
                             </TableCell>
                         </TableRow>
                     )}
@@ -120,35 +122,35 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
                                 <TableCell>{exp.note}</TableCell>
                                 {!showOnly && <TableCell>
                                     <Button variant='default' className='w-20'
-                                            onClick={() => handleEditData(exp)}>Sửa</Button>
+                                            onClick={() => handleEditData(exp)}>{t('edit')}</Button>
 
                                     {/* Confirm Delete */}
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button className='ml-2 w-20' variant='destructive'
                                                     disabled={isDeleting}>
-                                                Xóa
+                                                {t('delete')}
                                             </Button>
                                         </AlertDialogTrigger>
 
                                         <AlertDialogContent className='max-w-sm p-4'>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle className='text-black!'>
-                                                    Bạn có chắc muốn xóa?
+                                                    {t('confirmDelete')}
                                                 </AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Hành động này không thể hoàn tác.
+                                                    {t('deleteDescription')}
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
 
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
 
                                                 <AlertDialogAction
                                                     onClick={() => handleDelete(exp._id)}
                                                     disabled={isDeleting}
                                                     className='bg-red-600 hover:bg-red-700'>
-                                                    {isDeleting ? 'Đang xoá...' : 'Xóa'}
+                                                    {isDeleting ? t('deleting') : t('delete')}
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -162,16 +164,16 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
             </Table>
             <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm text-gray-500">
-                            {filteredOrders.length} chi phí • Trang {page}/{totalPages || 1}
+                            {filteredOrders.length} {t('expenseCount')} • {t('page')} {page}/{totalPages || 1}
                         </span>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)}
                             disabled={page === 1}>
-                        Trước
+                        {t('previous')}
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)}
                             disabled={page >= totalPages}>
-                        Sau
+                        {t('next')}
                     </Button>
                 </div>
             </div>

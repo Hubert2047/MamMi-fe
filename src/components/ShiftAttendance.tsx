@@ -8,6 +8,7 @@ import NumPad from './NumPad'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import Loading from "@/components/Loading.tsx";
 import axios from 'axios'
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     open: boolean
@@ -15,6 +16,7 @@ type Props = {
 }
 
 function ShiftAttendance({open, onClose}: Props) {
+    const {t} = useI18n()
     const [numberId, setNumberId] = useState('')
     const queryClient = useQueryClient()
     const checkInMutation = useMutation({
@@ -25,11 +27,11 @@ function ShiftAttendance({open, onClose}: Props) {
         onError: (error: unknown) => {
             const message = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined
             if (message === "Already checked in today") {
-                toast.error('Bạn đã chấm công vào làm rồi')
+                toast.error(t('alreadyCheckedIn'))
             } else if (message === "Employee not found") {
-                toast.error('Không tồn tại mã số nhân viên')
+                toast.error(t('employeeNotFound'))
             } else {
-                toast.error('Chấm công không thành công')
+                toast.error(t('attendanceFailure'))
             }
         },
     })
@@ -41,20 +43,20 @@ function ShiftAttendance({open, onClose}: Props) {
         onError: (error: unknown) => {
             const message = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined
             if (message === "No check-in found for today") {
-                toast.error('Bạn chưa chấm công vào làm')
+                toast.error(t('noCheckIn'))
             } else {
-                toast.error('Chấm công không thành công')
+                toast.error(t('attendanceFailure'))
             }
         },
     })
     const handleCheckIn = async () => {
         await checkInMutation.mutateAsync(numberId)
-        toast.success('Chấm công vào làm thành công')
+        toast.success(t('checkInSuccess'))
         onClose()
     }
     const handleCheckOut = async () => {
         await checkOutMutation.mutateAsync(numberId)
-        toast.success('Chấm công tan làm thành công')
+        toast.success(t('checkOutSuccess'))
         onClose()
     }
     return (
@@ -65,10 +67,10 @@ function ShiftAttendance({open, onClose}: Props) {
             }}>
             <DialogContent className=' min-h-[50vh] flex flex-col'>
                 <DialogHeader>
-                    <DialogTitle className='text-black! font-bold! text-xl text-center'>Chấm công</DialogTitle>
+                    <DialogTitle className='text-black! font-bold! text-xl text-center'>{t('attendance')}</DialogTitle>
                 </DialogHeader>
                 <div className='flex items-center gap-2 px-2'>
-                    <span className='font-bold text-md'>Mã nhân viên</span>
+                    <span className='font-bold text-md'>{t('employeeId')}</span>
                     <Input value={numberId} className=' w-48 ml-2' onChange={(e) => setNumberId(e.target.value)}/>
                 </div>
                 <div className='flex items-center justify-between mt-4 gap-2 px-2'>
@@ -76,12 +78,12 @@ function ShiftAttendance({open, onClose}: Props) {
                     <Button
                         className='bg-green-500 hover:bg-green-600 text-white'
                         onClick={handleCheckIn}>
-                        Vào làm
+                        {t('checkIn')}
                     </Button>
                     <Button
                         className='bg-red-500 hover:bg-red-600 text-white'
                         onClick={handleCheckOut}>
-                        Tan làm
+                        {t('checkOut')}
                     </Button>
                 </div>
                 {(checkOutMutation.isPending || checkInMutation.isPending)&&<Loading/>}

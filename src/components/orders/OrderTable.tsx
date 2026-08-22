@@ -14,11 +14,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
 import { cancelOrder, type BaseOrder } from '@/api/order.ts'
 import { useOrders, queryKeys } from '@/hooks/queries'
-import { getOrderTypeString, getPaymentMethodString, getStatusString } from '@/lib/utils.ts'
 import Loading from '@/components/Loading.tsx'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input.tsx'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx'
 import PrintOptions from '../PrintOptions'
 import { useI18n } from '@/lib/i18n'
 
@@ -29,27 +29,48 @@ type Props = {
     onClose: () => void
 }
 
+const orderStatusMessageKeys = {
+    pending: 'orderStatusPending',
+    paid: 'orderStatusPaid',
+    cancelled: 'orderStatusCancelled',
+} as const
+
+const orderTypeMessageKeys = {
+    dine_in: 'dineIn',
+    takeaway: 'takeaway',
+    uber: 'uber',
+    foodpanda: 'foodpanda',
+} as const
+
+const paymentMethodMessageKeys = {
+    cash: 'cash',
+    bank: 'bank',
+    linepay: 'linepay',
+    uber: 'uber',
+    foodpanda: 'foodpanda',
+} as const
+
 export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onClose }: Props) {
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
-    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('all')
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
     const pageSize = 6
 
     const [days, setDays] = useState<number>(1)
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const { data: orders = [], isLoading: isOrderLoading } = useOrders(days)
 
     const cancelOrderMutation = useMutation({
         mutationFn: cancelOrder,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.orders(days) }).then()
-            toast.success('Hủy thành công')
+            toast.success(t('cancelSuccess'))
         },
         onError: () => {
-            toast.error('Hủy thất bại')
+            toast.error(t('cancelFailure'))
         },
     })
 
@@ -78,32 +99,35 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                 onOpenChange={(isOpen) => {
                     if (!isOpen) onClose()
                 }}>
-                <DialogContent className='min-w-[95vw] w-[95vw] h-[90vh] flex flex-col'>
+                <DialogContent key={locale} className='min-w-[95vw] w-[95vw] h-[90vh] flex flex-col'>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl'>Bảng Đơn hàng</DialogTitle>
+                        <DialogTitle className='text-black! font-bold! text-xl'>{t('orderTableTitle')}</DialogTitle>
                     </DialogHeader>
                     <div className='flex items-center gap-2'>
-                        {([
-                            { label: t('allOrders'), value: 'all' },
-                            { label: t('pendingPayment'), value: 'pending' },
-                            { label: t('paidOrders'), value: 'paid' },
-                        ] as const).map((item) => (
-                            <Button
-                                key={item.value}
-                                size='sm'
-                                variant={statusFilter === item.value ? 'default' : 'outline'}
-                                onClick={() => {
-                                    setStatusFilter(item.value)
+                        <label className='flex items-center gap-2 text-sm'>
+                            <span className='sr-only'>{t('orderStatusFilter')}</span>
+                            <Select
+                                value={statusFilter}
+                                onValueChange={(value) => {
+                                    setStatusFilter(value as 'all' | BaseOrder['status'])
                                     setPage(1)
                                 }}>
-                                {item.label}
-                            </Button>
-                        ))}
+                                <SelectTrigger aria-label={t('orderStatusFilter')} className='w-44'>
+                                    <SelectValue placeholder={t('orderStatusFilter')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='all'>{t('allOrders')}</SelectItem>
+                                    <SelectItem value='paid'>{t('paidOrders')}</SelectItem>
+                                    <SelectItem value='pending'>{t('pendingPayment')}</SelectItem>
+                                    <SelectItem value='cancelled'>{t('cancelledOrders')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </label>
                         {(
                             [
-                                { label: 'Hôm nay', value: 1 },
-                                { label: '3 ngày', value: 3 },
-                                { label: '1 tuần', value: 7 },
+                                { label: t('today'), value: 1 },
+                                { label: t('days'), value: 3 },
+                                { label: t('week'), value: 7 },
                             ] as const
                         ).map((item) => (
                             <Button
@@ -118,7 +142,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                             </Button>
                         ))}
                         <Input
-                            placeholder='Tìm theo mã đơn...'
+                            placeholder={t('searchOrder')}
                             value={search}
                             onChange={handleSearchChange}
                             className='w-48 ml-2'
@@ -131,7 +155,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                     setSearch('')
                                     setPage(1)
                                 }}>
-                                Xóa
+                                {t('clear')}
                             </Button>
                         )}
                     </div>
@@ -139,13 +163,13 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                         <Table>
                             <TableHeader className='sticky top-0 bg-white z-10'>
                                 <TableRow>
-                                    <TableHead>Mã Đơn</TableHead>
-                                    <TableHead>Tổng SP</TableHead>
-                                    <TableHead>Tổng tiền</TableHead>
-                                    <TableHead>Trạng thái</TableHead>
-                                    <TableHead>Loại Đơn</TableHead>
-                                    <TableHead>Phương thức</TableHead>
-                                    <TableHead>Thời gian</TableHead>
+                                    <TableHead>{t('orderNumberHeader')}</TableHead>
+                                    <TableHead>{t('totalItems')}</TableHead>
+                                    <TableHead>{t('totalAmount')}</TableHead>
+                                    <TableHead>{t('status')}</TableHead>
+                                    <TableHead>{t('orderType')}</TableHead>
+                                    <TableHead>{t('paymentMethod')}</TableHead>
+                                    <TableHead>{t('time')}</TableHead>
                                     <TableHead></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -153,7 +177,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                 {paginatedOrders.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={8} className='text-center text-gray-400 py-8'>
-                                            Không tìm thấy đơn hàng
+                                            {t('noOrdersFound')}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -165,9 +189,9 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                             <TableCell>{order.number}</TableCell>
                                             <TableCell>{order.items.length}</TableCell>
                                             <TableCell>{order.totalPrice.toLocaleString()}</TableCell>
-                                            <TableCell>{getStatusString(order.status)}</TableCell>
-                                            <TableCell>{getOrderTypeString(order.type)}</TableCell>
-                                            <TableCell>{getPaymentMethodString(order.paymentMethod)}</TableCell>
+                                            <TableCell>{t(orderStatusMessageKeys[order.status])}</TableCell>
+                                            <TableCell>{t(orderTypeMessageKeys[order.type])}</TableCell>
+                                            <TableCell>{t(paymentMethodMessageKeys[order.paymentMethod])}</TableCell>
                                             <TableCell>
                                                 {order.createdAt
                                                     ? new Date(order.createdAt).toLocaleString('vi-VN', {
@@ -185,14 +209,14 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                     variant='outline'
                                                     className='border-gray-300 text-gray-700 hover:bg-gray-100'
                                                     onClick={() => displayOrderDetail(order)}>
-                                                    Chi tiết
+                                                    {t('detail')}
                                                 </Button>
                                                 {order.status === 'pending' && (
                                                     <Button
                                                         variant='default'
                                                         className='ml-1 bg-green-600 hover:bg-green-700 text-white'
                                                         onClick={() => checkoutPendingOrder(order)}>
-                                                        Thanh toán
+                                                        {t('pay')}
                                                     </Button>
                                                 )}
                                                 {
@@ -203,7 +227,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                             setFocusOrder(order)
                                                             setOpenPrintOptions(true)
                                                         }}>
-                                                        In
+                                                        {t('print')}
                                                     </Button>
                                                 }
                                                 {order.status !== 'cancelled' && (
@@ -213,22 +237,22 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                                 className='ml-1'
                                                                 variant='destructive'
                                                                 disabled={isCanceling}>
-                                                                Hủy Đơn
+                                                                {t('cancelOrder')}
                                                             </Button>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent className='max-w-sm p-4'>
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle className='text-black!'>
-                                                                    Bạn có chắc muốn hủy đơn hàng này không?
+                                                                    {t('confirmCancelOrder')}
                                                                 </AlertDialogTitle>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
-                                                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                                                                 <AlertDialogAction
                                                                     onClick={() => handleCancelOrder(order._id)}
                                                                     disabled={isCanceling}
                                                                     className='bg-red-600 hover:bg-red-700'>
-                                                                    {isCanceling ? 'Đang hủy...' : 'Xác nhận'}
+                                                                    {isCanceling ? t('cancelling') : t('confirm')}
                                                                 </AlertDialogAction>
                                                             </AlertDialogFooter>
                                                         </AlertDialogContent>
@@ -243,7 +267,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                     </div>
                     <div className='flex items-center justify-between pt-2 border-t'>
                         <span className='text-sm text-gray-500'>
-                            {filteredOrders.length} đơn hàng • Trang {page}/{totalPages || 1}
+                            {filteredOrders.length} {t('ordersCount')} • {t('page')} {page}/{totalPages || 1}
                         </span>
                         <div className='flex gap-2'>
                             <Button
@@ -251,14 +275,14 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                 size='sm'
                                 onClick={() => setPage((p) => p - 1)}
                                 disabled={page === 1}>
-                                Trước
+                                {t('previous')}
                             </Button>
                             <Button
                                 variant='outline'
                                 size='sm'
                                 onClick={() => setPage((p) => p + 1)}
                                 disabled={page >= totalPages}>
-                                Sau
+                                {t('next')}
                             </Button>
                         </div>
                     </div>

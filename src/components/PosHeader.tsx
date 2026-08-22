@@ -8,6 +8,7 @@ import { getPaymentMethodByType, getPriceByType } from '@/lib/utils.ts'
 import type { Item } from '@/api/item.ts'
 import type { BaseOrder } from '@/api/order'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useI18n } from '@/lib/i18n'
 
 type Props = {
 
@@ -37,13 +38,14 @@ function PosHeader({
     closeDisplayOrderDetail,
     handlePendingOrder,
 }: Props) {
+    const { t } = useI18n()
     
 
     return (
         <div className='flex items-center p-2 justify-start gap-2 border-b pb-2 border-[#ccc]'>
             <div className='flex items-center space-x-2 '>
                 <Label htmlFor='stt' className='whitespace-nowrap'>
-                    Mã Đơn:
+                    {t('orderNumber')}:
                 </Label>
                 <Input id='stt' className='w-15' value={currentOrderNumber} disabled />
             </div>
@@ -86,7 +88,7 @@ function PosHeader({
             <LanguageSwitcher />
 
             <div className='flex items-center space-x-2'>
-                <Label className='whitespace-nowrap'>Tổng tiền:</Label>
+                        <Label className='whitespace-nowrap'>{t('total')}:</Label>
                 <Input className='w-30 font-bold text-red-600' value={totalPrice.toLocaleString()} disabled />
             </div>
             <div className='w-48'>
@@ -101,7 +103,7 @@ function PosHeader({
                                   ? () => handlePendingOrder(false)
                                   : () => handleOpenCheckout(false)
                         }>
-                        Đơn hàng
+                        {t('order')}
                     </Button>
                 ) : (
                     <div className='flex gap-2'>
@@ -109,23 +111,23 @@ function PosHeader({
                             className='bg-yellow-400 hover:bg-yellow-500 text-black'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
-                                    toast.error('Không có sản phẩm đặt hàng')
+                                    toast.error(t('noProductsToOrder'))
                                     return
                                 }
                                 handlePendingOrder(true)
                             }}>
-                            Đặt hàng
+                            {t('placeOrder')}
                         </Button>
                         <Button
                             className='bg-green-600 hover:bg-green-700 text-white'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
-                                    toast.error('Không có sản phẩm thanh toán')
+                                    toast.error(t('noProductsToPay'))
                                     return
                                 }
                                 handleOpenCheckout(true)
                             }}>
-                            Thanh toán
+                            {t('pay')}
                         </Button>
                     </div>
                 )}

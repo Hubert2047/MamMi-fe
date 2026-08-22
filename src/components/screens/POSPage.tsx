@@ -20,8 +20,10 @@ import ShiftAttendance from '@/components/ShiftAttendance.tsx'
 import { signOut } from 'next-auth/react'
 import { logoutAPI } from '@/api/auth'
 import { calculateOrderTotal } from '@/lib/posCalculations'
+import { useI18n } from '@/lib/i18n'
 
 const POSPage: React.FC = () => {
+    const { t } = useI18n()
     const [selectedCategory, setSelectedCategory] = useState<string>('牛肉河粉')
     const [currentOrder, setCurrentOrder] = useState<BaseOrder>(DEFAULT_ORDER)
     const [currentOrderItem, setCurrentOrderItem] = useState<OrderItem>(DEFAULT_ORDER_ITEM)
@@ -193,25 +195,25 @@ const POSPage: React.FC = () => {
             {openBtns && (
                 <div className='right flex flex-col justify-end p-2 gap-2 border border-[#ccc] rounded'>
                     <Button variant='outline' onClick={toggleFullScreen}>
-                        {isFullScreen ? 'Tắt toàn màn hình' : 'Mở toàn màn hình'}
+                        {isFullScreen ? t('fullscreenOff') : t('fullscreenOn')}
                     </Button>
                     <Button variant='outline' onClick={() => setOpenOrderTable(true)}>
-                        Bảng đơn hàng
+                        {t('orderTableTitle')}
                     </Button>
                     <Button variant='outline' onClick={() => setOpenOtherRevenue(true)}>
-                        Thu nhập khác
+                        {t('otherRevenue')}
                     </Button>
                     <Button variant='outline' onClick={() => setOpenExpense(true)}>
-                        Bảng chi phí
+                        {t('expenses')}
                     </Button>
                     <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
-                        Chấm công
+                        {t('attendance')}
                     </Button>
                     <Button variant='outline' onClick={() => setOpenDailyClosing(true)}>
-                        Kết sổ
+                        {t('dailyClosing')}
                     </Button>
                     <Button variant='destructive' onClick={handleLogout}>
-                        Đăng xuất
+                        {t('logout')}
                     </Button>
                 </div>
             )}

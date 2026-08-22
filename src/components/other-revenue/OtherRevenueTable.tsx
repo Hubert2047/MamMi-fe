@@ -18,6 +18,7 @@ import {toast} from "sonner";
 import {deleteRevenue, type IUpdateRevenue, type Revenue} from "@/api/other-revenue.ts";
 import {EditOtherRevenue} from "@/components/other-revenue/EditOtherRevenue.tsx";
 import {AddOtherRevenue} from "@/components/other-revenue/AddOtherRevenue.tsx";
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     revenues: Revenue[]
@@ -25,6 +26,7 @@ type Props = {
 }
 
 export function OtherRevenueTable({revenues, showOnly = false}: Props) {
+    const {t} = useI18n()
     const queryClient = useQueryClient()
     const [openEdit, setOpenEdit] = useState<boolean>(false)
     const [addRevenue, setAddRevenue] = useState<boolean>(false)
@@ -53,10 +55,10 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
         mutationFn: deleteRevenue,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['revenues']}).then()
-            toast.success('Xóa thành công')
+            toast.success(t('deleteSuccess'))
         },
         onError: () => {
-            toast.error('Xóa thất bại')
+            toast.error(t('deleteFailure'))
         },
     })
     const handleDeleteRevenue = (id: string) => {
@@ -66,7 +68,7 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
         <div className="flex flex-col flex-1 overflow-clip">
             <div className="flex gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                    <span className='font-bold text-md'>Tổng thu nhập khác</span>
+                    <span className='font-bold text-md'>{t('totalOtherRevenue')}</span>
                     <Input
                         value={totalPrice.toLocaleString()}
                         disabled
@@ -75,7 +77,7 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
                 </div>
                 <div className="flex items-center gap-2">
                     <Input
-                        placeholder="Tìm theo tên thu nhập..."
+                        placeholder={t('searchRevenue')}
                         value={search}
                         onChange={handleSearchChange}
                         className="w-48 ml-2"
@@ -85,22 +87,22 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
                             setSearch('');
                             setPage(1)
                         }}>
-                            Xóa
+                            {t('delete')}
                         </Button>
                     )}
                 </div>
                 <Button className='bg-primary text-primary-foreground hover:bg-primary/90' onClick={()=>{
                     setAddRevenue(true)
-                }}>Thêm thu nhập</Button>
+                }}>{t('addRevenue')}</Button>
             </div>
 
             <Table>
                 <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead>Tên</TableHead>
-                        <TableHead>Giá</TableHead>
-                        <TableHead>Chú thích</TableHead>
-                        {!showOnly && <TableHead>Hành động</TableHead>}
+                        <TableHead>{t('revenueName')}</TableHead>
+                        <TableHead>{t('price')}</TableHead>
+                        <TableHead>{t('note')}</TableHead>
+                        {!showOnly && <TableHead>{t('actions')}</TableHead>}
                     </TableRow>
                 </TableHeader>
 
@@ -108,7 +110,7 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
                     {paginatedOrders.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={8} className="text-center text-gray-400 py-8">
-                                Không tìm thấy thu nhập khác
+                                {t('noRevenueFound')}
                             </TableCell>
                         </TableRow>
                     )}
@@ -121,35 +123,35 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
                                 <TableCell>{exp.note}</TableCell>
                                 {!showOnly && <TableCell>
                                     <Button variant='default' className='w-20'
-                                            onClick={() => handleEditData(exp)}>Sửa</Button>
+                                            onClick={() => handleEditData(exp)}>{t('edit')}</Button>
 
                                     {/* Confirm Delete */}
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button className='ml-2 w-20' variant='destructive'
                                                     disabled={isDeleting}>
-                                                Xóa
+                                                {t('delete')}
                                             </Button>
                                         </AlertDialogTrigger>
 
                                         <AlertDialogContent className='max-w-sm p-4'>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle className='text-black!'>
-                                                    Bạn có chắc muốn xóa?
+                                                    {t('confirmDelete')}
                                                 </AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Hành động này không thể hoàn tác.
+                                                    {t('deleteDescription')}
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
 
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
 
                                                 <AlertDialogAction
                                                     onClick={() => handleDeleteRevenue(exp._id)}
                                                     disabled={isDeleting}
                                                     className='bg-red-600 hover:bg-red-700'>
-                                                    {isDeleting ? 'Đang xoá...' : 'Xóa'}
+                                                    {isDeleting ? t('deleting') : t('delete')}
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -163,16 +165,16 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
             </Table>
             <div className="flex items-center justify-between pt-2 border-t">
                         <span className="text-sm text-gray-500">
-                            {filteredOrders.length} thu nhập • Trang {page}/{totalPages || 1}
+                            {filteredOrders.length} {t('revenueCount')} • {t('page')} {page}/{totalPages || 1}
                         </span>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)}
                             disabled={page === 1}>
-                        Trước
+                        {t('previous')}
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)}
                             disabled={page >= totalPages}>
-                        Sau
+                        {t('next')}
                     </Button>
                 </div>
             </div>

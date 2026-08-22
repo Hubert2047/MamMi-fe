@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useI18n } from '@/lib/i18n'
 
 type Props = {
     open: boolean
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export function AddExpenseDialog({ open, onClose }: Props) {
+    const { t } = useI18n()
     const queryClient = useQueryClient()
 
     const [formData, setFormData] = useState({
@@ -26,7 +28,7 @@ export function AddExpenseDialog({ open, onClose }: Props) {
         mutationFn: createExpense,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] })
-            toast.success('Lưu thành công', {
+            toast.success(t('createSuccess'), {
                 closeButton: true,
                 duration: 1500,
             })
@@ -34,7 +36,7 @@ export function AddExpenseDialog({ open, onClose }: Props) {
             setFormData({ name: '', price: '', note: '' })
         },
         onError: () => {
-            toast.error('Lưu thất bại')
+            toast.error(t('createFailure'))
         },
     })
 
@@ -47,12 +49,12 @@ export function AddExpenseDialog({ open, onClose }: Props) {
         e.preventDefault()
 
         if (!formData.name) {
-            toast.warning('Tên không được bỏ trống')
+            toast.warning(t('requiredName'))
             return
         }
 
         if (!formData.price) {
-            toast.warning('Giá không được bỏ trống')
+            toast.warning(t('requiredPrice'))
             return
         }
 
@@ -71,17 +73,17 @@ export function AddExpenseDialog({ open, onClose }: Props) {
             <DialogContent className='sm:max-w-sm'>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl'>Thêm Chi Phí</DialogTitle>
+                        <DialogTitle className='text-black! font-bold! text-xl'>{t('expenseAddTitle')}</DialogTitle>
                     </DialogHeader>
 
                     <FieldGroup>
                         <Field>
-                            <Label htmlFor='name-1'>Tên</Label>
+                            <Label htmlFor='name-1'>{t('expenseName')}</Label>
                             <Input id='name-1' name='name' value={formData.name} onChange={handleChange} />
                         </Field>
 
                         <Field>
-                            <Label htmlFor='price-1'>Giá</Label>
+                            <Label htmlFor='price-1'>{t('expensePrice')}</Label>
                             <Input
                                 id='price-1'
                                 name='price'
@@ -92,18 +94,18 @@ export function AddExpenseDialog({ open, onClose }: Props) {
                         </Field>
 
                         <Field>
-                            <Label htmlFor='note-1'>Chú thích</Label>
+                            <Label htmlFor='note-1'>{t('expenseNote')}</Label>
                             <Input id='note-1' name='note' value={formData.note} onChange={handleChange} />
                         </Field>
                     </FieldGroup>
 
                     <DialogFooter className='mt-4'>
                         <DialogClose asChild>
-                            <Button variant='outline'>Huỷ</Button>
+                            <Button variant='outline'>{t('cancel')}</Button>
                         </DialogClose>
 
                         <Button type='submit' disabled={createMutation.isPending}>
-                            {createMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                            {createMutation.isPending ? t('saving') : t('save')}
                         </Button>
                     </DialogFooter>
                 </form>

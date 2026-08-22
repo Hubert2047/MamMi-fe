@@ -5,12 +5,14 @@ import DailyClosingStep2 from '@/components/daily-closing/DailyClosingStep2.tsx'
 import type { PaymentMethod } from '@/constants'
 import type { SalesByPayment } from '@/api/order.ts'
 import { useDailyClosingSummary, useExpenses } from '@/hooks/queries'
+import {useI18n} from '@/lib/i18n'
 type Props = {
     open: boolean
     onClose: () => void
 }
 
 function DailyClosing({ open, onClose }: Props) {
+    const {t} = useI18n()
     const [currentStep, setCurrentStep] = useState(1)
     const { data: summary, isLoading: isSummaryLoading } = useDailyClosingSummary()
     const { data: expenses = [], isLoading: isExpenseLoading } = useExpenses()
@@ -28,7 +30,7 @@ function DailyClosing({ open, onClose }: Props) {
                 <DialogContent className='min-w-[95vw] w-[95vw] h-[90vh] flex flex-col'>
                     <DialogHeader>
                         <DialogTitle className='text-black! font-bold! text-xl text-center'>
-                            Kết Toán Hàng Ngày
+                            {t('closingTitle')}
                         </DialogTitle>
                     </DialogHeader>
                     {currentStep === 1 && (

@@ -7,6 +7,7 @@ import {Label} from '@/components/ui/label'
 import React from 'react'
 import {toast} from 'sonner'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
+import {useI18n} from '@/lib/i18n'
 
 type Props = {
     editData: IUpdateExpense
@@ -16,19 +17,20 @@ type Props = {
 }
 
 export function EditExpenses({editData, setEditData, open, onClose}: Props) {
+    const {t} = useI18n()
     const queryClient = useQueryClient()
     const editMutation = useMutation({
         mutationFn: updateExpense,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['expenses']}).then()
-            toast.success('Sửa thành công', {
+            toast.success(t('updateSuccess'), {
                 closeButton: true,
                 duration: 1500,
             })
             onClose()
         },
         onError: () => {
-            toast.error('Sửa thất bại')
+            toast.error(t('updateFailure'))
         },
     })
 
@@ -46,11 +48,11 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
             if (!editData?.name) {
-            toast.warning('Tên không được bỏ trống')
+            toast.warning(t('requiredName'))
             return
         }
         if (!editData?.price) {
-            toast.warning('Giá không được bỏ trống')
+            toast.warning(t('requiredPrice'))
             return
         }
         editMutation.mutate({
@@ -71,17 +73,17 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
             <DialogContent className='sm:max-w-sm'>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl'>Thêm Chi Phí</DialogTitle>
+                        <DialogTitle className='text-black! font-bold! text-xl'>{t('expenseEditTitle')}</DialogTitle>
                     </DialogHeader>
 
                     <FieldGroup>
                         <Field>
-                            <Label htmlFor='name-1'>Tên</Label>
+                            <Label htmlFor='name-1'>{t('expenseName')}</Label>
                             <Input id='name-1' name='name' value={editData.name} onChange={handleChange}/>
                         </Field>
 
                         <Field>
-                            <Label htmlFor='price-1'>Giá</Label>
+                            <Label htmlFor='price-1'>{t('expensePrice')}</Label>
                             <Input
                                 id='price-1'
                                 name='price'
@@ -92,17 +94,17 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
                         </Field>
 
                         <Field>
-                            <Label htmlFor='note-1'>Chú thích</Label>
+                            <Label htmlFor='note-1'>{t('expenseNote')}</Label>
                             <Input id='note-1' name='note' value={editData.note} onChange={handleChange}/>
                         </Field>
                     </FieldGroup>
 
                     <DialogFooter className='mt-4'>
                         <DialogClose asChild>
-                            <Button variant='outline' size='lg' className='w-20'>Huỷ</Button>
+                            <Button variant='outline' size='lg' className='w-20'>{t('cancel')}</Button>
                         </DialogClose>
                         <Button type='submit' disabled={editMutation.isPending} size='lg' className='w-20'>
-                            {editMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                            {editMutation.isPending ? t('saving') : t('save')}
                         </Button>
                     </DialogFooter>
                 </form>

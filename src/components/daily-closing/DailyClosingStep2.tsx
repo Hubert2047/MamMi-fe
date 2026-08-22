@@ -49,7 +49,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
             queryClient.invalidateQueries({queryKey: ['closing-of-yesterday']}).then()
         },
         onError: () => {
-            toast.error('Kết toán không thành công')
+            toast.error(t('closeFailure'))
         },
     })
     const actualTotal = calculateActualCash(cash)
@@ -67,7 +67,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
             reason,
         }
         await createDailyClosingMutation.mutateAsync(newDailyClosing)
-        toast.success('Kết toán thành công')
+        toast.success(t('closeSuccess'))
         onClose()
     }
 
@@ -77,10 +77,10 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
                 <Button
                     className='flex absolute -top-10 -left-4 items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
                     onClick={() => setCurrentStep(1)}>
-                    Quay lại
+                    {t('back')}
                     <ArrowLeft className='w-4 h-4'/>
                 </Button>
-                <p className='text-center flex-1 font-bold text-xl'>Kiểm tiền</p>
+                <p className='text-center flex-1 font-bold text-xl'>{t('counting')}</p>
             </div>
             <div className='flex justify-between gap-6 mt-4'>
                 <div className='flex justify-center items-start mt-8 flex-1'>
@@ -123,11 +123,11 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
                 </div>
                 <div className='flex gap-2 flex-1 flex-col'>
                     <div className='variant flex justify-start items-center gap-4 pl-2'>
-                        <Label className='block w-30 font-semibold'>Thực tế</Label>
+                        <Label className='block w-30 font-semibold'>{t('actual')}</Label>
                         <Input id='amount' value={actualTotal.toLocaleString()} disabled className='w-20 text-center'/>
                     </div>
                     <div className='variant flex justify-start items-center gap-4 pl-2'>
-                        <Label className='block w-30 font-semibold'>Hệ thống</Label>
+                        <Label className='block w-30 font-semibold'>{t('system')}</Label>
                         <Input
                             id='amount'
                             value={systemAmount.toLocaleString()}
@@ -136,11 +136,11 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
                         />
                     </div>
                     <div className='variant flex justify-start items-center gap-4 pl-2'>
-                        <Label className={`block w-30 font-semibold ${diff !== 0 ? 'text-red-600' : ''}`}>Chênh lệch</Label>
+                        <Label className={`block w-30 font-semibold ${diff !== 0 ? 'text-red-600' : ''}`}>{t('difference')}</Label>
                         <Input id='amount' value={diff.toLocaleString()} disabled className={`w-20 text-center ${diff !== 0 ? 'border-red-500 text-red-600' : ''}`}/>
                     </div>
                     <div className='variant flex justify-start items-center gap-4 pl-2'>
-                        <Label className='block w-40 font-semibold'>Nguyên nhân</Label>
+                        <Label className='block w-40 font-semibold'>{t('reason')}</Label>
                         <Textarea
                             id='amount'
                             value={reason}
@@ -152,26 +152,26 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button className='ml-2 mt-4 min-h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90'>
-                                Kết toán
+                                {t('closing')}
                             </Button>
                         </AlertDialogTrigger>
 
                         <AlertDialogContent className='max-w-sm p-4'>
                             <AlertDialogHeader>
                                 <AlertDialogTitle className='text-black! text-lg!'>
-                                    Bạn có chắc muốn kết toán không?
+                                    {t('countDialogTitle')}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Mỗi ngày chỉ được phép kết toán một lần.
+                                    {t('countDialogDescription')}
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel className='min-h-11'>Huỷ</AlertDialogCancel>
+                                <AlertDialogCancel className='min-h-11'>{t('cancel')}</AlertDialogCancel>
                                 <AlertDialogAction
                                     onClick={handleConfirm}
                                     disabled={createDailyClosingMutation.isPending}
                                     className='min-h-11 bg-primary! text-primary-foreground! hover:bg-primary/90!'>
-                                    {createDailyClosingMutation.isPending ? 'Đang lưu...' : 'Kết toán'}
+                                    {createDailyClosingMutation.isPending ? t('saving') : t('closing')}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
