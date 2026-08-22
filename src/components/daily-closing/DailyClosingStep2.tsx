@@ -46,7 +46,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
     const createDailyClosingMutation = useMutation({
         mutationFn: createDailyClosing,
         onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['closing-of-yesterday']}).then()
+            queryClient.invalidateQueries({queryKey: ['daily-closing-summary']}).then()
         },
         onError: () => {
             toast.error(t('closeFailure'))
@@ -162,7 +162,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
                                     {t('countDialogTitle')}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    {t('countDialogDescription')}
+                                    {t('closingConfirmDescription')}
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
