@@ -14,6 +14,8 @@ import Loading from '@/components/Loading.tsx'
 import PendingOrder from '@/components/PendingOrder.tsx'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useI18n } from '@/lib/i18n'
+import CashDenominationInput from '@/components/CashDenominationInput'
+import { calculateCashChange, calculateCashFromDenominations, setCashCount, type CashCounts, type CashDenomination } from '@/lib/cashDenominations'
 
 type Props = {
     isPendingOrder: boolean
@@ -46,6 +48,8 @@ function Checkout({
     const [isPrint, setIsPrint] = useState(!isCheckoutPendingOrder)
     const queryClient = useQueryClient()
     const [cash, setCash] = useState<number>(totalPrice)
+    const [cashDenominations, setCashDenominations] = useState<CashCounts>({})
+    const [selectedDenomination, setSelectedDenomination] = useState<CashDenomination>(100)
     const createOrderMutation = useMutation({
         mutationFn: createOrder,
         onSuccess: () => {
@@ -78,12 +82,13 @@ function Checkout({
         handleOpenCheckout(false)
         handlePendingOrder(false)
         setCurrentOrder(DEFAULT_ORDER)
+        setCashDenominations({})
         setCurrentOrderNumber(nextOrder)
         setIsCheckoutPendingOrder(false)
         toast.success(status === 'paid' ? t('paidSuccess') : t('pendingSuccess'))
     }
 
-    const cashBack = cash - totalPrice < 0 ? 0 : cash - totalPrice
+    const cashBack = calculateCashChange(cash, totalPrice)
 
     function onDiscountChange(value: string) {
         if (!value) {
@@ -104,7 +109,7 @@ function Checkout({
     }, [currentOrder.type])
 
     return (
-        <div className='border flex gap-2 flex-1 border-[#ccc] rounded p-2'>
+        <div className='min-h-0 flex flex-1 gap-2 overflow-hidden'>
             {isPendingOrder ? (
                 <PendingOrder
                     isPrint={isPrint}
@@ -129,7 +134,7 @@ function Checkout({
                                     <ToggleGroupItem
                                         key={discount.name}
                                         value={discount.name}
-                                        className='flex items-center gap-1 px-3 py-1 w-max rounded-md hover:bg-gray-100 data-[state=on]:bg-blue-500 data-[state=on]:text-white transition-colors'>
+                                        className='flex min-w-24 max-w-full items-center justify-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 data-[state=on]:bg-blue-500 data-[state=on]:text-white transition-colors'>
                                         <div className='flex flex-col'>
                                             <span>
                                                 {' '}
@@ -142,7 +147,7 @@ function Checkout({
                             </ToggleGroup>
                         </div>
                     </div>
-                    <div className='payment-method flex-1 border border-[#ccc] rounded p-2'>
+                    <div className='payment-method min-h-0 flex-1 overflow-y-auto rounded border border-[#ccc] p-1.5'>
                         <p className='text-xl'>{t('paymentMethodTitle')}</p>
                         <div className='flex justify-start items-center gap-4 pt-6 pl-2'>
                             <ToggleGroup
@@ -172,7 +177,7 @@ function Checkout({
                             </ToggleGroup>
                         </div>
 
-                        <div className='variant flex justify-start items-center gap-4 pt-4 pl-2'>
+                        <div className='variant flex items-center gap-3 pt-2 pl-2'>
                             <Label className='block w-max font-semibold'>{t('cashGiven')}:</Label>
                             <Input
                                 id='amount'
@@ -181,15 +186,17 @@ function Checkout({
                                 onChange={(e) => {
                                     const rawValue = e.target.value.replace(/,/g, '')
                                     setCash(Number(rawValue))
+                                    setCashDenominations({})
                                 }}
                             />
                         </div>
-                        <div className='variant flex justify-start items-center gap-4 pt-4 pl-2'>
+                        {currentOrder.paymentMethod === 'cash' && <div className='flex items-start gap-1 pt-1'><div className='min-w-0 flex-1'><CashDenominationInput counts={cashDenominations} selectedDenomination={selectedDenomination} onSelect={setSelectedDenomination} onChange={(counts) => { setCashDenominations(counts); setCash(calculateCashFromDenominations(counts)) }} onClear={() => { setCashDenominations({}); setCash(0) }} /></div><NumPad currentValue={(cashDenominations[selectedDenomination] ?? 0).toString()} resetKey={selectedDenomination} onChange={(num) => { const counts = setCashCount(cashDenominations, selectedDenomination, Number(num)); setCashDenominations(counts); setCash(calculateCashFromDenominations(counts)) }} /></div>}
+                        <div className='variant flex items-center gap-3 pt-2 pl-2'>
                             <Label className='block w-max font-semibold'>{t('cashBack')}:</Label>
                             <Input id='amount' value={cashBack} className='w-30' disabled />
                         </div>
                         {/* print option */}
-                        <div className='flex justify-start items-center gap-4 pt-5 pl-2'>
+                        <div className='flex items-center gap-3 pt-3 pl-2'>
                             <Checkbox
                                 id='print-confirm'
                                 checked={isPrint}
@@ -197,13 +204,7 @@ function Checkout({
                             />
                             <Label htmlFor='print-confirm'>{t('printOnConfirm')}</Label>
                         </div>
-                        <div className='flex justify-start pt-8 gap-3'>
-                            <NumPad
-                                currentValue={cash.toString()}
-                                onChange={(num) => {
-                                    setCash(Number(num))
-                                }}
-                            />
+                        <div className='flex justify-start gap-3 pt-3'>
                             <div className='flex-1'></div>
                             <Button
                                 variant='default'

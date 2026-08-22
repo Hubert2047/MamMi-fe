@@ -1,12 +1,14 @@
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Props = {
     currentValue: string
     onChange: (newValue: string) => void
+    resetKey?: string | number
 }
-export default function NumPad({ currentValue, onChange }: Props) {
+export default function NumPad({ currentValue, onChange, resetKey }: Props) {
     const [isFirst, setIsFirst] = useState(true)
+    useEffect(() => setIsFirst(true), [resetKey])
     const numbers = [
         ['1', '2', '3'],
         ['4', '5', '6'],
@@ -30,12 +32,12 @@ export default function NumPad({ currentValue, onChange }: Props) {
     }
 
     return (
-        <div className='grid grid-cols-3 gap-2 border-[#ccc] rounded w-64 border p-2'>
+        <div className='grid w-36 shrink-0 grid-cols-3 gap-1 rounded border border-[#ccc] p-1'>
             {numbers.flat().map((num, idx) => (
                 <Button
                     key={idx}
                     size='lg'
-                    className={`text-lg ${
+                    className={`h-8 text-xs ${
                         num === 'clear' ? 'bg-red-500 text-white' : num === 'enter' ? 'bg-green-500 text-white' : ''
                     }`}
                     onClick={() => onChangeNumber(num)}>

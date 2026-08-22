@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { type Item } from '@/api/item'
 import { type BaseOrder, type OrderItem } from '@/api/order.ts'
@@ -37,6 +37,7 @@ const POSPage: React.FC = () => {
     const [isPendingOrder, setIsPendingOrder] = useState<boolean>(false)
     const [isCheckoutPendingOrder, setIsCheckoutPendingOrder] = useState<boolean>(false)
     const [openBtns, setOpenBtns] = useState(true)
+    const openBtnsBeforeCheckout = useRef<boolean | null>(null)
     const [openDailyClosing, setOpenDailyClosing] = useState(false)
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
@@ -71,12 +72,23 @@ const POSPage: React.FC = () => {
 
     const totalPrice = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
 
+    function setCheckoutOpen(checkout: boolean) {
+        if (checkout && !isCheckout) {
+            openBtnsBeforeCheckout.current = openBtns
+            setOpenBtns(false)
+        } else if (!checkout && isCheckout && openBtnsBeforeCheckout.current !== null) {
+            setOpenBtns(openBtnsBeforeCheckout.current)
+            openBtnsBeforeCheckout.current = null
+        }
+        setIsCheckout(checkout)
+    }
+
     function handleOpenCheckout(checkout: boolean) {
         if (isCheckoutPendingOrder) {
             setIsCheckoutPendingOrder(false)
             setCurrentOrder(DEFAULT_ORDER)
         }
-        setIsCheckout(checkout)
+        setCheckoutOpen(checkout)
         setSelectedItem(null)
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
     }
@@ -95,7 +107,7 @@ const POSPage: React.FC = () => {
         if (item) setSelectedItem(item)
         setOpenOrderTable(false)
         setIsDetail(true)
-        setIsCheckout(false)
+        setCheckoutOpen(false)
     }
 
     function closeDisplayOrderDetail() {
@@ -110,7 +122,7 @@ const POSPage: React.FC = () => {
         setCurrentOrder(order)
         setSelectedItem(null)
         setOpenOrderTable(false)
-        setIsCheckout(true)
+        setCheckoutOpen(true)
         setIsCheckoutPendingOrder(true)
     }
     async function toggleFullScreen() {
