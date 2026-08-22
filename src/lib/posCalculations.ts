@@ -1,4 +1,5 @@
 import type { BaseOrder, OrderDiscount, OrderItem } from '@/api/order'
+import type { Item } from '@/api/item'
 
 type PosOrderItem = Pick<OrderItem, 'basePrice' | 'quantity' | 'addons'>
 
@@ -24,4 +25,25 @@ export function applyOrderDiscount(subtotal: number, discount: OrderDiscount | n
 
 export function calculateOrderTotal(order: Pick<BaseOrder, 'items' | 'discount'>): number {
   return applyOrderDiscount(calculateOrderSubtotal(order.items), order.discount)
+}
+
+export function findFreshSelectedItem(selectedItemId: string | null, items: Item[]): Item | null {
+  if (!selectedItemId) return null
+  return items.find((item) => item._id === selectedItemId) ?? null
+}
+
+export function getUnavailableAddonIds(item: Pick<Item, 'addons'>, selectedAddonIds: string[]): string[] {
+  return item.addons.filter((addon) => addon.temporarilyUnavailable === true && selectedAddonIds.includes(addon._id)).map((addon) => addon._id)
+}
+
+export function syncOrderItemsWithCatalog(orderItems: OrderItem[], catalogItems: Item[]): OrderItem[] {
+  return orderItems.map((orderItem) => {
+    const catalogItem = catalogItems.find((item) => item._id === orderItem.id)
+    if (!catalogItem) return orderItem
+    const addons = orderItem.addons.map((orderAddon) => {
+      const catalogAddon = catalogItem.addons.find((addon) => addon._id === orderAddon.id)
+      return catalogAddon ? { ...orderAddon, priceExtra: catalogAddon.priceExtra } : orderAddon
+    })
+    return { ...orderItem, addons }
+  })
 }

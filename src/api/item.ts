@@ -40,7 +40,9 @@ interface Addon {
     _id: string
     names?: LocalizedText
     name: string
-    priceExtra: number
+  priceExtra: number
+  permanentlyActive?: boolean
+  temporarilyUnavailable?: boolean
 }
 
 export const getItems = async (available?: boolean, lang?: string): Promise<Item[]> => {

@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useI18n } from '@/lib/i18n'
 import CashDenominationInput from '@/components/CashDenominationInput'
 import { calculateCashChange, calculateCashFromDenominations, setCashCount, type CashCounts, type CashDenomination } from '@/lib/cashDenominations'
+import { isAxiosError } from 'axios'
 
 type Props = {
     isPendingOrder: boolean
@@ -59,8 +60,9 @@ function Checkout({
                 })
                 .then()
         },
-        onError: () => {
-            toast.error(t('createOrderFailure'))
+        onError: (error) => {
+            const code = isAxiosError(error) ? error.response?.data?.code : undefined
+            toast.error(code === 'ITEM_NOT_AVAILABLE' ? t('itemNotAvailable') : code === 'ADDON_NOT_AVAILABLE' ? t('addonNotAvailable') : t('createOrderFailure'))
         },
     })
     const handleCreateOrder = async (status: 'paid' | 'pending') => {
@@ -134,7 +136,7 @@ function Checkout({
                                     <ToggleGroupItem
                                         key={discount.name}
                                         value={discount.name}
-                                        className='flex min-w-24 max-w-full items-center justify-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 data-[state=on]:bg-blue-500 data-[state=on]:text-white transition-colors'>
+                                        className='flex min-w-24 max-w-full items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-primary/10 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground'>
                                         <div className='flex flex-col'>
                                             <span>
                                                 {' '}

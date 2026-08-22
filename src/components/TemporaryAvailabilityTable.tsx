@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -9,63 +9,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2 } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Item } from '@/api/item'
+import type { Addon } from '@/api/addon'
 import { updateTemporaryStoreItemAvailability } from '@/api/store-item'
+import { updateTemporaryStoreAddonAvailability } from '@/api/store-addon'
 import { useI18n } from '@/lib/i18n'
 
-type Props = {
-  open: boolean
-  items: Item[]
-  onClose: () => void
+type Props = { open: boolean; items: Item[]; addons: Addon[]; onClose: () => void }
+type AvailabilityRow = { _id: string; name: string; categoryName?: string; permanentlyActive?: boolean; temporarilyUnavailable?: boolean }
+
+export default function TemporaryAvailabilityTable({ open, items, addons, onClose }: Props) {
+  const { t } = useI18n(); const queryClient = useQueryClient(); const [search, setSearch] = useState(''); const [category, setCategory] = useState('all'); const [tab, setTab] = useState('products'); const [pendingId, setPendingId] = useState<string | null>(null)
+  const itemMutation = useMutation({ mutationFn: updateTemporaryStoreItemAvailability, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items'] }), onSettled: () => setPendingId(null), onError: () => toast.error(t('temporaryAvailabilityError')) })
+  const addonMutation = useMutation({ mutationFn: updateTemporaryStoreAddonAvailability, onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['items'] }); void queryClient.invalidateQueries({ queryKey: ['store-addons'] }) }, onSettled: () => setPendingId(null), onError: () => toast.error(t('temporaryAvailabilityError')) })
+  const categories = useMemo(() => Array.from(new Set(items.map((item) => item.categoryName).filter(Boolean))).sort(), [items]); const normalizedSearch = search.trim().toLocaleLowerCase()
+  const filteredItems = useMemo(() => items.filter((item) => category === 'all' || item.categoryName === category).filter((item) => !normalizedSearch || item.name.toLocaleLowerCase().includes(normalizedSearch)).sort((a, b) => a.name.localeCompare(b.name)), [category, items, normalizedSearch])
+  const filteredAddons = useMemo(() => addons.filter((addon) => !normalizedSearch || addon.name.toLocaleLowerCase().includes(normalizedSearch)).sort((a, b) => a.name.localeCompare(b.name)), [addons, normalizedSearch]); const saving = itemMutation.isPending || addonMutation.isPending
+  const availabilityCell = (id: string, permanentlyActive: boolean, unavailable: boolean, kind: 'item' | 'addon', name: string) => <TableCell className="text-center"><div className="flex justify-center">{pendingId === id ? <Loader2 className="size-4 animate-spin text-primary" aria-label={t('loading')} /> : <Checkbox checked={unavailable} disabled={!permanentlyActive || saving} aria-label={`${t('temporaryUnavailable')} ${name}`} onCheckedChange={(checked) => { setPendingId(id); if (kind === 'item') itemMutation.mutate({ itemId: id, temporarilyUnavailable: checked === true }); else addonMutation.mutate({ addonId: id, temporarilyUnavailable: checked === true }) }} />}</div></TableCell>
+  return <Dialog open={open} onOpenChange={(value) => !value && onClose()}><DialogContent className="flex h-[90vh] min-w-0 w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col overflow-hidden px-3 sm:px-4"><DialogHeader><DialogTitle>{t('temporaryAvailabilityTitle')}</DialogTitle></DialogHeader><Tabs value={tab} onValueChange={(value) => { setTab(value); setSearch(''); setCategory('all') }} className="flex min-h-0 flex-1 flex-col"><TabsList className="w-fit"><TabsTrigger value="products">{t('products')}</TabsTrigger><TabsTrigger value="addons">{t('addons')}</TabsTrigger></TabsList><div className="flex flex-wrap gap-2 py-2"><Input className="max-w-sm" placeholder={t('temporaryAvailabilitySearch')} value={search} onChange={(event) => setSearch(event.target.value)} />{tab === 'products' && <Select value={category} onValueChange={setCategory}><SelectTrigger className="w-52"><SelectValue placeholder={t('temporaryAvailabilityCategory')} /></SelectTrigger><SelectContent><SelectItem value="all">{t('temporaryAvailabilityAllCategories')}</SelectItem>{categories.map((itemCategory) => <SelectItem key={itemCategory} value={itemCategory}>{itemCategory}</SelectItem>)}</SelectContent></Select>}</div><TabsContent value="products" className="min-h-0 flex-1 overflow-hidden"><AvailabilityTable items={filteredItems} empty={t('temporaryAvailabilityEmpty')} nameHeader={t('name')} categoryHeader={t('categories')} statusHeader={t('temporaryUnavailable')} showCategory renderStatus={(item) => availabilityCell(item._id, item.permanentlyActive !== false, item.temporarilyUnavailable === true, 'item', item.name)} /></TabsContent><TabsContent value="addons" className="min-h-0 flex-1 overflow-hidden"><AvailabilityTable items={filteredAddons} empty={t('temporaryAvailabilityEmpty')} nameHeader={t('name')} categoryHeader={t('addons')} statusHeader={t('temporaryUnavailable')} renderStatus={(addon) => availabilityCell(addon._id, addon.permanentlyActive !== false, addon.temporarilyUnavailable === true, 'addon', addon.name)} /></TabsContent></Tabs></DialogContent></Dialog>
 }
 
-export default function TemporaryAvailabilityTable({ open, items, onClose }: Props) {
-  const { t } = useI18n()
-  const queryClient = useQueryClient()
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [pendingItemId, setPendingItemId] = useState<string | null>(null)
-  const mutation = useMutation({
-    mutationFn: updateTemporaryStoreItemAvailability,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items'] }),
-    onSettled: () => setPendingItemId(null),
-    onError: () => toast.error(t('temporaryAvailabilityError')),
-  })
-  const categories = useMemo(() => Array.from(new Set(items.map((item) => item.categoryName).filter(Boolean))).sort(), [items])
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = search.trim().toLocaleLowerCase()
-    return items
-      .filter((item) => item.permanentlyActive)
-      .filter((item) => category === 'all' || item.categoryName === category)
-      .filter((item) => !normalizedSearch || item.name.toLocaleLowerCase().includes(normalizedSearch))
-      .sort((left, right) => left.name.localeCompare(right.name))
-  }, [category, items, search])
-
-  return <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-    <DialogContent className="flex h-[90vh] min-w-0 w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col overflow-hidden px-3 sm:px-4">
-      <DialogHeader><DialogTitle>{t('temporaryAvailabilityTitle')}</DialogTitle></DialogHeader>
-      <div className="flex flex-wrap gap-2">
-        <Input className="max-w-sm" placeholder={t('temporaryAvailabilitySearch')} value={search} onChange={(event) => setSearch(event.target.value)} />
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-52"><SelectValue placeholder={t('temporaryAvailabilityCategory')} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('temporaryAvailabilityAllCategories')}</SelectItem>
-            {categories.map((itemCategory) => <SelectItem key={itemCategory} value={itemCategory}>{itemCategory}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-md border [&>[data-slot=table-container]]:overflow-x-hidden">
-        <Table className="w-full min-w-0 table-fixed">
-          <TableHeader><TableRow><TableHead className="w-[50%] whitespace-normal break-words">{t('name')}</TableHead><TableHead className="w-[35%] whitespace-normal break-words">{t('categories')}</TableHead><TableHead className="w-[15%] whitespace-normal break-words text-center leading-tight">{t('temporaryUnavailable')}</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {filteredItems.length === 0 ? <TableRow><TableCell colSpan={3} className="py-10 text-center text-muted-foreground">{t('temporaryAvailabilityEmpty')}</TableCell></TableRow> : filteredItems.map((item) => <TableRow key={item._id}>
-              <TableCell className="whitespace-normal break-words font-medium">{item.name}</TableCell>
-              <TableCell className="max-w-0 truncate" title={item.categoryName}>{item.categoryName || '—'}</TableCell>
-              <TableCell className="text-center"><div className="flex justify-center">{pendingItemId === item._id ? <Loader2 className="size-4 animate-spin text-primary" aria-label={t('loading')} /> : <Checkbox checked={item.temporarilyUnavailable} disabled={mutation.isPending} aria-label={`${t('temporaryUnavailable')} ${item.name}`} onCheckedChange={(checked) => { setPendingItemId(item._id); mutation.mutate({ itemId: item._id, temporarilyUnavailable: checked === true }) }} />}</div></TableCell>
-            </TableRow>)}
-          </TableBody>
-        </Table>
-      </div>
-    </DialogContent>
-  </Dialog>
+function AvailabilityTable({ items, empty, nameHeader, categoryHeader, statusHeader, showCategory = false, renderStatus }: { items: AvailabilityRow[]; empty: string; nameHeader: string; categoryHeader: string; statusHeader: string; showCategory?: boolean; renderStatus: (item: AvailabilityRow) => ReactNode }) {
+  return <div className="h-full min-h-0 min-w-0 overflow-x-hidden overflow-y-auto rounded-md border [&>[data-slot=table-container]]:overflow-x-hidden"><Table className="w-full min-w-0 table-fixed"><TableHeader><TableRow><TableHead className={showCategory ? 'w-[50%] whitespace-normal break-words' : 'w-[70%] whitespace-normal break-words'}>{nameHeader}</TableHead>{showCategory && <TableHead className="w-[35%] whitespace-normal break-words">{categoryHeader}</TableHead>}<TableHead className={showCategory ? 'w-[15%] whitespace-normal break-words text-center leading-tight' : 'w-[30%] whitespace-normal break-words text-center leading-tight'}>{statusHeader}</TableHead></TableRow></TableHeader><TableBody>{items.length === 0 ? <TableRow><TableCell colSpan={showCategory ? 3 : 2} className="py-10 text-center text-muted-foreground">{empty}</TableCell></TableRow> : items.map((item) => <TableRow key={item._id} className={item.permanentlyActive === false ? 'opacity-60' : undefined}><TableCell className="whitespace-normal break-words font-medium">{item.name}</TableCell>{showCategory && <TableCell className="max-w-0 truncate" title={item.categoryName}>{item.categoryName || '—'}</TableCell>}{renderStatus(item)}</TableRow>)}</TableBody></Table></div>
 }

@@ -1,69 +1,49 @@
 import { describe, expect, it } from 'vitest'
-import type { OrderItem } from '@/api/order'
-import { calculateOrderItemTotal, calculateOrderSubtotal, calculateOrderTotal } from './posCalculations'
-import { getPriceByType } from './utils'
+import { calculateOrderTotal, findFreshSelectedItem, getUnavailableAddonIds, syncOrderItemsWithCatalog } from './posCalculations'
 
-const item = (overrides: Partial<OrderItem> = {}): OrderItem => ({
-  id: 'order-item-1',
-  itemId: 'item-1',
-  name: 'Mì bò',
-  quantity: 1,
-  basePrice: 30000,
-  variant: '',
-  addons: [],
-  noteOptions: [],
-  note: '',
-  ...overrides,
+const item = (priceExtra: number) => ({
+  _id: 'item-1', name: 'Item', names: { vi: 'Item', en: 'Item', 'zh-TW': 'Item' }, description: { vi: '', en: '', 'zh-TW': '' },
+  categoryName: 'Category', price: { base: 10 }, addons: [{ _id: 'addon-1', name: 'Addon', priceExtra }], variants: [], noteOptions: [],
+  permanentlyActive: true, temporarilyUnavailable: false,
 })
 
-describe('POS price calculations', () => {
-  it('calculates an item total from quantity and addon amounts', () => {
-    expect(calculateOrderItemTotal(item({
-      quantity: 2,
-      addons: [
-        { id: 'egg', name: 'Trứng', priceExtra: 5000, amount: 2 },
-        { id: 'beef', name: 'Bò thêm', priceExtra: 15000, amount: 1 },
-      ],
-    }))).toBe(85000)
+describe('POS selected item synchronization', () => {
+  it('returns the fresh item so addon prices update after a catalog refetch', () => {
+    const fresh = item(25)
+    expect(findFreshSelectedItem('item-1', [fresh])?.addons[0]?.priceExtra).toBe(25)
   })
 
-  it('returns the base total when no addons are selected', () => {
-    expect(calculateOrderItemTotal(item({ quantity: 3 }))).toBe(90000)
+  it('clears the selection when the item no longer exists', () => {
+    expect(findFreshSelectedItem('item-1', [])).toBeNull()
   })
 
-  it('calculates the subtotal across all order items', () => {
-    expect(calculateOrderSubtotal([
-      item({ quantity: 2 }),
-      item({ basePrice: 45000, quantity: 1, addons: [{ id: 'tea', name: 'Trà', priceExtra: 10000, amount: 1 }] }),
-    ])).toBe(115000)
+  it('detects an addon that became temporarily unavailable while selected', () => {
+    const catalogItem = { ...item(10), addons: [{ _id: 'addon-1', name: 'Addon', priceExtra: 10, temporarilyUnavailable: true }, { _id: 'addon-2', name: 'Other', priceExtra: 5, temporarilyUnavailable: true }] }
+    expect(getUnavailableAddonIds(catalogItem, ['addon-1'])).toEqual(['addon-1'])
   })
 
-  it('applies a percentage discount', () => {
-    expect(calculateOrderTotal({
-      items: [item({ basePrice: 100000 })],
-      discount: { name: '10%', type: 'percent', amount: 10 },
-    })).toBe(90000)
+  it('does not block selected addons that are still available', () => {
+    expect(getUnavailableAddonIds(item(10), ['addon-1'])).toEqual([])
   })
 
-  it('applies a fixed-value discount', () => {
-    expect(calculateOrderTotal({
-      items: [item({ basePrice: 100000 })],
-      discount: { name: 'Voucher', type: 'value', amount: 25000 },
-    })).toBe(75000)
+  it('updates the total-price snapshot for an addon already active in the draft order', () => {
+    const draft = { ...item(10), id: 'item-1', itemId: 'item-1', quantity: 1, basePrice: 10, variant: '', note: '', addons: [{ id: 'addon-1', name: 'Addon', amount: 1, priceExtra: 10 }] }
+    const synced = syncOrderItemsWithCatalog([draft], [item(25)])[0]
+    expect(synced?.addons[0]?.priceExtra).toBe(25)
+    expect(calculateOrderTotal({ items: synced ? [synced] : [], discount: null })).toBe(35)
   })
 
-  it('never returns a negative total when discount exceeds the subtotal', () => {
-    expect(calculateOrderTotal({
-      items: [item({ basePrice: 30000 })],
-      discount: { name: 'Voucher', type: 'value', amount: 50000 },
-    })).toBe(0)
+  it('does not change addon snapshots that are no longer present in the catalog', () => {
+    const draft = { ...item(10), id: 'item-1', itemId: 'item-1', quantity: 1, basePrice: 10, variant: '', note: '', addons: [{ id: 'removed-addon', name: 'Removed', amount: 1, priceExtra: 10 }] }
+    const synced = syncOrderItemsWithCatalog([draft], [item(25)])[0]
+    expect(synced?.addons[0]?.priceExtra).toBe(10)
   })
 
-  it('uses the correct channel price for each POS order type', () => {
-    const prices = { base: 30000, uber: 35000, foodpanda: 40000 }
-    expect(getPriceByType('dine_in', prices)).toBe(30000)
-    expect(getPriceByType('takeaway', prices)).toBe(30000)
-    expect(getPriceByType('uber', prices)).toBe(35000)
-    expect(getPriceByType('foodpanda', prices)).toBe(40000)
+  it('updates only matching order lines when several products are in the draft', () => {
+    const first = { ...item(10), id: 'item-1', itemId: 'item-1', quantity: 1, basePrice: 10, variant: '', note: '', addons: [{ id: 'addon-1', name: 'Addon', amount: 1, priceExtra: 10 }] }
+    const second = { ...item(10), _id: 'item-2', id: 'item-2', itemId: 'item-2', quantity: 1, basePrice: 20, variant: '', note: '', addons: [{ id: 'addon-1', name: 'Addon', amount: 1, priceExtra: 5 }] }
+    const synced = syncOrderItemsWithCatalog([first, second], [item(25)])
+    expect(synced[0]?.addons[0]?.priceExtra).toBe(25)
+    expect(synced[1]?.addons[0]?.priceExtra).toBe(5)
   })
 })

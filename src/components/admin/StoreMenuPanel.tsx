@@ -16,6 +16,7 @@ import type { Item, PriceType } from '@/api/item'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
 import { useStorePricingEmbedded } from '@/app/admin/store-pricing/store-pricing-context'
+import { Loader2 } from 'lucide-react'
 
 const emptyPrice: PriceType = { base: 0, uber: 0, foodpanda: 0 }
 const priceKeys = ['base', 'uber', 'foodpanda'] as const
@@ -47,7 +48,7 @@ export default function StoreMenuPanel() {
   })
   const update = useMutation({
     mutationFn: updateStoreItem,
-    onSuccess: () => { refresh(); setEditing(null); toast.success(t('updateSuccess')) },
+    onSuccess: async () => { await refresh(); setEditing(null); toast.success(t('updateSuccess')) },
     onError: () => toast.error(t('saveError')),
   })
   const matchesCategory = (item: Item) => categoryFilter === 'all' || (typeof item.categoryId === 'string' ? item.categoryId : item.categoryId?._id) === categoryFilter
@@ -59,7 +60,7 @@ export default function StoreMenuPanel() {
     setEditing(item)
     setDraftPrice(item.price)
     setDraftPermanentlyActive(item.permanentlyActive)
-    setDraftTemporarilyUnavailable(item.temporarilyUnavailable)
+    setDraftTemporarilyUnavailable(item.permanentlyActive && item.temporarilyUnavailable)
   }
 
   useEffect(() => {
@@ -93,18 +94,19 @@ export default function StoreMenuPanel() {
       <CardContent ref={listRef} className="min-h-0 flex-1 overflow-hidden space-y-3">
         {paginated.map((item) => {
           const isEditing = editing?._id === item._id
+          const saving = isEditing && update.isPending
           return <div data-store-row="true" className="grid min-h-[86px] gap-3 rounded-lg border p-3 md:grid-cols-[1fr_repeat(3,120px)_minmax(230px,auto)] md:items-end" key={item._id}>
             <div><div className="font-medium">{item.name}</div><div className="text-xs text-muted-foreground">{item.categoryName}</div></div>
-            {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input className="h-9" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
+            {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input disabled={saving} className="h-9" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
             <div className="flex min-h-9 flex-wrap items-center gap-2">
               {isEditing ? <>
-                {canChangePermanentAvailability && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox checked={draftPermanentlyActive} onCheckedChange={(value) => setDraftPermanentlyActive(value === true)} />{t('permanentSelling')}</label>}
-                <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>
-                <Button className="shrink-0" size="sm" disabled={update.isPending} onClick={() => update.mutate({ itemId: item._id, data: { price: draftPrice, ...(canChangePermanentAvailability ? { permanentlyActive: draftPermanentlyActive } : {}), temporarilyUnavailable: draftTemporarilyUnavailable } })}>{t('save')}</Button>
-                <Button className="shrink-0" size="sm" variant="outline" onClick={() => setEditing(null)}>{t('cancel')}</Button>
+                {canChangePermanentAvailability && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftPermanentlyActive} onCheckedChange={(value) => { setDraftPermanentlyActive(value === true); if (value !== true) setDraftTemporarilyUnavailable(false) }} />{t('permanentSelling')}</label>}
+                {draftPermanentlyActive && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>}
+                <Button className="shrink-0" size="sm" disabled={saving} onClick={() => update.mutate({ itemId: item._id, data: { price: draftPrice, ...(canChangePermanentAvailability ? { permanentlyActive: draftPermanentlyActive } : {}), temporarilyUnavailable: draftPermanentlyActive && draftTemporarilyUnavailable } })}>{saving ? <Loader2 className="size-4 animate-spin" aria-label={t('loading')} /> : t('save')}</Button>
+                <Button className="shrink-0" size="sm" variant="outline" disabled={saving} onClick={() => setEditing(null)}>{t('cancel')}</Button>
               </> : <>
                 <span className="shrink-0 text-sm">{item.permanentlyActive ? t('permanentSelling') : t('permanentHidden')}</span>
-                <span className="shrink-0 text-sm">{item.temporarilyUnavailable ? t('temporaryUnavailable') : t('temporaryAvailable')}</span>
+                {item.permanentlyActive && <span className="shrink-0 text-sm">{item.temporarilyUnavailable ? t('temporaryUnavailable') : t('temporaryAvailable')}</span>}
                 <Button className="shrink-0" size="sm" variant="outline" onClick={() => startEdit(item)}>{t('edit')}</Button>
               </>}
             </div>

@@ -5,13 +5,17 @@ export interface Addon {
   names: { vi: string; en: string; 'zh-TW': string }
   name: string
   priceExtra: number
-  active: boolean
+  permanentlyActive: boolean
+  temporarilyUnavailable: boolean
+  temporarilyUnavailableUntil?: string | null
 }
 
 export type AddonInput = {
   names: Addon['names']
-  priceExtra: number
-  active: boolean
+  priceExtra?: number
+  active?: boolean
+  permanentlyActive?: boolean
+  temporarilyUnavailable?: boolean
 }
 
 export const getAddons = async (lang?: string): Promise<Addon[]> => {

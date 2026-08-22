@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getDiscounts, type Discount } from '@/api/discount'
 import { getExpenses, type Expense } from '@/api/expense'
 import { getItems, type Item } from '@/api/item'
+import { getStoreAddons } from '@/api/store-addon'
+import type { Addon } from '@/api/addon'
 import { getNextOrderNumber, getOrders, getSalesByPayment, type IOrder, type SalesByPayment } from '@/api/order'
 import { getRevenues, type Revenue } from '@/api/other-revenue'
 import { getDailyClosingSummary } from '@/api/daily-closing'
@@ -83,4 +85,9 @@ export function useDailyClosingSummary() {
     queryFn: getDailyClosingSummary,
     staleTime: 5 * 60 * 1000,
   })
+}
+
+export function useStoreAddons() {
+  const { locale } = useI18n()
+  return useQuery<Addon[], Error>({ queryKey: ['store-addons', locale], queryFn: () => getStoreAddons(locale), staleTime: 5 * 60 * 1000 })
 }

@@ -11,7 +11,7 @@ import PosItemSection from '@/components/PosItemSection.tsx'
 import PosHeader from '@/components/PosHeader.tsx'
 import Loading from '@/components/Loading.tsx'
 import Checkout from '@/components/Checkout.tsx'
-import { useDiscounts, useItems, useNextOrderNumber } from '@/hooks/queries'
+import { useDiscounts, useItems, useNextOrderNumber, useStoreAddons } from '@/hooks/queries'
 import { OrderTable } from '@/components/orders/OrderTable.tsx'
 import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
@@ -20,8 +20,9 @@ import ShiftAttendance from '@/components/ShiftAttendance.tsx'
 import TemporaryAvailabilityTable from '@/components/TemporaryAvailabilityTable'
 import { signOut } from 'next-auth/react'
 import { logoutAPI } from '@/api/auth'
-import { calculateOrderTotal } from '@/lib/posCalculations'
+import { calculateOrderTotal, findFreshSelectedItem, syncOrderItemsWithCatalog } from '@/lib/posCalculations'
 import { useI18n } from '@/lib/i18n'
+import { toast } from 'sonner'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -44,10 +45,13 @@ const POSPage: React.FC = () => {
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
-    const { data: discounts = [] } = useDiscounts()
+    const { data: storeAddons = [] } = useStoreAddons()
+    const { data: discounts = [], isLoading: isDiscountsLoading } = useDiscounts()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
-    const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive && !item.temporarilyUnavailable), [items])
+    // Keep temporarily unavailable products visible but not selectable.
+    const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive !== false), [items])
+    const activeDiscounts = useMemo(() => discounts.filter((discount) => discount.active), [discounts])
     const itemsByCategory = useMemo(() => {
         const grouped: Record<string, Item[]> = {}
         sellableItems.forEach((item) => {
@@ -64,6 +68,38 @@ const POSPage: React.FC = () => {
         document.addEventListener('fullscreenchange', onFSChange)
         return () => document.removeEventListener('fullscreenchange', onFSChange)
     }, [])
+
+    useEffect(() => {
+        if (!selectedItem) return
+        const freshItem = findFreshSelectedItem(selectedItem._id, items)
+        if (freshItem && freshItem !== selectedItem) setSelectedItem(freshItem)
+    }, [items, selectedItem])
+
+    useEffect(() => {
+        setCurrentOrder((current) => {
+            const syncedItems = syncOrderItemsWithCatalog(current.items, items)
+            const changed = syncedItems.some((item, index) => item !== current.items[index])
+            return changed ? { ...current, items: syncedItems } : current
+        })
+        setCurrentOrderItem((current) => {
+            const freshItem = findFreshSelectedItem(current.id, items)
+            if (!freshItem) return current
+            const synced = syncOrderItemsWithCatalog([current], [freshItem])[0]
+            return synced ?? current
+        })
+    }, [items])
+
+    useEffect(() => {
+        if (isDiscountsLoading) return
+        setCurrentOrder((current) => {
+            if (!current.discount) return current
+            const stillActive = activeDiscounts.some((discount) => discount.name === current.discount?.name)
+            if (stillActive) return current
+            toast.error(t('discountUnavailable'))
+            return { ...current, discount: null }
+        })
+    }, [activeDiscounts, isDiscountsLoading, t])
+
     const filteredItems = itemsByCategory[selectedCategory] ?? []
 
     const selectUpdateOrderItem = (orderItem: OrderItem) => {
@@ -182,7 +218,7 @@ const POSPage: React.FC = () => {
                             currentOrder={currentOrder}
                             isCheckoutPendingOrder={isCheckoutPendingOrder}
                             setIsCheckoutPendingOrder={setIsCheckoutPendingOrder}
-                            discounts={discounts}
+                            discounts={activeDiscounts}
                             handlePendingOrder={handlePendingOrder}
                             handleOpenCheckout={handleOpenCheckout}
                             setCurrentOrderNumber={setCurrentOrderNumber}
@@ -253,7 +289,7 @@ const POSPage: React.FC = () => {
                     }}
                 />
             )}
-            {openTemporaryAvailability && <TemporaryAvailabilityTable items={items} open={openTemporaryAvailability} onClose={() => setOpenTemporaryAvailability(false)} />}
+            {openTemporaryAvailability && <TemporaryAvailabilityTable items={items} addons={storeAddons} open={openTemporaryAvailability} onClose={() => setOpenTemporaryAvailability(false)} />}
             {openDailyClosing && <DailyClosing open={openDailyClosing} onClose={() => setOpenDailyClosing(false)} />}
             {openOtherRevenue && <OtherRevenue open={openOtherRevenue} onClose={() => setOpenOtherRevenue(false)} />}
             {openShiftAttendance && (

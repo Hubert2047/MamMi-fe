@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Loading from './Loading'
 import { useI18n } from '@/lib/i18n'
-import { calculateOrderItemTotal } from '@/lib/posCalculations'
+import { calculateOrderItemTotal, getUnavailableAddonIds } from '@/lib/posCalculations'
 
 type Props = {
     isDetail: boolean
@@ -52,6 +52,8 @@ function PosItemSection({
     const { locale, t } = useI18n()
     const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
     const selectedItemPrice = calculateOrderItemTotal(currentOrderItem)
+    const unavailableAddonIds = selectedItem ? getUnavailableAddonIds(selectedItem, currentOrderItem.addons.map((addon) => addon.id)) : []
+    const selectionUnavailable = selectedItem?.temporarilyUnavailable === true || unavailableAddonIds.length > 0
     const displayItemName = (item: Item) => {
         const name = item.name.trim()
         const category = item.categoryName.trim()
@@ -87,6 +89,10 @@ function PosItemSection({
         setSelectedItem(item)
     }
     const addItem = () => {
+        if (selectionUnavailable) {
+            toast.error(t('selectionUnavailable'))
+            return
+        }
         setCurrentOrder((prev) => ({ ...prev, items: [...prev.items, currentOrderItem] }))
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setSelectedItem(null)
@@ -97,6 +103,10 @@ function PosItemSection({
         setIsEditItem(false)
     }
     const updateItem = () => {
+        if (selectionUnavailable) {
+            toast.error(t('selectionUnavailable'))
+            return
+        }
         setCurrentOrder((prev) => {
             const items = prev.items.map((i) => {
                 if (i.id === currentOrderItem.id) return currentOrderItem
@@ -158,10 +168,11 @@ function PosItemSection({
                                 key={item._id}
                                 className='h-14 w-full px-2'
                                 variant='default'
+                                disabled={item.temporarilyUnavailable === true}
                                 onClick={() => selectItem(item)}>
                                     <div className='flex min-w-0 w-full justify-center items-center flex-col gap-1'>
                                         <span className='w-full truncate text-sm' title={item.name}>{displayItemName(item)}</span>
-                                        <span>{getPriceByType(currentOrder.type,item.price)}</span>
+                                        <span>{item.temporarilyUnavailable ? t('temporaryUnavailableShort') : getPriceByType(currentOrder.type,item.price)}</span>
                                     </div>
                             </Button>
                         ))}
@@ -169,6 +180,7 @@ function PosItemSection({
                 ) : (
                     <div className='flex flex-col flex-1 justify-start gap-3'>
                         <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex items-center justify-between gap-3'><p className='min-w-0 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
+                        {selectionUnavailable && <div className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'>{t('selectionUnavailable')}</div>}
                         <div className='variant flex justify-start items-center gap-4'>
                             <Label className='block w-27 font-semibold text-start'>{t('quantity')}:</Label>
                             <Input
@@ -253,6 +265,7 @@ function PosItemSection({
                                         <ToggleGroupItem
                                             key={addon._id}
                                             value={addon._id}
+                                            disabled={addon.temporarilyUnavailable === true && !currentOrderItem.addons.some((selectedAddon) => selectedAddon.id === addon._id)}
                                             className='flex h-auto min-h-10 min-w-20 max-w-32 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
                                             <span className='line-clamp-2'>{addon.name}</span>
                                             <span className='text-[11px] opacity-80'>+{addon.priceExtra}</span>
@@ -344,7 +357,7 @@ function PosItemSection({
                                 <div className='flex shrink-0 flex-col gap-2 self-start'>
                                     {isEditItem ? (
                                         <>
-                                            <Button className='min-w-20' variant='default' size='lg' onClick={updateItem}>
+                                            <Button className='min-w-20' variant='default' size='lg' disabled={selectionUnavailable} onClick={updateItem}>
                                                 Sửa
                                             </Button>
                                             <Button className='min-w-20' variant='destructive' size='lg' onClick={deleteItem}>
@@ -352,7 +365,7 @@ function PosItemSection({
                                             </Button>
                                         </>
                                     ) : (
-                                        <Button className='min-w-20' variant='default' size='lg' onClick={addItem}>
+                                        <Button className='min-w-20' variant='default' size='lg' disabled={selectionUnavailable} onClick={addItem}>
                                             Xác nhận
                                         </Button>
                                     )}

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { getDiscounts, updateStoreDiscount, type Discount } from '@/api/discount'
 import { useI18n } from '@/lib/i18n'
 import { useStorePricingEmbedded } from './store-pricing-context'
+import { Loader2 } from 'lucide-react'
 
 export default function StoreDiscountsPanel() {
   const { locale, t } = useI18n()
@@ -19,6 +20,7 @@ export default function StoreDiscountsPanel() {
   const listRef = useRef<HTMLDivElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftAmount, setDraftAmount] = useState(0)
+  const [draftActive, setDraftActive] = useState(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(8)
   const { data: discounts = [], isLoading } = useQuery({ queryKey: ['discounts', locale], queryFn: () => getDiscounts() })
@@ -26,7 +28,7 @@ export default function StoreDiscountsPanel() {
   const refresh = () => client.invalidateQueries({ queryKey: ['discounts'] })
   const update = useMutation({
     mutationFn: ({ id, data }: { id: string; data: { amount: number; active?: boolean } }) => updateStoreDiscount({ id, data }),
-    onSuccess: () => { refresh(); setEditingId(null); toast.success(t('updateDiscountSuccess')) },
+    onSuccess: async () => { await refresh(); setEditingId(null); toast.success(t('updateDiscountSuccess')) },
     onError: (error) => toast.error(axios.isAxiosError(error) ? error.response?.data?.message || t('discountSaveError') : t('discountSaveError')),
   })
 
@@ -52,17 +54,18 @@ export default function StoreDiscountsPanel() {
 
   useEffect(() => setPage((current) => Math.min(current, totalPages)), [totalPages])
 
-  function startEditing(discount: Discount) { setEditingId(discount._id); setDraftAmount(discount.amount) }
+  function startEditing(discount: Discount) { setEditingId(discount._id); setDraftAmount(discount.amount); setDraftActive(discount.active) }
 
   return <div className={`flex h-full min-h-0 flex-col gap-6 overflow-hidden [&>[data-slot=card]]:border [&>[data-slot=card]]:border-border/50 [&>[data-slot=card]]:ring-0 ${embedded ? 'px-1 pb-6' : 'p-6 md:p-8'}`}>
     <Card className="min-h-0 flex-1 flex flex-col"><CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-3"><CardTitle>{t('discountList')}</CardTitle><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {discounts.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader><CardContent ref={listRef} className="min-h-0 flex-1 overflow-hidden space-y-3">
       {isLoading ? <div className="text-sm text-muted-foreground">{t('loading')}</div> : paginated.length === 0 ? <div className="text-center text-sm text-muted-foreground">{t('emptyDiscounts')}</div> : paginated.map((discount) => {
         const isEditing = editingId === discount._id
+        const saving = isEditing && update.isPending
         return <div data-store-row="true" className="grid min-h-[60px] gap-x-6 gap-y-3 rounded-lg border p-3 md:grid-cols-[minmax(0,1fr)_128px_minmax(110px,auto)_auto] md:items-center" key={discount._id}>
           <div className="min-w-0"><div className="font-medium">{displayName(discount)}</div><div className="text-xs text-muted-foreground">{discount.type === 'percent' ? t('discountPercent') : t('discountValue')}</div></div>
-          <div className="flex items-center"><div className="w-32">{isEditing ? <Input className="h-9 w-full" type="number" min="0" value={draftAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{formatAmount(discount)}</div>}</div></div>
-          <label className="flex w-fit items-center gap-2 whitespace-nowrap rounded-md bg-muted/40 px-2 py-1.5 text-sm"><Checkbox checked={discount.active} onCheckedChange={(active) => update.mutate({ id: discount._id, data: { amount: discount.amount, active: active === true } })} />{t('selling')}</label>
-          <div className="flex min-h-9 items-center gap-2">{isEditing ? <><Button size="sm" disabled={update.isPending} onClick={() => update.mutate({ id: discount._id, data: { amount: draftAmount } })}>{t('save')}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)}>{t('cancel')}</Button></> : <Button size="sm" variant="outline" onClick={() => startEditing(discount)}>{t('edit')}</Button>}</div>
+          <div className="flex items-center"><div className="w-32">{isEditing ? <Input disabled={saving} className="h-9 w-full" type="number" min="0" value={draftAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{formatAmount(discount)}</div>}</div></div>
+          <div className="flex min-h-9 items-center gap-2 text-sm">{isEditing ? <label className="flex w-fit items-center gap-2 whitespace-nowrap rounded-md bg-muted/40 px-2 py-1.5"><Checkbox disabled={saving} checked={draftActive} onCheckedChange={(active) => setDraftActive(active === true)} />{t('selling')}</label> : <span>{discount.active ? t('discountActive') : t('hidden')}</span>}{saving && <Loader2 className="size-4 animate-spin text-primary" aria-label={t('loading')} />}</div>
+          <div className="flex min-h-9 items-center gap-2">{isEditing ? <><Button size="sm" disabled={saving} onClick={() => update.mutate({ id: discount._id, data: { amount: draftAmount, active: draftActive } })}>{saving ? <Loader2 className="size-4 animate-spin" /> : t('save')}</Button><Button size="sm" variant="outline" disabled={saving} onClick={() => setEditingId(null)}>{t('cancel')}</Button></> : <Button size="sm" variant="outline" onClick={() => startEditing(discount)}>{t('edit')}</Button>}</div>
         </div>
       })}
     </CardContent></Card>

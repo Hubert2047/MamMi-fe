@@ -20,10 +20,10 @@ export const realtimeClientTypeForPath = (pathname: string): RealtimeClientType 
 
 export const realtimeEventsForClient = (clientType: RealtimeClientType): string[] => {
   if (clientType === 'admin') return [
-    'catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.discount.updated', 'catalog.changed',
+    'catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.store-addon.availability.updated', 'catalog.discount.updated', 'catalog.changed',
     'order.created', 'order.updated', 'order.cancelled', 'order.payment.updated', 'closing.created', 'closing.voided',
   ]
-  if (clientType === 'customer') return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.discount.updated', 'catalog.changed']
-  if (clientType === 'order') return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.discount.updated', 'order.updated', 'order.cancelled', 'order.payment.updated']
-  return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.discount.updated', 'catalog.changed', 'order.created', 'order.updated', 'order.cancelled', 'order.payment.updated']
+  if (clientType === 'customer') return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.store-addon.availability.updated', 'catalog.discount.updated', 'catalog.changed']
+  if (clientType === 'order') return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.store-addon.availability.updated', 'catalog.discount.updated', 'order.updated', 'order.cancelled', 'order.payment.updated']
+  return ['catalog.item.updated', 'catalog.store-item.price.updated', 'catalog.store-item.availability.updated', 'catalog.store-addon.updated', 'catalog.store-addon.availability.updated', 'catalog.discount.updated', 'catalog.changed', 'order.created', 'order.updated', 'order.cancelled', 'order.payment.updated']
 }
