@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
-import { Badge } from '@/components/ui/badge.tsx'
 import NumPad from '@/components/NumPad.tsx'
 import React from 'react'
 import { updateOrderPayment, type BaseOrder, type OrderItem } from '@/api/order.ts'
@@ -14,6 +13,7 @@ import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Loading from './Loading'
 import { useI18n } from '@/lib/i18n'
+import { calculateOrderItemTotal } from '@/lib/posCalculations'
 
 type Props = {
     isDetail: boolean
@@ -51,8 +51,7 @@ function PosItemSection({
     const queryClient = useQueryClient()
     const { locale, t } = useI18n()
     const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
-    const selectedItemUnitPrice = currentOrderItem.basePrice + currentOrderItem.addons.reduce((total, addon) => total + addon.amount * addon.priceExtra, 0)
-    const selectedItemPrice = selectedItemUnitPrice * currentOrderItem.quantity
+    const selectedItemPrice = calculateOrderItemTotal(currentOrderItem)
     const displayItemName = (item: Item) => {
         const name = item.name.trim()
         const category = item.categoryName.trim()
@@ -211,15 +210,16 @@ function PosItemSection({
                                 <ToggleGroup
                                     size='lg'
                                     variant='outline'
-                                     type='multiple'
-                                     className='w-full flex-wrap gap-0'
+                                    type='multiple'
+                                    spacing={2}
+                                    className='w-full flex-wrap gap-2'
                                     value={currentOrderItem.noteOptions.map((value) => selectedItem.noteOptions.find((option) => option.id === value || optionName(option) === value)?.id || value)}
                                     onValueChange={(value) => {
                                         if (isDetail) return
                                         setCurrentOrderItem((prev) => ({ ...prev, noteOptions: value }))
                                     }}>
                                     {selectedItem.noteOptions.map((note) => (
-                                        <ToggleGroupItem key={note.id} className='w-auto min-w-20 whitespace-nowrap border-primary/40 px-3 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10' value={note.id}>
+                                        <ToggleGroupItem key={note.id} className='h-auto min-h-10 min-w-20 max-w-32 rounded-lg whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10' value={note.id}>
                                             {optionName(note)}
                                         </ToggleGroupItem>
                                     ))}
@@ -234,6 +234,8 @@ function PosItemSection({
                                     size='lg'
                                     variant='outline'
                                     type='multiple'
+                                    spacing={2}
+                                    className='flex-wrap gap-2'
                                     value={currentOrderItem.addons.map((a) => a.id)}
                                     onValueChange={(values) => {
                                         if (isDetail) return
@@ -251,9 +253,9 @@ function PosItemSection({
                                         <ToggleGroupItem
                                             key={addon._id}
                                             value={addon._id}
-                                            className='relative flex md:w-15 flex-col items-center justify-center border-primary/40 p-2 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
-                                            <span className='text-center'>{addon.name}</span>
-                                            <Badge className='absolute -top-6'>{addon.priceExtra}</Badge>
+                                            className='flex h-auto min-h-10 min-w-20 max-w-32 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
+                                            <span className='line-clamp-2'>{addon.name}</span>
+                                            <span className='text-[11px] opacity-80'>+{addon.priceExtra}</span>
                                         </ToggleGroupItem>
                                     ))}
                                 </ToggleGroup>
@@ -331,7 +333,7 @@ function PosItemSection({
                             )}
 
                         {!isDetail && (
-                            <div className='flex justify-start pt-2 gap-3'>
+                            <div className='flex items-end justify-start gap-3 pt-2'>
                                 <NumPad
                                     currentValue={currentOrderItem.quantity.toString()}
                                     onChange={(value) => {
@@ -339,25 +341,25 @@ function PosItemSection({
                                     }}
                                 />
                                 <div className='flex-1'></div>
-                                <>
+                                <div className='flex shrink-0 flex-col gap-2 self-start'>
                                     {isEditItem ? (
                                         <>
-                                            <Button variant='default' size='lg' onClick={updateItem}>
+                                            <Button className='min-w-20' variant='default' size='lg' onClick={updateItem}>
                                                 Sửa
                                             </Button>
-                                            <Button variant='destructive' size='lg' onClick={deleteItem}>
+                                            <Button className='min-w-20' variant='destructive' size='lg' onClick={deleteItem}>
                                                 Xóa
                                             </Button>
                                         </>
                                     ) : (
-                                        <Button variant='default' size='lg' onClick={addItem}>
+                                        <Button className='min-w-20' variant='default' size='lg' onClick={addItem}>
                                             Xác nhận
                                         </Button>
                                     )}
-                                    <Button variant='outline' size='lg' onClick={cancelAddItem}>
+                                    <Button className='min-w-20' variant='outline' size='lg' onClick={cancelAddItem}>
                                         Hủy
                                     </Button>
-                                </>
+                                </div>
                             </div>
                         )}
                     </div>

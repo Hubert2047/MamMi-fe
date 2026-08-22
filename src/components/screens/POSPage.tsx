@@ -19,6 +19,7 @@ import OtherRevenue from '@/components/other-revenue/OtherRevenue.tsx'
 import ShiftAttendance from '@/components/ShiftAttendance.tsx'
 import { signOut } from 'next-auth/react'
 import { logoutAPI } from '@/api/auth'
+import { calculateOrderTotal } from '@/lib/posCalculations'
 
 const POSPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string>('牛肉河粉')
@@ -66,19 +67,7 @@ const POSPage: React.FC = () => {
         setIsEditItem(true)
     }
 
-    const totalPrice = useMemo(() => {
-        const total = currentOrder.items.reduce((sum, i) => {
-            const item = i.basePrice * i.quantity
-            const addon = i.addons.reduce((sum, a) => sum + a.amount * a.priceExtra, 0)
-            return sum + item + addon
-        }, 0)
-        if (!currentOrder.discount) return total
-        if (currentOrder.discount.type === 'percent') {
-            const percent = currentOrder.discount.amount / 100
-            return total * (1 - percent)
-        }
-        return total - currentOrder.discount.amount
-    }, [currentOrder.discount, currentOrder.items])
+    const totalPrice = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
 
     function handleOpenCheckout(checkout: boolean) {
         if (isCheckoutPendingOrder) {
