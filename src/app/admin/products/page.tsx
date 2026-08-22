@@ -26,7 +26,6 @@ const emptyForm: ItemInput = {
   categoryId: '',
   addons: [],
   noteOptions: [],
-  active: true,
 }
 
 type OptionInputs = { vi: string; en: string; 'zh-TW': string }
@@ -112,7 +111,6 @@ export default function ProductsPage() {
       variants: item.variants || [],
       noteOptions: item.noteOptions || [],
       price: { base: 0, uber: 0, foodpanda: 0 },
-      active: true,
     }
   }
 

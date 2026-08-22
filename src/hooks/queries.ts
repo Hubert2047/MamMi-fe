@@ -19,12 +19,13 @@ export const queryKeys = {
   dailyClosingSummary: ['daily-closing-summary'] as const,
 }
 
-export function useItems(active = true) {
+export function useItems(available?: boolean) {
   const { locale } = useI18n()
   return useQuery<Item[], Error>({
-    queryKey: [...queryKeys.items, active, locale],
-    queryFn: () => getItems(active, locale),
+    queryKey: [...queryKeys.items, available, locale],
+    queryFn: () => getItems(available, locale),
     staleTime: 5 * 60 * 1000,
+    refetchInterval: available === undefined ? 60 * 1000 : false,
   })
 }
 

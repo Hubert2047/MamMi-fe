@@ -65,6 +65,16 @@ const storeProductMessages = {
   'zh-TW': { storePricing: '分店售價', mainStore: '主店', store: '分店', overview: '總覽', commonConfig: '共用設定', currentStoreGroup: '目前分店', switchStore: '切換分店', overviewHint: '查看所有分店的彙總資料。', discountStoreHint: '正在設定所選分店的折扣。', discountCatalogHint: 'Super Admin 管理共用折扣；Admin 僅能設定分店折扣。', discountStoreConfig: '分店折扣設定', discountAdminSelectExisting: 'Admin 只能編輯已建立的折扣。', superAdminOnly: '只有 Super Admin 可以管理共用目錄', catalogSuperAdminHint: 'Admin 只能在分店售價中設定價格與販售狀態。', storeRequired: '請先選擇分店。' },
 } as const
 
+const availabilityMessages = {
+  vi: { permanentSelling: 'Đang bán', permanentHidden: 'Tắt hẳn', temporaryUnavailable: 'Tạm tắt', temporaryAvailable: 'Đang bán', temporaryAvailability: 'Tắt tạm thời món', temporaryAvailabilityTitle: 'Tắt tạm thời món', temporaryAvailabilitySearch: 'Tìm tên món...', temporaryAvailabilityCategory: 'Lọc theo danh mục', temporaryAvailabilityAllCategories: 'Tất cả danh mục', temporaryAvailabilityEmpty: 'Không tìm thấy món', temporaryAvailabilityError: 'Không thể cập nhật trạng thái tạm thời' },
+  en: { permanentSelling: 'Selling', permanentHidden: 'Permanently off', temporaryUnavailable: 'Temporarily off', temporaryAvailable: 'Temporarily available', temporaryAvailability: 'Temporarily disable items', temporaryAvailabilityTitle: 'Temporarily disable items', temporaryAvailabilitySearch: 'Search item name...', temporaryAvailabilityCategory: 'Filter by category', temporaryAvailabilityAllCategories: 'All categories', temporaryAvailabilityEmpty: 'No items found', temporaryAvailabilityError: 'Unable to update temporary availability' },
+  'zh-TW': { permanentSelling: '販售中', permanentHidden: '永久關閉', temporaryUnavailable: '暫時關閉', temporaryAvailable: '暫時可售', temporaryAvailability: '暫時關閉商品', temporaryAvailabilityTitle: '暫時關閉商品', temporaryAvailabilitySearch: '搜尋商品名稱...', temporaryAvailabilityCategory: '依分類篩選', temporaryAvailabilityAllCategories: '所有分類', temporaryAvailabilityEmpty: '找不到商品', temporaryAvailabilityError: '無法更新暫時狀態' },
+} as const
+
+Object.assign(discountMessages.vi as Record<string, string>, availabilityMessages.vi)
+Object.assign(discountMessages.en as Record<string, string>, availabilityMessages.en)
+Object.assign(discountMessages['zh-TW'] as Record<string, string>, availabilityMessages['zh-TW'])
+
 const productActionMessages = {
   vi: { copy: 'Sao chép', allCategories: 'Tất cả danh mục', productTotal: 'Tổng sản phẩm', posAddItem: 'Thêm món', posEditItem: 'Chỉnh sửa món', cancelPosItemBeforeCategory: 'Vui lòng hủy thao tác hiện tại trước khi chuyển danh mục', confirmCreateProduct: 'Bạn có chắc muốn tạo sản phẩm này không?', confirmUpdateProduct: 'Bạn có chắc muốn cập nhật sản phẩm này không?', confirmDeleteProduct: 'Bạn có chắc muốn xóa sản phẩm này không?' },
   en: { copy: 'Copy', allCategories: 'All categories', productTotal: 'Total products', posAddItem: 'Add item', posEditItem: 'Edit item', cancelPosItemBeforeCategory: 'Please cancel the current action before switching categories', confirmCreateProduct: 'Are you sure you want to create this product?', confirmUpdateProduct: 'Are you sure you want to update this product?', confirmDeleteProduct: 'Are you sure you want to delete this product?' },

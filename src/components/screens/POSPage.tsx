@@ -17,6 +17,7 @@ import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
 import OtherRevenue from '@/components/other-revenue/OtherRevenue.tsx'
 import ShiftAttendance from '@/components/ShiftAttendance.tsx'
+import TemporaryAvailabilityTable from '@/components/TemporaryAvailabilityTable'
 import { signOut } from 'next-auth/react'
 import { logoutAPI } from '@/api/auth'
 import { calculateOrderTotal } from '@/lib/posCalculations'
@@ -41,18 +42,20 @@ const POSPage: React.FC = () => {
     const [openDailyClosing, setOpenDailyClosing] = useState(false)
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
-    const { data: items = [], isLoading: isItemsLoading } = useItems(true)
+    const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
+    const { data: items = [], isLoading: isItemsLoading } = useItems()
     const { data: discounts = [] } = useDiscounts()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
+    const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive && !item.temporarilyUnavailable), [items])
     const itemsByCategory = useMemo(() => {
         const grouped: Record<string, Item[]> = {}
-        items.forEach((item) => {
+        sellableItems.forEach((item) => {
             if (!grouped[item.categoryName]) grouped[item.categoryName] = []
             grouped[item.categoryName].push(item)
         })
         return grouped
-    }, [items])
+    }, [sellableItems])
 
     useEffect(() => {
         const onFSChange = () => {
@@ -212,6 +215,9 @@ const POSPage: React.FC = () => {
                     <Button variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>
+                    <Button variant='outline' onClick={() => setOpenTemporaryAvailability(true)}>
+                        {t('temporaryAvailabilityTitle')}
+                    </Button>
                     <Button variant='outline' onClick={() => setOpenOtherRevenue(true)}>
                         {t('otherRevenue')}
                     </Button>
@@ -247,6 +253,7 @@ const POSPage: React.FC = () => {
                     }}
                 />
             )}
+            {openTemporaryAvailability && <TemporaryAvailabilityTable items={items} open={openTemporaryAvailability} onClose={() => setOpenTemporaryAvailability(false)} />}
             {openDailyClosing && <DailyClosing open={openDailyClosing} onClose={() => setOpenDailyClosing(false)} />}
             {openOtherRevenue && <OtherRevenue open={openOtherRevenue} onClose={() => setOpenOtherRevenue(false)} />}
             {openShiftAttendance && (

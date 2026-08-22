@@ -14,21 +14,103 @@ import { addStoreItem, getStoreItems, updateStoreItem } from '@/api/store-item'
 import { getCategories, type Category } from '@/api/category'
 import type { Item, PriceType } from '@/api/item'
 import { useI18n } from '@/lib/i18n'
+import { useAuth } from '@/hooks/auth'
 import { useStorePricingEmbedded } from '@/app/admin/store-pricing/store-pricing-context'
 
 const emptyPrice: PriceType = { base: 0, uber: 0, foodpanda: 0 }
 const priceKeys = ['base', 'uber', 'foodpanda'] as const
 
 export default function StoreMenuPanel() {
-  const { locale, t } = useI18n(); const embedded = useStorePricingEmbedded(); const queryClient = useQueryClient(); const rootRef = useRef<HTMLDivElement>(null); const listRef = useRef<HTMLDivElement>(null)
-  const [selectedItemId, setSelectedItemId] = useState(''); const [price, setPrice] = useState<PriceType>(emptyPrice); const [editing, setEditing] = useState<Item | null>(null); const [draftPrice, setDraftPrice] = useState<PriceType>(emptyPrice); const [draftActive, setDraftActive] = useState(true); const [page, setPage] = useState(1); const [pageSize, setPageSize] = useState(8); const [categoryFilter, setCategoryFilter] = useState('all')
-  const { data: catalog = [] } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) }); const { data: menu = [] } = useQuery({ queryKey: ['store-items', locale], queryFn: () => getStoreItems(locale) }); const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: getCategories }); const refresh = () => queryClient.invalidateQueries({ queryKey: ['store-items'] }); const add = useMutation({ mutationFn: addStoreItem, onSuccess: () => { refresh(); setSelectedItemId(''); setPrice(emptyPrice); toast.success(t('createSuccess')) }, onError: () => toast.error(t('saveError')) }); const update = useMutation({ mutationFn: updateStoreItem, onSuccess: () => { refresh(); setEditing(null); toast.success(t('updateSuccess')) }, onError: () => toast.error(t('saveError')) })
-  const matchesCategory = (item: Item) => categoryFilter === 'all' || (typeof item.categoryId === 'string' ? item.categoryId : item.categoryId?._id) === categoryFilter; const available = catalog.filter((item) => matchesCategory(item) && !menu.some((menuItem) => menuItem._id === item._id)); const filteredMenu = menu.filter(matchesCategory); const totalPages = Math.max(1, Math.ceil(filteredMenu.length / pageSize)); const paginated = useMemo(() => filteredMenu.slice((page - 1) * pageSize, page * pageSize), [filteredMenu, page, pageSize]); const startEdit = (item: Item) => { setEditing(item); setDraftPrice(item.price); setDraftActive(item.active) }
-  useEffect(() => { const element = listRef.current; if (!element) return; const resize = () => { const rows = Array.from(element.querySelectorAll<HTMLElement>('[data-store-row]')); const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 86; setPageSize(Math.max(1, Math.floor((element.clientHeight + 12) / (rowHeight + 12)))) }; resize(); const observer = new ResizeObserver(resize); observer.observe(element); return () => observer.disconnect() }, [paginated.length, page, categoryFilter, locale]); useEffect(() => setPage((current) => Math.min(current, totalPages)), [totalPages])
+  const { locale, t } = useI18n()
+  const { user } = useAuth()
+  const canChangePermanentAvailability = user?.role === 'Admin' || user?.role === 'SuperAdmin'
+  const embedded = useStorePricingEmbedded()
+  const queryClient = useQueryClient()
+  const listRef = useRef<HTMLDivElement>(null)
+  const [selectedItemId, setSelectedItemId] = useState('')
+  const [price, setPrice] = useState<PriceType>(emptyPrice)
+  const [editing, setEditing] = useState<Item | null>(null)
+  const [draftPrice, setDraftPrice] = useState<PriceType>(emptyPrice)
+  const [draftPermanentlyActive, setDraftPermanentlyActive] = useState(true)
+  const [draftTemporarilyUnavailable, setDraftTemporarilyUnavailable] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(8)
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const { data: catalog = [] } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
+  const { data: menu = [] } = useQuery({ queryKey: ['store-items', locale], queryFn: () => getStoreItems(locale) })
+  const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: getCategories })
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['store-items'] })
+  const add = useMutation({
+    mutationFn: addStoreItem,
+    onSuccess: () => { refresh(); setSelectedItemId(''); setPrice(emptyPrice); toast.success(t('createSuccess')) },
+    onError: () => toast.error(t('saveError')),
+  })
+  const update = useMutation({
+    mutationFn: updateStoreItem,
+    onSuccess: () => { refresh(); setEditing(null); toast.success(t('updateSuccess')) },
+    onError: () => toast.error(t('saveError')),
+  })
+  const matchesCategory = (item: Item) => categoryFilter === 'all' || (typeof item.categoryId === 'string' ? item.categoryId : item.categoryId?._id) === categoryFilter
+  const available = catalog.filter((item) => matchesCategory(item) && !menu.some((menuItem) => menuItem._id === item._id))
+  const filteredMenu = menu.filter(matchesCategory)
+  const totalPages = Math.max(1, Math.ceil(filteredMenu.length / pageSize))
+  const paginated = useMemo(() => filteredMenu.slice((page - 1) * pageSize, page * pageSize), [filteredMenu, page, pageSize])
+  const startEdit = (item: Item) => {
+    setEditing(item)
+    setDraftPrice(item.price)
+    setDraftPermanentlyActive(item.permanentlyActive)
+    setDraftTemporarilyUnavailable(item.temporarilyUnavailable)
+  }
 
-  return <div ref={rootRef} className={`flex h-full min-h-0 flex-col gap-6 overflow-hidden ${embedded ? 'px-1 pb-6' : 'p-6 md:p-8'}`}>
+  useEffect(() => {
+    const element = listRef.current
+    if (!element) return
+    const resize = () => {
+      const rows = Array.from(element.querySelectorAll<HTMLElement>('[data-store-row]'))
+      const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 86
+      setPageSize(Math.max(1, Math.floor((element.clientHeight + 12) / (rowHeight + 12))))
+    }
+    resize()
+    const observer = new ResizeObserver(resize)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [paginated.length, page, categoryFilter, locale])
+
+  useEffect(() => setPage((current) => Math.min(current, totalPages)), [totalPages])
+
+  return <div className={`flex h-full min-h-0 flex-col gap-6 overflow-hidden ${embedded ? 'px-1 pb-6' : 'p-6 md:p-8'}`}>
     {!embedded && <h1 className="text-3xl font-bold">{t('storePricing')}</h1>}
-    <Card><CardHeader><CardTitle>{t('createProduct')}</CardTitle></CardHeader><CardContent className="grid gap-3 md:grid-cols-[1fr_repeat(3,120px)_auto] md:items-end"><div className="space-y-2"><Label>{t('products')}</Label><Select value={selectedItemId} onValueChange={setSelectedItemId} disabled={!available.length}><SelectTrigger><SelectValue placeholder={available.length ? t('products') : ''} /></SelectTrigger><SelectContent>{available.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent></Select></div>{priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label><Input type="number" value={price[key] ?? 0} onChange={(event) => setPrice({ ...price, [key]: Number(event.target.value) })} /></div>)}<Button disabled={!selectedItemId || add.isPending} onClick={() => add.mutate({ itemId: selectedItemId, price, active: true })}>{t('createProduct')}</Button></CardContent></Card>
-    <Card className="min-h-0 flex-1 flex flex-col"><CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><CardTitle>{t('productList')}</CardTitle><div className="w-52"><Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setPage(1) }}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t('allCategories')}</SelectItem>{categories.map((category) => <SelectItem key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</SelectItem>)}</SelectContent></Select></div></div><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {filteredMenu.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader><CardContent ref={listRef} className="min-h-0 flex-1 overflow-hidden space-y-3">{paginated.map((item) => { const isEditing = editing?._id === item._id; return <div data-store-row="true" className="grid min-h-[86px] gap-3 rounded-lg border p-3 md:grid-cols-[1fr_repeat(3,120px)_auto] md:items-end" key={item._id}><div><div className="font-medium">{item.name}</div><div className="text-xs text-muted-foreground">{item.categoryName}</div></div>{priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input className="h-9" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}<div className="flex min-h-9 flex-nowrap items-center gap-2 overflow-x-auto">{isEditing ? <><label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox checked={draftActive} onCheckedChange={(value) => setDraftActive(value === true)} />{t('selling')}</label><Button className="shrink-0" size="sm" disabled={update.isPending} onClick={() => update.mutate({ itemId: item._id, data: { price: draftPrice, active: draftActive } })}>{t('save')}</Button><Button className="shrink-0" size="sm" variant="outline" onClick={() => setEditing(null)}>{t('cancel')}</Button></> : <><span className="shrink-0 text-sm">{item.active ? t('selling') : t('hidden')}</span><Button className="shrink-0" size="sm" variant="outline" onClick={() => startEdit(item)}>{t('edit')}</Button></>}</div></div> })}</CardContent></Card>
+    <Card>
+      <CardHeader><CardTitle>{t('createProduct')}</CardTitle></CardHeader>
+      <CardContent className="grid gap-3 md:grid-cols-[1fr_repeat(3,120px)_auto] md:items-end">
+        <div className="space-y-2"><Label>{t('products')}</Label><Select value={selectedItemId} onValueChange={setSelectedItemId} disabled={!available.length}><SelectTrigger><SelectValue placeholder={available.length ? t('products') : ''} /></SelectTrigger><SelectContent>{available.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent></Select></div>
+        {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label><Input type="number" value={price[key] ?? 0} onChange={(event) => setPrice({ ...price, [key]: Number(event.target.value) })} /></div>)}
+        <Button disabled={!selectedItemId || add.isPending} onClick={() => add.mutate({ itemId: selectedItemId, price })}>{t('createProduct')}</Button>
+      </CardContent>
+    </Card>
+    <Card className="min-h-0 flex-1 flex flex-col">
+      <CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><CardTitle>{t('productList')}</CardTitle><div className="w-52"><Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setPage(1) }}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t('allCategories')}</SelectItem>{categories.map((category) => <SelectItem key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</SelectItem>)}</SelectContent></Select></div></div><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {filteredMenu.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader>
+      <CardContent ref={listRef} className="min-h-0 flex-1 overflow-hidden space-y-3">
+        {paginated.map((item) => {
+          const isEditing = editing?._id === item._id
+          return <div data-store-row="true" className="grid min-h-[86px] gap-3 rounded-lg border p-3 md:grid-cols-[1fr_repeat(3,120px)_minmax(230px,auto)] md:items-end" key={item._id}>
+            <div><div className="font-medium">{item.name}</div><div className="text-xs text-muted-foreground">{item.categoryName}</div></div>
+            {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input className="h-9" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
+            <div className="flex min-h-9 flex-wrap items-center gap-2">
+              {isEditing ? <>
+                {canChangePermanentAvailability && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox checked={draftPermanentlyActive} onCheckedChange={(value) => setDraftPermanentlyActive(value === true)} />{t('permanentSelling')}</label>}
+                <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>
+                <Button className="shrink-0" size="sm" disabled={update.isPending} onClick={() => update.mutate({ itemId: item._id, data: { price: draftPrice, ...(canChangePermanentAvailability ? { permanentlyActive: draftPermanentlyActive } : {}), temporarilyUnavailable: draftTemporarilyUnavailable } })}>{t('save')}</Button>
+                <Button className="shrink-0" size="sm" variant="outline" onClick={() => setEditing(null)}>{t('cancel')}</Button>
+              </> : <>
+                <span className="shrink-0 text-sm">{item.permanentlyActive ? t('permanentSelling') : t('permanentHidden')}</span>
+                <span className="shrink-0 text-sm">{item.temporarilyUnavailable ? t('temporaryUnavailable') : t('temporaryAvailable')}</span>
+                <Button className="shrink-0" size="sm" variant="outline" onClick={() => startEdit(item)}>{t('edit')}</Button>
+              </>}
+            </div>
+          </div>
+        })}
+      </CardContent>
+    </Card>
   </div>
 }

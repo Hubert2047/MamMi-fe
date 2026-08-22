@@ -6,43 +6,46 @@ export type PriceType = {
     foodpanda?: number
     [key: string]: number | undefined
 }
+
 export type LocalizedText = { vi: string; en: string; 'zh-TW': string }
 export type LocalizedOption = { id: string; names: LocalizedText }
+
 export interface Item {
     _id: string
     name: string
-    names: { vi: string; en: string; 'zh-TW': string }
-    description: { vi: string; en: string; 'zh-TW': string }
+    names: LocalizedText
+    description: LocalizedText
     categoryName: string
-    categoryId?: string | { _id: string; names?: { vi: string; en: string; 'zh-TW': string }; name?: string }
+    categoryId?: string | { _id: string; names?: LocalizedText; name?: string }
     price: PriceType
     addons: Addon[]
     variants: LocalizedOption[]
     noteOptions: LocalizedOption[]
-    active: boolean
+    permanentlyActive: boolean
+    temporarilyUnavailable: boolean
+    temporarilyUnavailableUntil?: string | null
 }
 
 export interface ItemInput {
-    names: { vi: string; en: string; 'zh-TW': string }
-    description: { vi: string; en: string; 'zh-TW': string }
+    names: LocalizedText
+    description: LocalizedText
     variants: LocalizedOption[]
     price: PriceType
     categoryId: string
     addons: string[]
     noteOptions: LocalizedOption[]
-    active: boolean
 }
 
 interface Addon {
     _id: string
-    names?: { vi: string; en: string; 'zh-TW': string }
+    names?: LocalizedText
     name: string
     priceExtra: number
 }
 
-export const getItems = async (active?: boolean, lang?: string): Promise<Item[]> => {
+export const getItems = async (available?: boolean, lang?: string): Promise<Item[]> => {
     const params = new URLSearchParams()
-    if (active !== undefined) params.set('active', String(active))
+    if (available !== undefined) params.set('available', String(available))
     if (lang) params.set('lang', lang)
     const query = params.toString()
     const res = await api.get(query ? `items?${query}` : 'items')

@@ -130,7 +130,7 @@ function PosItemSection({
     return (
         <>
             {updateOrderMutation.isPending && <Loading />}
-            <div className='categories w-22 flex flex-col gap-2 rounded border p-1 border-[#ccc]'>
+            <div className='categories w-22 flex flex-col gap-2 rounded border border-[#ccc] p-1 border-[#ccc]'>
                 {!isDetail &&
                     Object.keys(itemsByCategory).map((categoryName) => {
                         return (
