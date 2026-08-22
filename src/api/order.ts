@@ -41,6 +41,9 @@ export interface BaseOrder {
     type: 'dine_in' | 'takeaway' | 'uber' | 'foodpanda'
     customer: Customer | null
     checkoutPending: boolean
+    version?: number
+    source?: 'pos' | 'qr' | 'uber' | 'foodpanda'
+    externalOrderId?: string
 }
 
 export interface IOrder extends BaseOrder {
@@ -71,12 +74,13 @@ export const createOrder = async (order: BaseOrder): Promise<number> => {
     const res = await api.post('orders', order)
     return res.data.data
 }
-export const cancelOrder = async (id: string): Promise<BaseOrder> => {
-    const res = await api.patch(`orders/${id}/cancel`)
+export const cancelOrder = async ({ id, version }: { id: string; version: number }): Promise<BaseOrder> => {
+    const res = await api.patch(`orders/${id}/cancel`, { version })
+    if (!res.data?.success || !res.data?.data) throw new Error('Invalid cancel order response')
     return res.data.data
 }
 
-export const updateOrderPayment = async ({ id, data }: { id: string; data: Partial<{paymentMethod:string}> }): Promise<BaseOrder> => {
+export const updateOrderPayment = async ({ id, data }: { id: string; data: Partial<{paymentMethod:string;version:number}> }): Promise<BaseOrder> => {
     const res = await api.put(`orders/payment/${id}`, data)
     return res.data.data
 }

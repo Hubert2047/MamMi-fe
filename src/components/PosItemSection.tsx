@@ -123,7 +123,7 @@ function PosItemSection({
     const handleUpdateOrder = async () => {
         await updateOrderMutation.mutateAsync({
             id: currentOrder._id,
-            data: { paymentMethod: currentOrder.paymentMethod },
+            data: { paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
         })
         toast.success(t('updateSuccess'))
     }

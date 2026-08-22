@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx'
 import PrintOptions from '../PrintOptions'
 import { useI18n } from '@/lib/i18n'
+import type { AxiosError } from 'axios'
 
 type Props = {
     open: boolean
@@ -69,8 +70,16 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
             queryClient.invalidateQueries({ queryKey: queryKeys.orders(days) }).then()
             toast.success(t('cancelSuccess'))
         },
-        onError: () => {
-            toast.error(t('cancelFailure'))
+        onError: (error: unknown) => {
+            const responseData = (error as AxiosError<{ code?: string; message?: string }>).response?.data
+            const message = responseData?.code === 'FINANCIAL_PERIOD_CLOSED'
+                ? t('cancelClosedPeriod')
+                : responseData?.code === 'ORDER_ALREADY_CANCELLED'
+                    ? t('cancelAlreadyCancelled')
+                    : responseData?.code === 'ORDER_NOT_FOUND'
+                        ? t('cancelNotFound')
+                        : responseData?.message || t('cancelFailure')
+            toast.error(message)
         },
     })
 
@@ -84,7 +93,9 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize)
 
     const handleCancelOrder = (id: string) => {
-        cancelOrderMutation.mutate(id)
+        const order = orders.find((candidate) => candidate._id === id)
+        if (order?.version === undefined) return toast.error(t('updateFailure'))
+        cancelOrderMutation.mutate({ id, version: order.version })
     }
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +194,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                 )}
                                 {paginatedOrders.map((order) => {
                                     const isCanceling =
-                                        cancelOrderMutation.isPending && cancelOrderMutation.variables === order._id
+                                        cancelOrderMutation.isPending && cancelOrderMutation.variables?.id === order._id
                                     return (
                                         <TableRow key={order._id}>
                                             <TableCell>{order.number}</TableCell>

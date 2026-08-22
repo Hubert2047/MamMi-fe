@@ -1,87 +1,189 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { CalendarDays, Eye, RotateCcw, WalletCards } from 'lucide-react'
 import { getDailyClosings, voidDailyClosing, type IDailyClosing } from '@/api/daily-closing'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+type StatusFilter = 'all' | 'confirmed' | 'voided'
+
+function getPeriodStart(closing: IDailyClosing) {
+  return closing.periodStart ?? closing.createdAt
+}
+
+function getPeriodEnd(closing: IDailyClosing) {
+  return closing.periodEnd ?? closing.createdAt
+}
+
+function formatDate(value?: string) {
+  if (!value) return '-'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '-' : new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }).format(date)
+}
+
+function formatAmount(value?: number) {
+  return Number(value ?? 0).toLocaleString()
+}
+
+function getDifference(closing: IDailyClosing) {
+  return closing.difference ?? closing.actualTotal - closing.systemAmount
 }
 
 export default function DailyClosingHistory() {
   const { t } = useI18n()
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [selected, setSelected] = useState<IDailyClosing | null>(null)
+  const [status, setStatus] = useState<StatusFilter>('all')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [selectedDetail, setSelectedDetail] = useState<IDailyClosing | null>(null)
+  const [selectedVoid, setSelectedVoid] = useState<IDailyClosing | null>(null)
   const [reason, setReason] = useState('')
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin'
-  const history = useQuery({ queryKey: ['daily-closing-history'], queryFn: () => getDailyClosings(3650) })
+  const history = useQuery({ queryKey: ['daily-closing-history', { fromDate, toDate, status, page, limit }], queryFn: () => getDailyClosings({ from: fromDate || undefined, to: toDate || undefined, status: status === 'all' ? undefined : status, page, limit }) })
+  const records = history.data?.data ?? []
+  const latestConfirmedId = history.data?.summary.latestConfirmedId
+  const confirmedCount = history.data?.summary.confirmed ?? 0
+  const voidedCount = history.data?.summary.voided ?? 0
+
   const voidMutation = useMutation({
     mutationFn: voidDailyClosing,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-closing-history'] })
       queryClient.invalidateQueries({ queryKey: ['daily-closing-summary'] })
-      setSelected(null)
+      setSelectedVoid(null)
       setReason('')
       toast.success(t('voidSuccess'))
     },
     onError: () => toast.error(t('voidFailure')),
   })
 
+  function openVoid(closing: IDailyClosing) {
+    setSelectedDetail(null)
+    setSelectedVoid(closing)
+    setReason('')
+  }
+
+  function clearFilters() {
+    setStatus('all')
+    setFromDate('')
+    setToDate('')
+    setPage(1)
+  }
+
   return (
-    <div className="p-6 md:p-8">
-      <div className="mb-6"><h1 className="text-3xl font-bold">{t('closingHistoryTitle')}</h1></div>
+    <div className="min-h-full p-4 md:p-6 lg:p-8">
+      <div className="mb-6 flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight">{t('closingHistoryTitle')}</h1>
+        <p className="text-sm text-muted-foreground">{t('closingHistoryDescription')}</p>
+      </div>
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard icon={<WalletCards className="size-4" />} label={t('closingSummaryTotal')} value={history.data?.summary.total ?? 0} />
+        <SummaryCard icon={<CalendarDays className="size-4" />} label={t('closingSummaryConfirmed')} value={confirmedCount} />
+        <SummaryCard icon={<RotateCcw className="size-4" />} label={t('closingSummaryVoided')} value={voidedCount} />
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">{t('closingSummaryLatest')}</CardTitle></CardHeader>
+          <CardContent className="text-sm font-semibold">{formatDate(history.data?.summary.latestConfirmedPeriodEnd ?? undefined)}</CardContent>
+        </Card>
+      </div>
+
       <Card>
-        <CardHeader><CardTitle>{t('closingHistoryTitle')}</CardTitle></CardHeader>
-        <CardContent>
-          {history.isLoading ? <p>{t('loading')}</p> : history.data?.length ? (
+          <CardHeader className="gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>{t('closingHistoryTitle')}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
+              <SelectTrigger className="w-44"><SelectValue placeholder={t('closingFilterStatus')} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('closingFilterAll')}</SelectItem>
+                <SelectItem value="confirmed">{t('closingFilterConfirmed')}</SelectItem>
+                <SelectItem value="voided">{t('closingFilterVoided')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">{t('closingFilterFrom')}</span><Input type="datetime-local" value={fromDate} aria-label={t('closingFilterFrom')} onChange={(event) => { setFromDate(event.target.value); setPage(1) }} className="w-52" /></div>
+            <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">{t('closingFilterTo')}</span><Input type="datetime-local" value={toDate} aria-label={t('closingFilterTo')} onChange={(event) => { setToDate(event.target.value); setPage(1) }} className="w-52" /></div>
+            <Select value={String(limit)} onValueChange={(value) => { setLimit(Number(value)); setPage(1) }}><SelectTrigger className="w-24"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="10">10 / {t('page')}</SelectItem><SelectItem value="20">20 / {t('page')}</SelectItem><SelectItem value="50">50 / {t('page')}</SelectItem></SelectContent></Select>
+            {(status !== 'all' || fromDate || toDate) && <Button variant="ghost" onClick={clearFilters}>{t('closingFilterReset')}</Button>}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {history.isLoading ? <div className="p-6 text-sm text-muted-foreground">{t('loading')}</div> : history.isError ? <div className="p-6 text-sm text-destructive">{t('closingLoadError')}</div> : records.length === 0 ? <div className="p-10 text-center text-sm text-muted-foreground">{t('closingNoData')}</div> : (
             <Table>
               <TableHeader><TableRow>
                 <TableHead>{t('closingPeriod')}</TableHead>
                 <TableHead>{t('closingStatus')}</TableHead>
-                <TableHead>{t('closingSystemAmount')}</TableHead>
-                <TableHead>{t('closingActualAmount')}</TableHead>
-                <TableHead>{t('closingDifference')}</TableHead>
-                <TableHead>{t('closingAction')}</TableHead>
+                <TableHead className="text-right">{t('closingSystemAmount')}</TableHead>
+                <TableHead className="text-right">{t('closingActualAmount')}</TableHead>
+                <TableHead className="text-right">{t('closingDifference')}</TableHead>
+                <TableHead className="text-right">{t('closingAction')}</TableHead>
               </TableRow></TableHeader>
-              <TableBody>{history.data.map((closing) => (
-                <TableRow key={closing._id}>
-                  <TableCell>{formatDate(closing.periodStart ?? closing.createdAt)} → {formatDate(closing.periodEnd ?? closing.createdAt)}</TableCell>
-                  <TableCell>{closing.status === 'voided' ? t('closingVoided') : t('closingConfirmed')}</TableCell>
-                  <TableCell>{closing.systemAmount.toLocaleString()}</TableCell>
-                  <TableCell>{closing.actualTotal.toLocaleString()}</TableCell>
-                  <TableCell>{(closing.difference ?? closing.actualTotal - closing.systemAmount).toLocaleString()}</TableCell>
-                  <TableCell>{isAdmin && closing.status === 'confirmed' && history.data[0]?._id === closing._id ? (
-                    <Button variant="destructive" size="sm" onClick={() => setSelected(closing)}>{t('voidClosing')}</Button>
-                  ) : null}</TableCell>
+              <TableBody>{records.map((closing) => {
+                const isConfirmed = (closing.status ?? 'confirmed') === 'confirmed'
+                const canVoid = isAdmin && isConfirmed && latestConfirmedId === closing._id
+                return <TableRow key={closing._id} className="cursor-pointer" onClick={() => setSelectedDetail(closing)}>
+                  <TableCell><div className="font-medium">{formatDate(getPeriodStart(closing))}</div><div className="text-xs text-muted-foreground">→ {formatDate(getPeriodEnd(closing))}</div></TableCell>
+                  <TableCell><Badge variant={isConfirmed ? 'secondary' : 'destructive'}>{isConfirmed ? t('closingConfirmed') : t('closingVoided')}</Badge></TableCell>
+                  <TableCell className="text-right tabular-nums">{formatAmount(closing.systemAmount)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatAmount(closing.actualTotal)}</TableCell>
+                  <TableCell className={`text-right tabular-nums ${getDifference(closing) === 0 ? 'text-muted-foreground' : 'font-semibold text-destructive'}`}>{formatAmount(getDifference(closing))}</TableCell>
+                  <TableCell className="text-right"><Button variant="ghost" size="icon-sm" aria-label={t('closingDetailsTitle')} onClick={(event) => { event.stopPropagation(); setSelectedDetail(closing) }}><Eye className="size-4" /></Button>{canVoid && <Button variant="destructive" size="sm" onClick={(event) => { event.stopPropagation(); openVoid(closing) }}>{t('voidClosing')}</Button>}</TableCell>
                 </TableRow>
-              ))}</TableBody>
+              })}</TableBody>
             </Table>
-          ) : <p className="text-muted-foreground">{t('noClosings')}</p>}
+          )}
         </CardContent>
       </Card>
+      {history.data && history.data.pagination.pages > 1 && <div className="mt-4 flex items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{t('page')} {history.data.pagination.page} / {history.data.pagination.pages}</p><div className="flex gap-2"><Button variant="outline" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>{t('previous')}</Button><Button variant="outline" disabled={page >= history.data.pagination.pages} onClick={() => setPage((value) => value + 1)}>{t('next')}</Button></div></div>}
 
-      <AlertDialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null) }}>
+      <Dialog open={Boolean(selectedDetail)} onOpenChange={(open) => { if (!open) setSelectedDetail(null) }}>
+        <DialogContent className="max-w-2xl">
+          {selectedDetail && <>
+            <DialogHeader><DialogTitle>{t('closingDetailsTitle')}</DialogTitle><DialogDescription>{formatDate(getPeriodStart(selectedDetail))} → {formatDate(getPeriodEnd(selectedDetail))}</DialogDescription></DialogHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Detail label={t('closingStatus')} value={(selectedDetail.status ?? 'confirmed') === 'confirmed' ? t('closingConfirmed') : t('closingVoided')} />
+              <Detail label={t('closingSystemAmount')} value={formatAmount(selectedDetail.systemAmount)} />
+              <Detail label={t('closingActualAmount')} value={formatAmount(selectedDetail.actualTotal)} />
+              <Detail label={t('closingDifference')} value={formatAmount(getDifference(selectedDetail))} />
+              <Detail label={t('closingCashSales')} value={formatAmount(selectedDetail.cashSales)} />
+              <Detail label={t('closingOtherRevenue')} value={formatAmount(selectedDetail.otherRevenueTotal)} />
+              <Detail label={t('closingExpenses')} value={formatAmount(selectedDetail.expensesTotal)} />
+              <Detail label={t('closingPreviousAmount')} value={formatAmount(selectedDetail.previousClosingAmount)} />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4"><p className="mb-2 text-sm font-semibold">{t('closingSnapshot')}</p><div className="grid gap-2 text-sm sm:grid-cols-2"><Detail label={t('closingConfirmedAt')} value={formatDate(selectedDetail.confirmedAt)} /><Detail label={t('closingConfirmedBy')} value={selectedDetail.confirmedBy ?? '-'} />{selectedDetail.status === 'voided' && <><Detail label={t('closingVoidedAt')} value={formatDate(selectedDetail.voidedAt)} /><Detail label={t('closingVoidedBy')} value={selectedDetail.voidedBy ?? '-'} /><Detail label={t('closingVoidReason')} value={selectedDetail.voidReason ?? '-'} /></>}</div></div>
+            {isAdmin && (selectedDetail.status ?? 'confirmed') === 'confirmed' && latestConfirmedId === selectedDetail._id && <Button variant="destructive" onClick={() => openVoid(selectedDetail)}>{t('voidClosing')}</Button>}
+          </>}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={Boolean(selectedVoid)} onOpenChange={(open) => { if (!open) setSelectedVoid(null) }}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('voidClosingTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('voidClosingDescription')}</AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>{t('voidClosingTitle')}</AlertDialogTitle><AlertDialogDescription>{t('voidClosingDescription')}</AlertDialogDescription></AlertDialogHeader>
           <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={t('voidReasonPlaceholder')} />
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction disabled={!reason.trim() || voidMutation.isPending} onClick={(event) => { event.preventDefault(); if (selected) voidMutation.mutate({ id: selected._id, reason }) }}>{t('voidClosing')}</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction disabled={!reason.trim() || voidMutation.isPending} onClick={(event) => { event.preventDefault(); if (selectedVoid) voidMutation.mutate({ id: selectedVoid._id, reason }) }}>{t('voidClosing')}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   )
+}
+
+function SummaryCard({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
+  return <Card><CardHeader className="flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><span className="text-primary">{icon}</span></CardHeader><CardContent className="text-2xl font-bold tabular-nums">{value}</CardContent></Card>
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-medium">{value}</p></div>
 }

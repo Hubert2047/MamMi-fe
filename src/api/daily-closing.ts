@@ -47,16 +47,30 @@ export interface DailyClosingSummary {
     systemAmount: number
 }
 
+export type DailyClosingHistoryParams = {
+    from?: string
+    to?: string
+    status?: 'confirmed' | 'voided'
+    page?: number
+    limit?: number
+}
+
+export type DailyClosingHistoryResponse = {
+    data: IDailyClosing[]
+    pagination: { page: number; limit: number; total: number; pages: number }
+    summary: { total: number; confirmed: number; voided: number; latestConfirmedId: string | null; latestConfirmedPeriodEnd: string | null }
+}
+
 export const getDailyClosingSummary = async (): Promise<DailyClosingSummary> => {
     const res = await api.get('daily-closing/summary')
     return res.data.data
 }
 
-export const getDailyClosings = async (days?: number): Promise<IDailyClosing[]> => {
+export const getDailyClosings = async (params: DailyClosingHistoryParams = {}): Promise<DailyClosingHistoryResponse> => {
     const res = await api.get('daily-closing', {
-        params: days ? { days } : {},
+        params,
     })
-    return res.data.data
+    return res.data
 }
 export const createDailyClosing = async (data: ICreateDailyClosing): Promise<IDailyClosing> => {
     return api.post('daily-closing', data)

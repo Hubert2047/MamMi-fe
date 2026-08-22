@@ -77,10 +77,26 @@ function PosHeader({
                             }),
                         }))
                 }}>
-                <ToggleGroupItem value='takeaway'>外帶</ToggleGroupItem>
-                <ToggleGroupItem value='dine_in'>內用</ToggleGroupItem>
-                <ToggleGroupItem value='uber'>Uber</ToggleGroupItem>
-                <ToggleGroupItem value='foodpanda'>FoodPanda</ToggleGroupItem>
+                <ToggleGroupItem
+                    value='takeaway'
+                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    外帶
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                    value='dine_in'
+                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    內用
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                    value='uber'
+                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    Uber
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                    value='foodpanda'
+                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    FoodPanda
+                </ToggleGroupItem>
             </ToggleGroup>
 
             <div className='flex-1'></div>

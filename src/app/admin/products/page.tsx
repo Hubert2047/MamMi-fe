@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { createItem, deleteItem, getItems, updateItem, type Item, type ItemInput, type LocalizedOption } from '@/api/item'
+import { type Item, type ItemInput, type LocalizedOption } from '@/api/item'
+import { createCatalogItem, deleteCatalogItem, getCatalogItems, updateCatalogItem } from '@/api/catalog-item'
 import { getCategories, type Category } from '@/api/category'
 import { getAddons, type Addon } from '@/api/addon'
 import { useI18n } from '@/lib/i18n'
@@ -55,7 +56,7 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useState(10)
   const [variantInputs, setVariantInputs] = useState<OptionInputs>(emptyOptionInputs)
   const [noteOptionInputs, setNoteOptionInputs] = useState<OptionInputs>(emptyOptionInputs)
-  const { data: allItems = [], isLoading } = useQuery({ queryKey: ['admin-items', locale], queryFn: () => getItems(undefined, locale) })
+  const { data: allItems = [], isLoading } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: getCategories })
   const { data: addons = [] } = useQuery<Addon[]>({ queryKey: ['addons', locale], queryFn: () => getAddons(locale) })
   const filteredItems = categoryFilter ? allItems.filter((item) => typeof item.categoryId === 'string' ? item.categoryId === categoryFilter : item.categoryId?._id === categoryFilter) : allItems
@@ -71,18 +72,18 @@ export default function ProductsPage() {
   }, [])
 
   const save = useMutation({
-    mutationFn: (data: ItemInput) => editing ? updateItem({ id: editing._id, data }) : createItem(data),
+    mutationFn: (data: ItemInput) => editing ? updateCatalogItem({ id: editing._id, data }) : createCatalogItem(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-items'] })
+      queryClient.invalidateQueries({ queryKey: ['catalog-items'] })
       toast.success(editing ? t('updateSuccess') : t('createSuccess'))
       reset()
     },
     onError: () => toast.error(t('saveError')),
   })
   const remove = useMutation({
-    mutationFn: deleteItem,
+    mutationFn: deleteCatalogItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-items'] })
+      queryClient.invalidateQueries({ queryKey: ['catalog-items'] })
       toast.success(t('deleteSuccess'))
     },
     onError: () => toast.error(t('deleteError')),
@@ -149,14 +150,12 @@ export default function ProductsPage() {
               <div className="space-y-2"><Label>{t('productName')} (EN)</Label><Input value={form.names.en} onChange={(event) => setForm({ ...form, names: { ...form.names, en: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('productName')} (繁中)</Label><Input value={form.names['zh-TW']} onChange={(event) => setForm({ ...form, names: { ...form.names, 'zh-TW': event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('categories')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })}><option value="">{t('chooseCategory')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select></div>
-              <div className="grid grid-cols-3 gap-2">{(['base', 'uber', 'foodpanda'] as const).map((type) => <div key={type} className="space-y-2"><Label className="capitalize">{type}</Label><Input type="number" value={form.price[type] ?? 0} onChange={(event) => setForm({ ...form, price: { ...form.price, [type]: Number(event.target.value) } })} /></div>)}</div>
               <div className="space-y-2"><Label>{t('variants')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={variantInputs.vi} onChange={(event) => setVariantInputs({ ...variantInputs, vi: event.target.value })} placeholder={`${t('variantPlaceholder')} (VI)`} /><Input value={variantInputs.en} onChange={(event) => setVariantInputs({ ...variantInputs, en: event.target.value })} placeholder={`${t('variantPlaceholder')} (EN)`} /><Input value={variantInputs['zh-TW']} onChange={(event) => setVariantInputs({ ...variantInputs, 'zh-TW': event.target.value })} placeholder={`${t('variantPlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('notes')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={noteOptionInputs.vi} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, vi: event.target.value })} placeholder={`${t('notePlaceholder')} (VI)`} /><Input value={noteOptionInputs.en} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, en: event.target.value })} placeholder={`${t('notePlaceholder')} (EN)`} /><Input value={noteOptionInputs['zh-TW']} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, 'zh-TW': event.target.value })} placeholder={`${t('notePlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('addons')}</Label><div className="grid grid-cols-2 gap-2 rounded-lg border p-3">{addons.map((addon) => <label key={addon._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={form.addons.includes(addon._id)} onCheckedChange={(checked) => setForm({ ...form, addons: checked ? [...form.addons, addon._id] : form.addons.filter((id) => id !== addon._id) })} /><span className="truncate">{addon.names[locale] || addon.names.vi || addon.names.en || addon.names['zh-TW']} (+{addon.priceExtra.toLocaleString(locale)})</span></label>)}</div></div>
               <div className="space-y-2"><Label>{t('description')} (VI)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.vi} onChange={(event) => setForm({ ...form, description: { ...form.description, vi: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('description')} (EN)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.en} onChange={(event) => setForm({ ...form, description: { ...form.description, en: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('description')} (繁中)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description['zh-TW']} onChange={(event) => setForm({ ...form, description: { ...form.description, 'zh-TW': event.target.value } })} /></div>
-              <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.active} onCheckedChange={(checked) => setForm({ ...form, active: checked === true })} />{t('selling')}</label>
             </form>
           </CardContent>
         </Card>
