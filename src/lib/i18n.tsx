@@ -53,7 +53,19 @@ const productDescriptionMessages = {
   'zh-TW': { description: '商品描述', descriptionPlaceholder: '描述食材或商品特色' },
 } as const
 
-type MessageKey = keyof typeof messages.vi | keyof typeof extraMessages.vi | keyof typeof productActionMessages.vi | keyof typeof productDescriptionMessages.vi | keyof typeof categoryMessages.vi | keyof typeof addonMessages.vi | keyof typeof discountMessages.vi | keyof typeof commonMessages.vi
+const orderMessages = {
+  vi: { allOrders: 'Tất cả', pendingPayment: 'Chờ thanh toán', paidOrders: 'Đã thanh toán' },
+  en: { allOrders: 'All', pendingPayment: 'Pending payment', paidOrders: 'Paid' },
+  'zh-TW': { allOrders: '全部', pendingPayment: '待付款', paidOrders: '已付款' },
+} as const
+
+const dailyClosingMessages = {
+  vi: { closingReasonRequired: 'Có chênh lệch nên phải điền nguyên nhân mới kết toán được' },
+  en: { closingReasonRequired: 'A reason is required for the difference before closing the day' },
+  'zh-TW': { closingReasonRequired: '有差異時必須填寫原因才能結算' },
+} as const
+
+type MessageKey = keyof typeof messages.vi | keyof typeof extraMessages.vi | keyof typeof productActionMessages.vi | keyof typeof productDescriptionMessages.vi | keyof typeof orderMessages.vi | keyof typeof dailyClosingMessages.vi | keyof typeof categoryMessages.vi | keyof typeof addonMessages.vi | keyof typeof discountMessages.vi | keyof typeof commonMessages.vi
 type I18nContextValue = { locale: Locale; setLocale: (locale: Locale) => void; t: (key: MessageKey) => string }
 const I18nContext = createContext<I18nContextValue | null>(null)
 
@@ -66,7 +78,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(browserLocale.startsWith('zh') ? 'zh-TW' : browserLocale.startsWith('en') ? 'en' : 'vi')
   }, [])
   const setLocale = (next: Locale) => { setLocaleState(next); window.localStorage.setItem('pos-locale', next) }
-  const value = useMemo(() => ({ locale, setLocale, t: (key: MessageKey) => key in messages[locale] ? messages[locale][key as keyof typeof messages.vi] : key in extraMessages[locale] ? extraMessages[locale][key as keyof typeof extraMessages.vi] : key in productActionMessages[locale] ? productActionMessages[locale][key as keyof typeof productActionMessages.vi] : key in productDescriptionMessages[locale] ? productDescriptionMessages[locale][key as keyof typeof productDescriptionMessages.vi] : key in commonMessages[locale] ? commonMessages[locale][key as keyof typeof commonMessages.vi] : key in categoryMessages[locale] ? categoryMessages[locale][key as keyof typeof categoryMessages.vi] : key in addonMessages[locale] ? addonMessages[locale][key as keyof typeof addonMessages.vi] : discountMessages[locale][key as keyof typeof discountMessages.vi] }), [locale])
+  const value = useMemo(() => ({ locale, setLocale, t: (key: MessageKey) => key in messages[locale] ? messages[locale][key as keyof typeof messages.vi] : key in extraMessages[locale] ? extraMessages[locale][key as keyof typeof extraMessages.vi] : key in productActionMessages[locale] ? productActionMessages[locale][key as keyof typeof productActionMessages.vi] : key in productDescriptionMessages[locale] ? productDescriptionMessages[locale][key as keyof typeof productDescriptionMessages.vi] : key in orderMessages[locale] ? orderMessages[locale][key as keyof typeof orderMessages.vi] : key in dailyClosingMessages[locale] ? dailyClosingMessages[locale][key as keyof typeof dailyClosingMessages.vi] : key in commonMessages[locale] ? commonMessages[locale][key as keyof typeof commonMessages.vi] : key in categoryMessages[locale] ? categoryMessages[locale][key as keyof typeof categoryMessages.vi] : key in addonMessages[locale] ? addonMessages[locale][key as keyof typeof addonMessages.vi] : discountMessages[locale][key as keyof typeof discountMessages.vi] }), [locale])
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }
 

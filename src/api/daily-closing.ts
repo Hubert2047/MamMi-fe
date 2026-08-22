@@ -1,4 +1,6 @@
 import api from './axios'
+import type { PaymentMethod } from '@/constants'
+import type { SalesByPayment } from '@/api/order'
 
 export type CashData = {
     [denomination: number]: string
@@ -23,6 +25,20 @@ export interface ICreateDailyClosing {
 
 export interface IUpdateDailyClosing extends ICreateDailyClosing {
     _id: string
+}
+
+export interface DailyClosingSummary {
+    salesByPayment: Record<PaymentMethod, SalesByPayment>
+    cashSales: number
+    otherRevenueTotal: number
+    expensesTotal: number
+    previousClosingAmount: number
+    systemAmount: number
+}
+
+export const getDailyClosingSummary = async (): Promise<DailyClosingSummary> => {
+    const res = await api.get('daily-closing/summary')
+    return res.data.data
 }
 
 export const getDailyClosings = async (date?: string): Promise<IDailyClosing[]> => {

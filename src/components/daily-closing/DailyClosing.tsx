@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useState } from 'react'
 import DailyClosingStep1 from '@/components/daily-closing/DailyClosingStep1.tsx'
 import DailyClosingStep2 from '@/components/daily-closing/DailyClosingStep2.tsx'
-import type { SalesByPayment } from '@/api/order.ts'
 import type { PaymentMethod } from '@/constants'
-import { useClosingOfYesterday, useExpenses, useRevenues, useSalesByPayment } from '@/hooks/queries'
+import type { SalesByPayment } from '@/api/order.ts'
+import { useDailyClosingSummary, useExpenses } from '@/hooks/queries'
 type Props = {
     open: boolean
     onClose: () => void
@@ -12,14 +12,11 @@ type Props = {
 
 function DailyClosing({ open, onClose }: Props) {
     const [currentStep, setCurrentStep] = useState(1)
-    const { data: salesData = {} as Record<PaymentMethod, SalesByPayment>, isLoading: isSalesLoading } = useSalesByPayment()
+    const { data: summary, isLoading: isSummaryLoading } = useDailyClosingSummary()
     const { data: expenses = [], isLoading: isExpenseLoading } = useExpenses()
-    const { data: otherRevenues = [] } = useRevenues()
-    const { data: closingOfYesterday = { amount: 0 } } = useClosingOfYesterday()
-    const totalCashSales = salesData['cash']?.totalSales || 0
-    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.price, 0)
-    const totalOtherRevenues = otherRevenues.reduce((sum, revenue) => sum + revenue.price, 0)
-    const systemAmount = closingOfYesterday.amount + totalCashSales + totalOtherRevenues - totalExpenses
+    const salesData = summary?.salesByPayment ?? {} as Record<PaymentMethod, SalesByPayment>
+    const totalOtherRevenues = summary?.otherRevenueTotal ?? 0
+    const systemAmount = summary?.systemAmount ?? 0
     
     return (
         <>
@@ -40,7 +37,7 @@ function DailyClosing({ open, onClose }: Props) {
                             totalOtherRevenues={totalOtherRevenues}
                             salesData={salesData}
                             isExpenseLoading={isExpenseLoading}
-                            isSalesLoading={isSalesLoading}
+                            isSalesLoading={isSummaryLoading}
                             setCurrentStep={setCurrentStep}
                         />
                     )}

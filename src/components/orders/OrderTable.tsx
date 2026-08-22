@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input.tsx'
 import PrintOptions from '../PrintOptions'
+import { useI18n } from '@/lib/i18n'
 
 type Props = {
     open: boolean
@@ -32,11 +33,13 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('all')
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
     const pageSize = 6
 
     const [days, setDays] = useState<number>(1)
+    const { t } = useI18n()
     const { data: orders = [], isLoading: isOrderLoading } = useOrders(days)
 
     const cancelOrderMutation = useMutation({
@@ -51,8 +54,9 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     })
 
     const filteredOrders = orders.filter((o) => {
-        if (!search) return true
-        return o.number.toString().includes(search.trim())
+        const matchesStatus = statusFilter === 'all' || o.status === statusFilter
+        const matchesSearch = !search || o.number.toString().includes(search.trim())
+        return matchesStatus && matchesSearch
     })
 
     const totalPages = Math.ceil(filteredOrders.length / pageSize)
@@ -79,6 +83,22 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                         <DialogTitle className='text-black! font-bold! text-xl'>Bảng Đơn hàng</DialogTitle>
                     </DialogHeader>
                     <div className='flex items-center gap-2'>
+                        {([
+                            { label: t('allOrders'), value: 'all' },
+                            { label: t('pendingPayment'), value: 'pending' },
+                            { label: t('paidOrders'), value: 'paid' },
+                        ] as const).map((item) => (
+                            <Button
+                                key={item.value}
+                                size='sm'
+                                variant={statusFilter === item.value ? 'default' : 'outline'}
+                                onClick={() => {
+                                    setStatusFilter(item.value)
+                                    setPage(1)
+                                }}>
+                                {item.label}
+                            </Button>
+                        ))}
                         {(
                             [
                                 { label: 'Hôm nay', value: 1 },

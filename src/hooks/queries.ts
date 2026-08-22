@@ -4,7 +4,7 @@ import { getExpenses, type Expense } from '@/api/expense'
 import { getItems, type Item } from '@/api/item'
 import { getNextOrderNumber, getOrders, getSalesByPayment, type IOrder, type SalesByPayment } from '@/api/order'
 import { getRevenues, type Revenue } from '@/api/other-revenue'
-import { getClosingOfYesterday } from '@/api/daily-closing'
+import { getDailyClosingSummary } from '@/api/daily-closing'
 import type { PaymentMethod } from '@/constants'
 import { useI18n } from '@/lib/i18n'
 
@@ -16,7 +16,7 @@ export const queryKeys = {
   expenses: (date?: string) => ['expenses', date] as const,
   revenues: (date?: string) => ['revenues', date] as const,
   salesByPayment: ['sales-by-payment'] as const,
-  closingOfYesterday: ['closing-of-yesterday'] as const,
+  dailyClosingSummary: ['daily-closing-summary'] as const,
 }
 
 export function useItems(active = true) {
@@ -76,10 +76,10 @@ export function useSalesByPayment() {
   })
 }
 
-export function useClosingOfYesterday() {
-  return useQuery<{ amount: number }, Error>({
-    queryKey: queryKeys.closingOfYesterday,
-    queryFn: getClosingOfYesterday,
+export function useDailyClosingSummary() {
+  return useQuery({
+    queryKey: queryKeys.dailyClosingSummary,
+    queryFn: getDailyClosingSummary,
     staleTime: 5 * 60 * 1000,
   })
 }

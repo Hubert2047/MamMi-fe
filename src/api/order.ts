@@ -47,6 +47,7 @@ export interface IOrder extends BaseOrder {
     _id: string
     totalPrice: number
     createdAt: Date
+    paidAt?: Date
 }
 export type SalesByPayment = {
     _id: string

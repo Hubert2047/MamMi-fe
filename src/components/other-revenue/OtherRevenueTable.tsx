@@ -89,7 +89,7 @@ export function OtherRevenueTable({revenues, showOnly = false}: Props) {
                         </Button>
                     )}
                 </div>
-                <Button className='bg-blue-300 text-black' onClick={()=>{
+                <Button className='bg-primary text-primary-foreground hover:bg-primary/90' onClick={()=>{
                     setAddRevenue(true)
                 }}>Thêm thu nhập</Button>
             </div>

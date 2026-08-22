@@ -89,7 +89,7 @@ export function ExpenseTable({expenses, showOnly = false}: Props) {
                         </Button>
                     )}
                 </div>
-                {!showOnly && <Button className='bg-blue-300 text-black' onClick={() => {
+                {!showOnly && <Button className='bg-primary text-primary-foreground hover:bg-primary/90' onClick={() => {
                     setAddExpense(true)
                 }}>Thêm chi phí</Button>}
             </div>

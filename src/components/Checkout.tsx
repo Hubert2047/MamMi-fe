@@ -155,7 +155,7 @@ function Checkout({
                                 {paymentMethods.map((method) => (
                                     <ToggleGroupItem
                                         key={method}
-                                        className='flex items-center justify-center w-max'
+                                        className='flex w-max items-center justify-center rounded-md border-primary/40 transition-colors hover:bg-primary/10 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground'
                                         value={method}>
                                         <span>
                                             {

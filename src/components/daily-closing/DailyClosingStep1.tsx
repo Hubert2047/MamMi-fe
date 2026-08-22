@@ -10,6 +10,7 @@ import {ExpenseTable} from '@/components/expense/ExpenseTable.tsx'
 import Loading from '@/components/Loading.tsx'
 import type {SalesByPayment} from '@/api/order'
 import type {Expense} from '@/api/expense'
+import {calculateIncomeTotal} from '@/lib/dailyClosingCalculations'
 
 type Props = {
     totalOtherRevenues: number
@@ -36,9 +37,7 @@ function DailyClosingStep1({
         return value
     }
 
-    const totalSales = Object.values(salesData).reduce((sum, item) => {
-        return sum + (item?.totalSales ?? 0)
-    }, 0)
+    const totalIncome = calculateIncomeTotal(salesData, totalOtherRevenues)
     return (
         <>
             <div className='flex justify-between'>
@@ -46,19 +45,21 @@ function DailyClosingStep1({
                     size='lg'
                     variant='outline'
                     type='single'
+                    spacing={2}
+                    className='flex-wrap gap-2'
                     value={type}
                     onValueChange={(value) => {
                         if (value) setType(value as 'income' | 'expense')
                     }}>
-                    <ToggleGroupItem className='w-20' value='income'>
+                    <ToggleGroupItem className='w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground' value='income'>
                         Thu nhập
                     </ToggleGroupItem>
-                    <ToggleGroupItem className='w-20' value='expense'>
+                    <ToggleGroupItem className='w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground' value='expense'>
                         Chi ra
                     </ToggleGroupItem>
                 </ToggleGroup>
                 <Button
-                    className='flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white'
+                    className='flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
                     onClick={() => setCurrentStep(2)}>
                     Tiếp theo
                     <ArrowRight className='w-4 h-4'/>
@@ -85,7 +86,7 @@ function DailyClosingStep1({
                         })}
                     <div className='variant flex justify-start items-center gap-4 pt-6 border-t mt-4'>
                         <Label className='block w-28 font-semibold'>Tổng</Label>
-                        <Input id='amount' value={totalSales.toLocaleString()} className='w-40 text-center' disabled/>
+                        <Input id='amount' value={totalIncome.toLocaleString()} className='w-40 text-center' disabled/>
                     </div>
                 </div>
             ) : (
