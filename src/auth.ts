@@ -28,6 +28,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         account: { label: 'Account', type: 'text' },
         password: { label: 'Password', type: 'password' },
+        storeId: { label: 'Store', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.account || !credentials.password) return null
@@ -36,6 +37,7 @@ export const authOptions: NextAuthOptions = {
           const response = await loginAPI({
             account: credentials.account,
             password: credentials.password,
+            ...(typeof credentials.storeId === 'string' && credentials.storeId !== 'undefined' ? { storeId: credentials.storeId } : {}),
           })
           const { accessToken, user } = response.data
           if (!accessToken || !user) return null

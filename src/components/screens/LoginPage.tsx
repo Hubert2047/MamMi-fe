@@ -6,10 +6,12 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { signIn } from 'next-auth/react'
 import { useI18n } from '@/lib/i18n'
+import { getLoginStores } from '@/api/auth'
 
 export default function LoginPage() {
     const { t } = useI18n()
@@ -18,6 +20,9 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<{ account?: string; password?: string }>({})
+    const [loginStores, setLoginStores] = useState<{ _id: string; name: string }[]>([])
+    const [selectedStoreId, setSelectedStoreId] = useState('')
+    const [selectingStore, setSelectingStore] = useState(false)
 
     const validate = () => {
         const nextErrors: typeof errors = {}
@@ -32,9 +37,27 @@ export default function LoginPage() {
         if (!validate()) return
         setLoading(true)
         try {
+            if (selectingStore && !selectedStoreId) {
+                setErrors({ account: t('requiredStoreSelection') })
+                return
+            }
+            if (!selectingStore) {
+                const options = await getLoginStores({ account, password })
+                const stores = options.data.data || []
+                const role = options.data.role
+                if (role === 'Admin' && stores.length > 1) {
+                    setLoginStores(stores)
+                    setSelectedStoreId(stores[0]._id)
+                    setSelectingStore(true)
+                    return
+                }
+                if (role !== 'SuperAdmin' && !stores[0]?._id) throw new Error('No store assigned')
+                if (stores[0]?._id) window.localStorage.setItem('activeStoreId', stores[0]._id)
+            }
             const result = await signIn('credentials', {
                 account,
                 password,
+                ...(selectingStore ? { storeId: selectedStoreId } : {}),
                 callbackUrl: '/',
                 redirect: false,
             })
@@ -106,6 +129,7 @@ export default function LoginPage() {
                                 </div>
                                 {errors.password && <p className='text-xs text-red-500'>{errors.password}</p>}
                             </div>
+                            {selectingStore && <div className='flex flex-col gap-1.5'><Label htmlFor='login-store' className='text-sm text-slate-700'>{t('loginStore')}</Label><Select value={selectedStoreId} onValueChange={setSelectedStoreId}><SelectTrigger id='login-store' className='!bg-white !text-slate-900'><SelectValue placeholder={t('selectStore')} /></SelectTrigger><SelectContent>{loginStores.map((store) => <SelectItem key={store._id} value={store._id}>{store.name}</SelectItem>)}</SelectContent></Select></div>}
                             <Button type='submit' disabled={loading} className='mt-1 w-full h-10 bg-primary hover:bg-primary/90 font-semibold tracking-wide gap-2 transition-colors'>
                                 {loading && <Loader2 size={15} className='animate-spin' />}
                                 {loading ? t('loginLoading') : t('loginSubmit')}

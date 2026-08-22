@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/auth'
+import Loading from '@/components/Loading'
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const { hydrated, isAuthenticated } = useAuth()
@@ -15,7 +16,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }, [hydrated, isAuthenticated, pathname, router])
 
   if (pathname === '/pos' && (!hydrated || !isAuthenticated)) {
-    return <div className="min-h-svh bg-background" />
+    return <Loading />
   }
 
   return <>{children}</>

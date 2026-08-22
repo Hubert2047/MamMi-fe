@@ -18,6 +18,8 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
+        const activeStoreId = typeof window !== 'undefined' ? window.localStorage.getItem('activeStoreId') : null
+        if (activeStoreId) config.headers['X-Store-Id'] = activeStoreId
         return config
     },
     (error: unknown) => {

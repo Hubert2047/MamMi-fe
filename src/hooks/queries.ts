@@ -31,7 +31,7 @@ export function useItems(active = true) {
 export function useDiscounts() {
   return useQuery<Discount[], Error>({
     queryKey: queryKeys.discounts,
-    queryFn: getDiscounts,
+    queryFn: () => getDiscounts(),
     staleTime: 5 * 60 * 1000,
   })
 }

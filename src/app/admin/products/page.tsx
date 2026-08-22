@@ -16,6 +16,7 @@ import { createCatalogItem, deleteCatalogItem, getCatalogItems, updateCatalogIte
 import { getCategories, type Category } from '@/api/category'
 import { getAddons, type Addon } from '@/api/addon'
 import { useI18n } from '@/lib/i18n'
+import { useAuth } from '@/hooks/auth'
 
 const emptyForm: ItemInput = {
   names: { vi: '', en: '', 'zh-TW': '' },
@@ -47,6 +48,8 @@ const optionInputsFrom = (options: LocalizedOption[]): OptionInputs => ({
 
 export default function ProductsPage() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'SuperAdmin'
   const { t, locale } = useI18n()
   const [form, setForm] = useState<ItemInput>(emptyForm)
   const [editing, setEditing] = useState<Item | null>(null)
@@ -89,6 +92,8 @@ export default function ProductsPage() {
     onError: () => toast.error(t('deleteError')),
   })
 
+  if (!isSuperAdmin) return <div className="p-6 md:p-8"><Card><CardHeader><CardTitle>{t('superAdminOnly')}</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">{t('catalogSuperAdminHint')}</CardContent></Card></div>
+
   function reset() {
     setForm(emptyForm)
     setEditing(null)
@@ -106,8 +111,8 @@ export default function ProductsPage() {
       addons: item.addons.map((addon) => addon._id),
       variants: item.variants || [],
       noteOptions: item.noteOptions || [],
-      price: item.price,
-      active: item.active,
+      price: { base: 0, uber: 0, foodpanda: 0 },
+      active: true,
     }
   }
 
@@ -152,7 +157,7 @@ export default function ProductsPage() {
               <div className="space-y-2"><Label>{t('categories')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })}><option value="">{t('chooseCategory')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select></div>
               <div className="space-y-2"><Label>{t('variants')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={variantInputs.vi} onChange={(event) => setVariantInputs({ ...variantInputs, vi: event.target.value })} placeholder={`${t('variantPlaceholder')} (VI)`} /><Input value={variantInputs.en} onChange={(event) => setVariantInputs({ ...variantInputs, en: event.target.value })} placeholder={`${t('variantPlaceholder')} (EN)`} /><Input value={variantInputs['zh-TW']} onChange={(event) => setVariantInputs({ ...variantInputs, 'zh-TW': event.target.value })} placeholder={`${t('variantPlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('notes')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={noteOptionInputs.vi} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, vi: event.target.value })} placeholder={`${t('notePlaceholder')} (VI)`} /><Input value={noteOptionInputs.en} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, en: event.target.value })} placeholder={`${t('notePlaceholder')} (EN)`} /><Input value={noteOptionInputs['zh-TW']} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, 'zh-TW': event.target.value })} placeholder={`${t('notePlaceholder')} (繁中)`} /></div>
-              <div className="space-y-2"><Label>{t('addons')}</Label><div className="grid grid-cols-2 gap-2 rounded-lg border p-3">{addons.map((addon) => <label key={addon._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={form.addons.includes(addon._id)} onCheckedChange={(checked) => setForm({ ...form, addons: checked ? [...form.addons, addon._id] : form.addons.filter((id) => id !== addon._id) })} /><span className="truncate">{addon.names[locale] || addon.names.vi || addon.names.en || addon.names['zh-TW']} (+{addon.priceExtra.toLocaleString(locale)})</span></label>)}</div></div>
+              <div className="space-y-2"><Label>{t('addons')}</Label><div className="grid grid-cols-2 gap-2 rounded-lg border p-3">{addons.map((addon) => <label key={addon._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={form.addons.includes(addon._id)} onCheckedChange={(checked) => setForm({ ...form, addons: checked ? [...form.addons, addon._id] : form.addons.filter((id) => id !== addon._id) })} /><span className="truncate">{addon.names[locale] || addon.names.vi || addon.names.en || addon.names['zh-TW']}</span></label>)}</div></div>
               <div className="space-y-2"><Label>{t('description')} (VI)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.vi} onChange={(event) => setForm({ ...form, description: { ...form.description, vi: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('description')} (EN)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.en} onChange={(event) => setForm({ ...form, description: { ...form.description, en: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('description')} (繁中)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description['zh-TW']} onChange={(event) => setForm({ ...form, description: { ...form.description, 'zh-TW': event.target.value } })} /></div>
@@ -161,7 +166,7 @@ export default function ProductsPage() {
         </Card>
         <Card className="flex min-h-0 flex-col overflow-hidden [&>div:last-child]:flex-1 [&>div:last-child]:min-h-0 [&>div:last-child]:overflow-hidden [&>div:last-child>div]:h-full [&>div:last-child>div]:!max-h-none">
           <CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-2"><CardTitle>{t('productList')}</CardTitle><div className="flex flex-wrap items-center justify-end gap-1"><span className="mr-2 text-xs text-muted-foreground">{t('productTotal')}: {filteredItems.length}</span><select aria-label={t('categories')} className="h-8 max-w-40 rounded-md border bg-background px-2 text-xs" value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setPage(1) }}><option value="">{t('allCategories')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select><span className="ml-1 text-xs text-muted-foreground">{currentPage}/{totalPages}</span><Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setPage((current) => current - 1)}>‹</Button><Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setPage((current) => current + 1)}>›</Button></div></div></CardHeader>
-          <CardContent className="min-h-0"><div className="max-h-[calc(100svh-220px)] overflow-auto"><Table><TableHeader><TableRow><TableHead className="h-8 px-2 py-1 text-xs">{t('name')}</TableHead><TableHead className="h-8 px-2 py-1 text-xs">{t('categories')}</TableHead><TableHead className="h-8 px-2 py-1 text-xs">{t('price')}</TableHead><TableHead className="h-8 px-2 py-1 text-xs">{t('status')}</TableHead><TableHead className="h-8 px-2 py-1 text-right text-xs">{t('actions')}</TableHead></TableRow></TableHeader><TableBody>{isLoading ? <TableRow><TableCell className="px-2 py-1 text-xs" colSpan={5}>{t('loading')}</TableCell></TableRow> : items.map((item) => <TableRow key={item._id}><TableCell className="px-2 py-1 text-xs font-medium">{item.name}</TableCell><TableCell className="px-2 py-1 text-xs">{item.categoryName || '—'}</TableCell><TableCell className="px-2 py-1 text-xs">{(item.price.base || 0).toLocaleString()}</TableCell><TableCell className="px-2 py-1 text-xs">{item.active ? t('selling') : t('hidden')}</TableCell><TableCell className="space-x-1 px-2 py-1 text-right"><Button className="min-w-20" size="sm" variant="outline" onClick={() => edit(item)}>{t('edit')}</Button><Button className="min-w-20" size="sm" variant="outline" onClick={() => copy(item)}>{t('copy')}</Button><AlertDialog><AlertDialogTrigger asChild><Button className="min-w-20" size="sm" variant="destructive">{t('delete')}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteProduct')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="min-w-20">{t('cancel')}</AlertDialogCancel><AlertDialogAction className="min-w-20" variant="destructive" onClick={() => remove.mutate(item._id)}>{t('confirm')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></TableCell></TableRow>)}</TableBody></Table></div></CardContent>
+          <CardContent className="min-h-0"><div className="max-h-[calc(100svh-220px)] overflow-auto"><Table><TableHeader><TableRow><TableHead className="h-8 px-2 py-1 text-xs">{t('name')}</TableHead><TableHead className="h-8 px-2 py-1 text-xs">{t('categories')}</TableHead><TableHead className="h-8 px-2 py-1 text-right text-xs">{t('actions')}</TableHead></TableRow></TableHeader><TableBody>{isLoading ? <TableRow><TableCell className="px-2 py-1 text-xs" colSpan={3}>{t('loading')}</TableCell></TableRow> : items.map((item) => <TableRow key={item._id}><TableCell className="px-2 py-1 text-xs font-medium">{item.name}</TableCell><TableCell className="px-2 py-1 text-xs">{item.categoryName || '—'}</TableCell><TableCell className="space-x-1 px-2 py-1 text-right"><Button className="min-w-20" size="sm" variant="outline" onClick={() => edit(item)}>{t('edit')}</Button><Button className="min-w-20" size="sm" variant="outline" onClick={() => copy(item)}>{t('copy')}</Button><AlertDialog><AlertDialogTrigger asChild><Button className="min-w-20" size="sm" variant="destructive">{t('delete')}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteProduct')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="min-w-20">{t('cancel')}</AlertDialogCancel><AlertDialogAction className="min-w-20" variant="destructive" onClick={() => remove.mutate(item._id)}>{t('confirm')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></TableCell></TableRow>)}</TableBody></Table></div></CardContent>
         </Card>
       </div>
       <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
