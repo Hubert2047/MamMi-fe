@@ -2,15 +2,20 @@ import api from './axios'
 
 export interface Addon {
   _id: string
+  names: { vi: string; en: string; 'zh-TW': string }
   name: string
   priceExtra: number
   active: boolean
 }
 
-export type AddonInput = Omit<Addon, '_id'>
+export type AddonInput = {
+  names: Addon['names']
+  priceExtra: number
+  active: boolean
+}
 
-export const getAddons = async (): Promise<Addon[]> => {
-  const res = await api.get('addons')
+export const getAddons = async (lang?: string): Promise<Addon[]> => {
+  const res = await api.get(lang ? `addons?lang=${lang}` : 'addons')
   return res.data
 }
 

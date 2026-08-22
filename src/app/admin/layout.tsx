@@ -21,5 +21,5 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     return <div className="min-h-svh bg-background" />
   }
 
-  return <div className="flex min-h-svh bg-muted/30"><AdminSidebar /><main className="admin-content min-w-0 flex-1 overflow-y-auto [&>div]:!pt-0 [&>div]:!px-4 [&>div]:!pb-4 [&>div]:md:!px-6 [&>div]:md:!pb-6">{children}</main></div>
+  return <div className="fixed inset-0 flex overflow-hidden bg-muted/30"><AdminSidebar /><main className="admin-content h-full min-h-0 min-w-0 flex-1 overflow-hidden [&>div]:!pt-0 [&>div]:!px-4 [&>div]:!pb-4 [&>div]:md:!px-6 [&>div]:md:!pb-6">{children}</main></div>
 }

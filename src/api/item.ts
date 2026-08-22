@@ -6,31 +6,36 @@ export type PriceType = {
     foodpanda?: number
     [key: string]: number | undefined
 }
+export type LocalizedText = { vi: string; en: string; 'zh-TW': string }
+export type LocalizedOption = { id: string; names: LocalizedText }
 export interface Item {
     _id: string
     name: string
     names: { vi: string; en: string; 'zh-TW': string }
+    description: { vi: string; en: string; 'zh-TW': string }
     categoryName: string
-    categoryId?: string | { _id: string; name?: string }
+    categoryId?: string | { _id: string; names?: { vi: string; en: string; 'zh-TW': string }; name?: string }
     price: PriceType
     addons: Addon[]
-    variants: string[]
-    noteOptions: string[]
+    variants: LocalizedOption[]
+    noteOptions: LocalizedOption[]
     active: boolean
 }
 
 export interface ItemInput {
     names: { vi: string; en: string; 'zh-TW': string }
-    variants: string[]
+    description: { vi: string; en: string; 'zh-TW': string }
+    variants: LocalizedOption[]
     price: PriceType
     categoryId: string
     addons: string[]
-    noteOptions: string[]
+    noteOptions: LocalizedOption[]
     active: boolean
 }
 
 interface Addon {
     _id: string
+    names?: { vi: string; en: string; 'zh-TW': string }
     name: string
     priceExtra: number
 }

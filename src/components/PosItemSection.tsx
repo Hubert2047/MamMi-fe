@@ -13,6 +13,7 @@ import { capitalize, generateUUID, getPriceByType } from '@/lib/utils.ts'
 import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Loading from './Loading'
+import { useI18n } from '@/lib/i18n'
 
 type Props = {
     isDetail: boolean
@@ -48,6 +49,17 @@ function PosItemSection({
     currentOrderNumber,
 }: Props) {
     const queryClient = useQueryClient()
+    const { locale, t } = useI18n()
+    const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
+    const selectedItemUnitPrice = currentOrderItem.basePrice + currentOrderItem.addons.reduce((total, addon) => total + addon.amount * addon.priceExtra, 0)
+    const selectedItemPrice = selectedItemUnitPrice * currentOrderItem.quantity
+    const displayItemName = (item: Item) => {
+        const name = item.name.trim()
+        const category = item.categoryName.trim()
+        if (!category || name.localeCompare(category, undefined, { sensitivity: 'accent' }) === 0) return name
+        const prefix = new RegExp(`^${category.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(?:\\s*[-:|–—]\\s*|\\s+)`, 'i')
+        return name.replace(prefix, '').trim() || name
+    }
     const updateOrderMutation = useMutation({
         mutationFn: updateOrderPayment,
         onSuccess: () => {
@@ -62,7 +74,7 @@ function PosItemSection({
     const selectItem = (item: Item) => {
         let variant = ''
         if (item.variants.length > 0) {
-            variant = item.variants[0]
+            variant = item.variants[0]?.id || ''
         }
         setCurrentOrderItem((prev) => ({
             ...prev,
@@ -128,7 +140,10 @@ function PosItemSection({
                                 className='h-10'
                                 variant={categoryName === selectedCategory ? 'default' : 'outline'}
                                 onClick={() => {
-                                    if (selectedItem) return
+                                    if (selectedItem) {
+                                        toast.error(t('cancelPosItemBeforeCategory'))
+                                        return
+                                    }
                                     setSelectedCategory(categoryName)
                                 }}>
                                 {categoryName}
@@ -138,15 +153,15 @@ function PosItemSection({
             </div>
             <div className='select-items flex w-50 flex-wrap items-start justify-start rounded border border-[#ccc] flex-1 p-2 h-full gap-2'>
                 {selectedItem === null ? (
-                    <div className='w-full grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2'>
+                    <div className='w-full grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2'>
                         {filteredItems.map((item) => (
                             <Button
                                 key={item._id}
-                                className='h-12 w-full'
+                                className='h-14 w-full px-2'
                                 variant='default'
                                 onClick={() => selectItem(item)}>
-                                    <div className='flex justify-center items-center flex-col ga-2'>
-                                        <span>{item.name}</span>
+                                    <div className='flex min-w-0 w-full justify-center items-center flex-col gap-1'>
+                                        <span className='w-full truncate text-sm' title={item.name}>{displayItemName(item)}</span>
                                         <span>{getPriceByType(currentOrder.type,item.price)}</span>
                                     </div>
                             </Button>
@@ -154,7 +169,7 @@ function PosItemSection({
                     </div>
                 ) : (
                     <div className='flex flex-col flex-1 justify-start gap-3'>
-                        <p className='text-xl'>{currentOrderItem.name}</p>
+                        <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex items-center justify-between gap-3'><p className='min-w-0 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
                         <div className='variant flex justify-start items-center gap-4'>
                             <Label className='block w-27 font-semibold text-start'>Số lượng:</Label>
                             <Input
@@ -174,16 +189,16 @@ function PosItemSection({
                             <div className='variants flex justify-start items-center gap-4'>
                                 <Label className='block w-27 font-semibold text-start'>Loại:</Label>
                                 <RadioGroup
-                                    value={currentOrderItem.variant}
+                                    value={selectedItem.variants.find((option) => option.id === currentOrderItem.variant || optionName(option) === currentOrderItem.variant)?.id || currentOrderItem.variant}
                                     onValueChange={(value) => {
                                         if (isDetail) return
                                         setCurrentOrderItem((prev) => ({ ...prev, variant: value }))
                                     }}
                                     className='flex gap-4'>
                                     {selectedItem.variants?.map((variant) => (
-                                        <div key={variant} className='flex items-center space-x-2'>
-                                            <RadioGroupItem value={variant} id={variant} />
-                                            <Label htmlFor={variant}>{variant}</Label>
+                                        <div key={variant.id} className='flex items-center space-x-2'>
+                                            <RadioGroupItem value={variant.id} id={variant.id} />
+                                            <Label htmlFor={variant.id}>{optionName(variant)}</Label>
                                         </div>
                                     ))}
                                 </RadioGroup>
@@ -196,15 +211,16 @@ function PosItemSection({
                                 <ToggleGroup
                                     size='lg'
                                     variant='outline'
-                                    type='multiple'
-                                    value={currentOrderItem.noteOptions}
+                                     type='multiple'
+                                     className='w-full flex-wrap gap-0'
+                                    value={currentOrderItem.noteOptions.map((value) => selectedItem.noteOptions.find((option) => option.id === value || optionName(option) === value)?.id || value)}
                                     onValueChange={(value) => {
                                         if (isDetail) return
                                         setCurrentOrderItem((prev) => ({ ...prev, noteOptions: value }))
                                     }}>
                                     {selectedItem.noteOptions.map((note) => (
-                                        <ToggleGroupItem key={note} className='md:w-15' value={note}>
-                                            {note}
+                                        <ToggleGroupItem key={note.id} className='w-auto min-w-20 whitespace-nowrap border-primary/40 px-3 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10' value={note.id}>
+                                            {optionName(note)}
                                         </ToggleGroupItem>
                                     ))}
                                 </ToggleGroup>
@@ -235,7 +251,7 @@ function PosItemSection({
                                         <ToggleGroupItem
                                             key={addon._id}
                                             value={addon._id}
-                                            className='relative flex md:w-15 flex-col items-center justify-center p-2'>
+                                            className='relative flex md:w-15 flex-col items-center justify-center border-primary/40 p-2 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
                                             <span className='text-center'>{addon.name}</span>
                                             <Badge className='absolute -top-6'>{addon.priceExtra}</Badge>
                                         </ToggleGroupItem>

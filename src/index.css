@@ -3,6 +3,16 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+@keyframes loading-breathe {
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes loading-dot {
+  0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
+}
+
 /* Admin page titles use the page container padding; no extra title margin. */
 main.admin-content > div > div:first-child {
   margin: 0 !important;
@@ -21,7 +31,7 @@ main.admin-content > div > div:first-child h1 {
    ============================================================ */
 :root {
   /* --- Fallback colors (trình duyệt không hiểu oklch) --- */
-  --primary: #3b82f6; /* blue-500 */
+  --primary: #8ac545; /* Mâm Mì green */
   --primary-foreground: #ffffff;
   --secondary: #6b7280; /* gray-500 */
   --secondary-foreground: #000000;
@@ -31,7 +41,7 @@ main.admin-content > div > div:first-child h1 {
   --muted: #f3f4f6; /* gray-100 */
   --muted-foreground: #6b7280; /* gray-500 */
   --input: #f9fafb; /* gray-50 */
-  --ring: #d1d5db; /* gray-300 */
+  --ring: #8ac545; /* Mâm Mì green */
   --border: #e5e7eb; /* gray-200 */
   --background: #ffffff;
   --foreground: #000000;
@@ -76,8 +86,8 @@ main.admin-content > div > div:first-child h1 {
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #8ac545;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -85,7 +95,7 @@ main.admin-content > div > div:first-child h1 {
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: #8ac545;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -214,8 +224,8 @@ code {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #8ac545;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -225,7 +235,7 @@ code {
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: #8ac545;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
