@@ -1,4 +1,4 @@
-import {type IUpdateExpense, updateExpense} from '@/api/expense'
+import {getExpenseUnits, type ExpenseUnit, type IUpdateExpense, updateExpense} from '@/api/expense'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Field, FieldGroup} from '@/components/ui/field'
@@ -7,7 +7,9 @@ import {Label} from '@/components/ui/label'
 import React from 'react'
 import {toast} from 'sonner'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import {useI18n} from '@/lib/i18n'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 
 type Props = {
     editData: IUpdateExpense
@@ -17,8 +19,9 @@ type Props = {
 }
 
 export function EditExpenses({editData, setEditData, open, onClose}: Props) {
-    const {t} = useI18n()
+    const {t, locale} = useI18n()
     const queryClient = useQueryClient()
+    const {data: units = []} = useQuery<ExpenseUnit[]>({queryKey: ['expense-units'], queryFn: () => getExpenseUnits(), staleTime: 5 * 60 * 1000})
     const editMutation = useMutation({
         mutationFn: updateExpense,
         onSuccess: () => {
@@ -40,9 +43,16 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
             if (!prev) return prev
             return {
                 ...prev,
-                [name]: name === 'price' ? Number(value) : value,
+                [name]: name === 'quantity' || name === 'unitPrice' ? Number(value) : value,
             }
         })
+    }
+
+    const adjustQuantity = (amount: number) => {
+        setEditData((prev) => prev ? {
+            ...prev,
+            quantity: Math.max(0.001, Number(prev.quantity ?? 0) + amount),
+        } : prev)
     }
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,7 +61,7 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
             toast.warning(t('requiredName'))
             return
         }
-        if (!editData?.price) {
+        if (!editData?.unitPrice && !editData?.price) {
             toast.warning(t('requiredPrice'))
             return
         }
@@ -59,7 +69,10 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
             id: editData._id!,
             data: {
                 ...editData,
-                price: Number(editData.price),
+                quantity: Number(editData.quantity ?? 1),
+                unit: editData.unit ?? '',
+                unitPrice: Number(editData.unitPrice ?? editData.price),
+                price: Number(editData.quantity ?? 1) * Number(editData.unitPrice ?? editData.price),
             },
         })
     }
@@ -70,30 +83,41 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
             onOpenChange={(isOpen) => {
                 if (!isOpen) onClose()
             }}>
-            <DialogContent className='sm:max-w-sm'>
+            <DialogContent onOpenAutoFocus={(event) => event.preventDefault()} className='top-4 max-h-[calc(100dvh-2rem)] translate-y-0 overflow-y-auto sm:max-w-2xl'>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle className='text-black! font-bold! text-xl'>{t('expenseEditTitle')}</DialogTitle>
                     </DialogHeader>
 
-                    <FieldGroup>
-                        <Field>
+                    <FieldGroup className='sm:grid sm:grid-cols-3 sm:gap-x-4 sm:gap-y-3'>
+                        <Field className='sm:col-span-3'>
                             <Label htmlFor='name-1'>{t('expenseName')}</Label>
                             <Input id='name-1' name='name' value={editData.name} onChange={handleChange}/>
                         </Field>
 
                         <Field>
-                            <Label htmlFor='price-1'>{t('expensePrice')}</Label>
-                            <Input
-                                id='price-1'
-                                name='price'
-                                type='number'
-                                value={editData.price}
-                                onChange={handleChange}
-                            />
+                            <Label htmlFor='quantity-1'>{t('expenseQuantity')}</Label>
+                            <div className='flex items-center gap-1'>
+                                <Button type='button' variant='outline' size='icon' aria-label='Giảm số lượng' onClick={() => adjustQuantity(-1)}>−</Button>
+                                <Input className='min-w-0 text-center' id='quantity-1' name='quantity' type='number' min='0.001' step='any' value={editData.quantity ?? 1} onChange={handleChange} />
+                                <Button type='button' variant='outline' size='icon' aria-label='Tăng số lượng' onClick={() => adjustQuantity(1)}>+</Button>
+                            </div>
                         </Field>
 
                         <Field>
+                            <Label htmlFor='unit-1'>{t('expenseUnit')}</Label>
+                            <Select value={editData.unit ?? ''} onValueChange={(value) => setEditData((prev) => prev ? {...prev, unit: value} : prev)}>
+                                <SelectTrigger id='unit-1' className='w-full'><SelectValue placeholder={t('expenseUnit')} /></SelectTrigger>
+                                <SelectContent>{units.map((unit) => <SelectItem key={unit.code} value={unit.code}>{unit.names[locale]}</SelectItem>)}</SelectContent>
+                            </Select>
+                        </Field>
+
+                        <Field>
+                            <Label htmlFor='unit-price-1'>{t('expenseUnitPrice')}</Label>
+                            <Input id='unit-price-1' name='unitPrice' type='number' min='0' value={editData.unitPrice ?? editData.price} onChange={handleChange}/>
+                        </Field>
+
+                        <Field className='sm:col-span-3'>
                             <Label htmlFor='note-1'>{t('expenseNote')}</Label>
                             <Input id='note-1' name='note' value={editData.note} onChange={handleChange}/>
                         </Field>

@@ -9,12 +9,14 @@ import {ExpenseTable} from '@/components/expense/ExpenseTable.tsx'
 import Loading from '@/components/Loading.tsx'
 import type {SalesByPayment} from '@/api/order'
 import type {Expense} from '@/api/expense'
+import type {ExpenseRange} from '@/api/expense'
 import {calculateIncomeTotal} from '@/lib/dailyClosingCalculations'
 import {useI18n} from '@/lib/i18n'
 
 type Props = {
     totalOtherRevenues: number
     expenses: Expense[]
+    periodRange?: ExpenseRange
     salesData: Record<PaymentMethod, SalesByPayment>
     isSalesLoading: boolean
     isExpenseLoading: boolean
@@ -23,6 +25,7 @@ type Props = {
 
 function DailyClosingStep1({
                                expenses,
+                               periodRange,
                                totalOtherRevenues,
                                salesData,
                                isSalesLoading,
@@ -92,7 +95,7 @@ function DailyClosingStep1({
                 </div>
             ) : (
                 <div className='flex border border-[#ccc] px-6 py-4 rounded'>
-                    {!isExpenseLoading && <ExpenseTable showOnly expenses={expenses}/>}
+                    {!isExpenseLoading && <ExpenseTable showOnly expenses={expenses} range={periodRange}/>}
                 </div>
             )}
             {isSalesLoading && <Loading/>}

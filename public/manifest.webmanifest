@@ -1,0 +1,17 @@
+{
+  "name": "Mâm Mì POS",
+  "short_name": "Mâm Mì POS",
+  "description": "Point of sale management system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

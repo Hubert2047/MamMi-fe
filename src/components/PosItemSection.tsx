@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Loading from './Loading'
 import { useI18n } from '@/lib/i18n'
 import { calculateOrderItemTotal, getUnavailableAddonIds } from '@/lib/posCalculations'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 
 type Props = {
     isDetail: boolean
@@ -140,7 +141,7 @@ function PosItemSection({
     return (
         <>
             {updateOrderMutation.isPending && <Loading />}
-            <div className='categories w-22 flex flex-col gap-2 rounded border border-[#ccc] p-1 border-[#ccc]'>
+            <div className='categories flex w-22 flex-col gap-2 rounded border border-[#ccc] p-1'>
                 {!isDetail &&
                     Object.keys(itemsByCategory).map((categoryName) => {
                         return (
@@ -160,7 +161,7 @@ function PosItemSection({
                         )
                     })}
             </div>
-            <div className='select-items flex w-50 flex-wrap items-start justify-start rounded border border-[#ccc] flex-1 p-2 h-full gap-2'>
+            <div className='select-items flex h-full w-50 flex-1 flex-wrap items-start justify-start gap-2 rounded border border-[#ccc] p-1'>
                 {selectedItem === null ? (
                     <div className='w-full grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2'>
                         {filteredItems.map((item) => (
@@ -178,8 +179,8 @@ function PosItemSection({
                         ))}
                     </div>
                 ) : (
-                    <div className='flex flex-col flex-1 justify-start gap-3'>
-                        <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex items-center justify-between gap-3'><p className='min-w-0 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
+                    <div className='flex min-w-0 flex-1 flex-col justify-start gap-3'>
+                        <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1'><p className='min-w-0 flex-1 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
                         {selectionUnavailable && <div className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'>{t('selectionUnavailable')}</div>}
                         <div className='variant flex justify-start items-center gap-4'>
                             <Label className='block w-27 font-semibold text-start'>{t('quantity')}:</Label>
@@ -231,7 +232,7 @@ function PosItemSection({
                                         setCurrentOrderItem((prev) => ({ ...prev, noteOptions: value }))
                                     }}>
                                     {selectedItem.noteOptions.map((note) => (
-                                        <ToggleGroupItem key={note.id} className='h-auto min-h-10 min-w-20 max-w-32 rounded-lg whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10' value={note.id}>
+                                            <ToggleGroupItem key={note.id} className='h-auto min-h-8 min-w-16 max-w-28 rounded-lg whitespace-normal break-words border-primary/40 px-1.5 py-1 text-sm text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10' value={note.id}>
                                             {optionName(note)}
                                         </ToggleGroupItem>
                                     ))}
@@ -266,7 +267,7 @@ function PosItemSection({
                                             key={addon._id}
                                             value={addon._id}
                                             disabled={addon.temporarilyUnavailable === true && !currentOrderItem.addons.some((selectedAddon) => selectedAddon.id === addon._id)}
-                                            className='flex h-auto min-h-10 min-w-20 max-w-32 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
+                                            className='flex h-auto min-h-8 min-w-16 max-w-28 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-1.5 py-1 text-sm text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
                                             <span className='line-clamp-2'>{addon.name}</span>
                                             <span className='text-[11px] opacity-80'>+{addon.priceExtra}</span>
                                         </ToggleGroupItem>
@@ -302,7 +303,7 @@ function PosItemSection({
                         {isDetail &&
                             ['dine_in', 'takeaway'].includes(currentOrder.type) &&
                             ['cash', 'linepay', 'bank'].includes(currentOrder.paymentMethod) && (
-                                <div className='flex gap-2 items-center'>
+                                <div className='flex flex-wrap items-center gap-2'>
                                     <p className='font-semibold block w-25 text-start text-md'>{t('payment')}</p>
                                     <div className='flex justify-start items-center gap-4'>
                                         <ToggleGroup
@@ -336,12 +337,25 @@ function PosItemSection({
                                             ))}
                                         </ToggleGroup>
                                     </div>
-                                    <Button
-                                        className='ml-2 bg-green-500 hover:bg-green-600'
-                                        size='lg'
-                                        onClick={handleUpdateOrder}>
-                                        Cập nhật
-                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button
+                                                className='mt-2 basis-full bg-primary text-primary-foreground hover:bg-primary/90'
+                                                size='lg'>
+                                                {t('update')}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>{t('update')}</AlertDialogTitle>
+                                                <AlertDialogDescription>{t('confirmUpdateProduct')}</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => void handleUpdateOrder()}>{t('confirm')}</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             )}
 
@@ -349,27 +363,57 @@ function PosItemSection({
                             <div className='flex items-end justify-start gap-3 pt-2'>
                                 <NumPad
                                     currentValue={currentOrderItem.quantity.toString()}
+                                    large
+                                    columns={4}
                                     onChange={(value) => {
                                         setCurrentOrderItem((prev) => ({ ...prev, quantity: Number(value) }))
                                     }}
                                 />
                                 <div className='flex-1'></div>
-                                <div className='flex shrink-0 flex-col gap-2 self-start'>
+                                <div className='flex shrink-0 flex-col gap-3 self-start'>
                                     {isEditItem ? (
                                         <>
-                                            <Button className='min-w-20' variant='default' size='lg' disabled={selectionUnavailable} onClick={updateItem}>
-                                                Sửa
-                                            </Button>
-                                            <Button className='min-w-20' variant='destructive' size='lg' onClick={deleteItem}>
-                                                Xóa
-                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button className='h-12 min-w-24 text-lg' variant='default' size='lg' disabled={selectionUnavailable}>
+                                                        Sửa
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>{t('update')}</AlertDialogTitle>
+                                                        <AlertDialogDescription>{t('confirmUpdateProduct')}</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={updateItem}>{t('confirm')}</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button className='h-12 min-w-24 text-lg' variant='destructive' size='lg'>
+                                                        Xóa
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>{t('delete')}</AlertDialogTitle>
+                                                        <AlertDialogDescription>{t('confirmDeleteProduct')}</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={deleteItem}>{t('confirm')}</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </>
                                     ) : (
-                                        <Button className='min-w-20' variant='default' size='lg' disabled={selectionUnavailable} onClick={addItem}>
+                                        <Button className='h-12 min-w-24 text-lg' variant='default' size='lg' disabled={selectionUnavailable} onClick={addItem}>
                                             Xác nhận
                                         </Button>
                                     )}
-                                    <Button className='min-w-20' variant='outline' size='lg' onClick={cancelAddItem}>
+                                    <Button className='h-12 min-w-24 text-lg' variant='outline' size='lg' onClick={cancelAddItem}>
                                         Hủy
                                     </Button>
                                 </div>

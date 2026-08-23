@@ -7,7 +7,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   useSecureCookies: process.env.NODE_ENV === 'production',
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NEXTAUTH_DEBUG === 'true',
   cookies: {
     sessionToken: {
       name: `${isProduction ? '__Secure-' : ''}next-auth.session-token`,

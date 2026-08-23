@@ -12,11 +12,11 @@ import {
 } from '../ui/alert-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
-import { cancelOrder, type BaseOrder } from '@/api/order.ts'
-import { useOrders, queryKeys } from '@/hooks/queries'
+import { cancelOrder, type BaseOrder, type OrderRange } from '@/api/order.ts'
+import { useDailyClosingSummary, useOrders, queryKeys } from '@/hooks/queries'
 import Loading from '@/components/Loading.tsx'
 import { toast } from 'sonner'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx'
 import PrintOptions from '../PrintOptions'
@@ -55,19 +55,24 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
-    const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('pending')
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
-    const pageSize = 6
-
-    const [days, setDays] = useState<number>(1)
+    const [pageSize, setPageSize] = useState(6)
+    const [currentTime] = useState(() => new Date().toISOString())
+    const tableRef = useRef<HTMLDivElement>(null)
+    const fromInputRef = useRef<HTMLInputElement>(null)
+    const toInputRef = useRef<HTMLInputElement>(null)
+    const [selectedRange, setSelectedRange] = useState<OrderRange | null>(null)
     const { t, locale } = useI18n()
-    const { data: orders = [], isLoading: isOrderLoading } = useOrders(days)
+    const { data: summary } = useDailyClosingSummary()
+    const range = selectedRange ?? (summary ? { from: summary.periodStart } : undefined)
+    const { data: orders = [], isLoading: isOrderLoading } = useOrders(range)
 
     const cancelOrderMutation = useMutation({
         mutationFn: cancelOrder,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.orders(days) }).then()
+            queryClient.invalidateQueries({ queryKey: queryKeys.orders(range) }).then()
             toast.success(t('cancelSuccess'))
         },
         onError: (error: unknown) => {
@@ -89,8 +94,28 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
         return matchesStatus && matchesSearch
     })
 
+    const dateInputValue = (value?: string) => { const date = new Date(value || currentTime); const pad = (part: number) => String(part).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}` }
+    const dateInputToIso = (value: string) => value ? new Date(value).toISOString() : undefined
+    const formatDateTime = (value?: string) => new Intl.DateTimeFormat(locale === 'zh-TW' ? 'zh-TW' : locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value || currentTime))
+    useEffect(() => {
+        const element = tableRef.current
+        if (!element) return
+        const resize = () => {
+            const toolbarHeight = element.querySelector<HTMLElement>('[data-order-toolbar]')?.getBoundingClientRect().height ?? 148
+            const headerHeight = element.querySelector<HTMLElement>('thead')?.getBoundingClientRect().height ?? 48
+            const rows = Array.from(element.querySelectorAll<HTMLElement>('tbody tr'))
+            const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 52
+            setPageSize(Math.min(10, Math.max(1, Math.floor((element.clientHeight - toolbarHeight - headerHeight - 8) / Math.max(rowHeight, 52)))))
+        }
+        resize()
+        const observer = new ResizeObserver(resize)
+        observer.observe(element)
+        element.querySelectorAll<HTMLElement>('tbody tr').forEach((row) => observer.observe(row))
+        return () => observer.disconnect()
+    }, [orders.length, page, pageSize, search, statusFilter])
     const totalPages = Math.ceil(filteredOrders.length / pageSize)
-    const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize)
+    const currentPage = Math.min(page, Math.max(1, totalPages))
+    const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
     const handleCancelOrder = (id: string) => {
         const order = orders.find((candidate) => candidate._id === id)
@@ -108,13 +133,18 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
             <Dialog
                 open={open}
                 onOpenChange={(isOpen) => {
-                    if (!isOpen) onClose()
+                    if (isOpen) {
+                        setStatusFilter('pending')
+                        setPage(1)
+                    } else onClose()
                 }}>
-                <DialogContent key={locale} className='min-w-[95vw] w-[95vw] h-[90vh] flex flex-col'>
+                <DialogContent key={locale} className='left-0 top-0 flex h-dvh min-h-0 max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-3 pb-[env(safe-area-inset-bottom)] sm:max-w-none'>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl'>{t('orderTableTitle')}</DialogTitle>
+                        <DialogTitle className='text-center capitalize text-black! font-bold! text-xl'>{t('orderTableTitle')}</DialogTitle>
                     </DialogHeader>
-                    <div className='flex items-center gap-2'>
+                    <div ref={tableRef} className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+                    <div data-order-toolbar className='mb-2 flex flex-col gap-2'>
+                        <div className='flex flex-wrap items-center gap-2'>
                         <label className='flex items-center gap-2 text-sm'>
                             <span className='sr-only'>{t('orderStatusFilter')}</span>
                             <Select
@@ -134,29 +164,12 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                 </SelectContent>
                             </Select>
                         </label>
-                        {(
-                            [
-                                { label: t('today'), value: 1 },
-                                { label: t('days'), value: 3 },
-                                { label: t('week'), value: 7 },
-                            ] as const
-                        ).map((item) => (
-                            <Button
-                                key={item.value}
-                                size='sm'
-                                variant={days === item.value ? 'default' : 'outline'}
-                                onClick={() => {
-                                    setDays(item.value)
-                                    setPage(1)
-                                }}>
-                                {item.label}
-                            </Button>
-                        ))}
+                        <span className='whitespace-nowrap text-xs text-muted-foreground'>{locale === 'en' ? 'Period:' : locale === 'zh-TW' ? '期間：' : 'Kỳ:'} {formatDateTime(range?.from)} → {formatDateTime(range?.to)}</span>
                         <Input
                             placeholder={t('searchOrder')}
                             value={search}
                             onChange={handleSearchChange}
-                            className='w-48 ml-2'
+                            className='w-48'
                         />
                         {search && (
                             <Button
@@ -169,8 +182,21 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                 {t('clear')}
                             </Button>
                         )}
+                        </div>
+                        <div className='flex flex-wrap items-center gap-2'>
+                            <span className='text-xs text-muted-foreground'>{locale === 'en' ? 'From' : locale === 'zh-TW' ? '從' : 'Từ'}</span>
+                            <Input ref={fromInputRef} type='datetime-local' className='h-8 w-48 px-2 text-xs' defaultValue={dateInputValue(range?.from)} key={`from-${range?.from}`} />
+                            <span className='text-xs text-muted-foreground'>{locale === 'en' ? 'to' : locale === 'zh-TW' ? '至' : 'đến'}</span>
+                            <Input ref={toInputRef} type='datetime-local' className='h-8 w-48 px-2 text-xs' defaultValue={dateInputValue(range?.to || currentTime)} key={`to-${range?.to || 'current'}`} />
+                            <Button size='sm' onClick={() => setSelectedRange({ from: dateInputToIso(fromInputRef.current?.value || ''), to: dateInputToIso(toInputRef.current?.value || '') })}>{locale === 'en' ? 'Search' : locale === 'zh-TW' ? '搜尋' : 'Tìm'}</Button>
+                            <div className='ml-auto flex items-center gap-2'>
+                                <span className='whitespace-nowrap text-sm text-gray-500'>{filteredOrders.length} {t('ordersCount')} • {t('page')} {currentPage}/{totalPages || 1}</span>
+                                <Button variant='outline' size='sm' onClick={() => setPage((p) => p - 1)} disabled={currentPage === 1}>{t('previous')}</Button>
+                                <Button variant='outline' size='sm' onClick={() => setPage((p) => p + 1)} disabled={currentPage >= totalPages}>{t('next')}</Button>
+                            </div>
+                        </div>
                     </div>
-                    <div className='flex flex-col flex-1 overflow-clip'>
+                    <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
                         <Table>
                             <TableHeader className='sticky top-0 bg-white z-10'>
                                 <TableRow>
@@ -276,26 +302,6 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                             </TableBody>
                         </Table>
                     </div>
-                    <div className='flex items-center justify-between pt-2 border-t'>
-                        <span className='text-sm text-gray-500'>
-                            {filteredOrders.length} {t('ordersCount')} • {t('page')} {page}/{totalPages || 1}
-                        </span>
-                        <div className='flex gap-2'>
-                            <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => setPage((p) => p - 1)}
-                                disabled={page === 1}>
-                                {t('previous')}
-                            </Button>
-                            <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => setPage((p) => p + 1)}
-                                disabled={page >= totalPages}>
-                                {t('next')}
-                            </Button>
-                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

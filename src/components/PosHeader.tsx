@@ -7,8 +7,8 @@ import { toast } from 'sonner'
 import { getPaymentMethodByType, getPriceByType } from '@/lib/utils.ts'
 import type { Item } from '@/api/item.ts'
 import type { BaseOrder } from '@/api/order'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useI18n } from '@/lib/i18n'
+import { FloatingButton } from '@/components/FloatingButton'
 
 type Props = {
 
@@ -23,6 +23,8 @@ type Props = {
     handleOpenCheckout(checkout: boolean): void
     closeDisplayOrderDetail(): void
     handlePendingOrder(open: boolean): void
+    openBtns: boolean
+    setOpenBtns: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function PosHeader({
@@ -37,12 +39,14 @@ function PosHeader({
     handleOpenCheckout,
     closeDisplayOrderDetail,
     handlePendingOrder,
+    openBtns,
+    setOpenBtns,
 }: Props) {
     const { t } = useI18n()
     
 
     return (
-        <div className='flex items-center p-2 justify-start gap-2 border-b pb-2 border-[#ccc]'>
+        <div className='mb-2 flex items-center justify-start gap-1 rounded border border-[#ccc] p-1'>
             <div className='flex items-center space-x-2 '>
                 <Label htmlFor='stt' className='whitespace-nowrap'>
                     {t('orderNumber')}:
@@ -101,16 +105,14 @@ function PosHeader({
 
             <div className='flex-1'></div>
 
-            <LanguageSwitcher />
-
-            <div className='flex items-center space-x-2'>
-                        <Label className='whitespace-nowrap'>{t('total')}:</Label>
-                <Input className='w-30 font-bold text-red-600' value={totalPrice.toLocaleString()} disabled />
+            <div className='ml-auto flex shrink-0 items-center space-x-1'>
+                        <Label className='whitespace-nowrap text-base font-semibold'>{t('total')}:</Label>
+                <Input className='h-10 w-30 !text-xl font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />
             </div>
-            <div className='w-48'>
+            <div className='ml-4 flex w-44 shrink-0 justify-end'>
                 {isDetail || isCheckout || isPendingOrder ? (
                     <Button
-                        className='w-full'
+                        className='h-10 w-36'
                         variant='default'
                         onClick={
                             isDetail
@@ -122,9 +124,9 @@ function PosHeader({
                         {t('order')}
                     </Button>
                 ) : (
-                    <div className='flex gap-2'>
+                    <div className='flex justify-end gap-1'>
                         <Button
-                            className='bg-yellow-400 hover:bg-yellow-500 text-black'
+                            className='h-10 min-w-20 px-3 bg-yellow-400 text-black hover:bg-yellow-500'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToOrder'))
@@ -135,7 +137,7 @@ function PosHeader({
                             {t('placeOrder')}
                         </Button>
                         <Button
-                            className='bg-green-600 hover:bg-green-700 text-white'
+                            className='h-10 min-w-20 px-3 bg-green-600 text-white hover:bg-green-700'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToPay'))
@@ -148,6 +150,7 @@ function PosHeader({
                     </div>
                 )}
             </div>
+            {!openBtns && <div className='ml-5'><FloatingButton open={false} setOpenBtns={setOpenBtns} /></div>}
         </div>
     )
 }

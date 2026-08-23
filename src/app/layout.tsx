@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/auth'
 import ClientProviders from '@/components/ClientProviders'
@@ -9,6 +9,19 @@ export const metadata: Metadata = {
   title: 'Mâm Mì POS',
   description: 'Point of sale management system',
   icons: { icon: '/logo.png', apple: '/logo.png' },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'MÃ¢m MÃ¬ POS',
+    statusBarStyle: 'default',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

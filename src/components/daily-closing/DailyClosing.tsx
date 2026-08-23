@@ -27,7 +27,7 @@ function DailyClosing({ open, onClose }: Props) {
                 onOpenChange={(isOpen) => {
                     if (!isOpen) onClose()
                 }}>
-                <DialogContent className='min-w-[95vw] w-[95vw] h-[90vh] flex flex-col'>
+                <DialogContent className='left-0 top-0 flex h-dvh min-h-0 max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-3 pb-[env(safe-area-inset-bottom)] sm:max-w-none'>
                     <DialogHeader>
                         <DialogTitle className='text-black! font-bold! text-xl text-center'>
                             {t('closingTitle')}
@@ -36,6 +36,7 @@ function DailyClosing({ open, onClose }: Props) {
                     {currentStep === 1 && (
                         <DailyClosingStep1
                             expenses={expenses}
+                            periodRange={summary ? { from: summary.periodStart, to: summary.periodEnd } : undefined}
                             totalOtherRevenues={totalOtherRevenues}
                             salesData={salesData}
                             isExpenseLoading={isExpenseLoading}

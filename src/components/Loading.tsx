@@ -6,7 +6,7 @@ function Loading() {
     const { t } = useI18n()
 
     return (
-        <div className='fixed inset-0 z-[99999] flex items-center justify-center bg-background/95 backdrop-blur-sm'>
+        <div className='fixed inset-0 z-[99999] flex items-center justify-center bg-background/55 backdrop-blur-[2px]'>
             <div className='flex flex-col items-center gap-4'>
                 <div className='relative flex h-16 w-16 items-center justify-center'>
                     <div className='absolute inset-0 rounded-full border-4 border-primary/15' />

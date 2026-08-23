@@ -5,8 +5,10 @@ type Props = {
     currentValue: string
     onChange: (newValue: string) => void
     resetKey?: string | number
+    large?: boolean
+    columns?: 3 | 4
 }
-export default function NumPad({ currentValue, onChange, resetKey }: Props) {
+export default function NumPad({ currentValue, onChange, resetKey, large = false, columns = 3 }: Props) {
     const [isFirst, setIsFirst] = useState(true)
     useEffect(() => setIsFirst(true), [resetKey])
     const numbers = [
@@ -32,12 +34,12 @@ export default function NumPad({ currentValue, onChange, resetKey }: Props) {
     }
 
     return (
-        <div className='grid w-36 shrink-0 grid-cols-3 gap-1 rounded border border-[#ccc] p-1'>
+        <div className={`grid shrink-0 ${columns === 4 ? 'grid-cols-4' : 'grid-cols-3'} rounded border border-[#ccc] ${large ? columns === 4 ? 'w-56 gap-2 p-2' : 'w-44 gap-2 p-2' : 'w-36 gap-1 p-1'}`}>
             {numbers.flat().map((num, idx) => (
                 <Button
                     key={idx}
                     size='lg'
-                    className={`h-8 text-xs ${
+                    className={`${large ? columns === 4 ? 'h-12 text-xl' : 'h-12 text-lg' : 'h-8 text-xs'} ${
                         num === 'clear' ? 'bg-red-500 text-white' : num === 'enter' ? 'bg-green-500 text-white' : ''
                     }`}
                     onClick={() => onChangeNumber(num)}>

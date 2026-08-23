@@ -18,19 +18,23 @@ import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
 import OtherRevenue from '@/components/other-revenue/OtherRevenue.tsx'
 import ShiftAttendance from '@/components/ShiftAttendance.tsx'
 import TemporaryAvailabilityTable from '@/components/TemporaryAvailabilityTable'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { signOut } from 'next-auth/react'
 import { logoutAPI } from '@/api/auth'
 import { calculateOrderTotal, findFreshSelectedItem, syncOrderItemsWithCatalog } from '@/lib/posCalculations'
 import { useI18n } from '@/lib/i18n'
+import { useStoreContext } from '@/lib/store-context'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import LogoutConfirmDialog from '@/components/LogoutConfirmDialog'
 import { toast } from 'sonner'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
+    const { stores, activeStoreId, setActiveStoreId } = useStoreContext()
     const [selectedCategory, setSelectedCategory] = useState<string>('牛肉河粉')
     const [currentOrder, setCurrentOrder] = useState<BaseOrder>(DEFAULT_ORDER)
     const [currentOrderItem, setCurrentOrderItem] = useState<OrderItem>(DEFAULT_ORDER_ITEM)
     const [selectedItem, setSelectedItem] = useState<Item | null>(null)
-    const [isFullScreen, setIsFullScreen] = useState<boolean>(() => !!document.fullscreenElement)
     const [openOrderTable, setOpenOrderTable] = useState<boolean>(false)
     const [openExpense, setOpenExpense] = useState<boolean>(false)
     const [isEditItem, setIsEditItem] = useState<boolean>(false)
@@ -43,12 +47,20 @@ const POSPage: React.FC = () => {
     const [openDailyClosing, setOpenDailyClosing] = useState(false)
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
+    const showShiftAttendanceButton = process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === 'true'
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
     const { data: storeAddons = [] } = useStoreAddons()
     const { data: discounts = [], isLoading: isDiscountsLoading } = useDiscounts()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
+    useEffect(() => {
+        if (nextOrderNumber === undefined || currentOrder.items.length > 0 || isCheckout || isPendingOrder) return
+        // The POS can render once before the store-scoped query resolves.
+        // Keep the displayed number synchronized with the backend preview.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCurrentOrderNumber(nextOrderNumber)
+    }, [currentOrder.items.length, isCheckout, isPendingOrder, nextOrderNumber])
     // Keep temporarily unavailable products visible but not selectable.
     const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive !== false), [items])
     const activeDiscounts = useMemo(() => discounts.filter((discount) => discount.active), [discounts])
@@ -60,14 +72,6 @@ const POSPage: React.FC = () => {
         })
         return grouped
     }, [sellableItems])
-
-    useEffect(() => {
-        const onFSChange = () => {
-            setIsFullScreen(!!document.fullscreenElement)
-        }
-        document.addEventListener('fullscreenchange', onFSChange)
-        return () => document.removeEventListener('fullscreenchange', onFSChange)
-    }, [])
 
     useEffect(() => {
         if (!selectedItem) return
@@ -164,17 +168,6 @@ const POSPage: React.FC = () => {
         setCheckoutOpen(true)
         setIsCheckoutPendingOrder(true)
     }
-    async function toggleFullScreen() {
-        try {
-            if (!document.fullscreenElement) {
-                await document.documentElement.requestFullscreen()
-            } else {
-                await document.exitFullscreen()
-            }
-        } catch (err) {
-            console.error(err)
-        }
-    }
     async function handleLogout() {
         try {
             await logoutAPI()
@@ -185,9 +178,8 @@ const POSPage: React.FC = () => {
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
 
     return (
-        <div className={`flex h-screen gap-2 p-2 overflow-hidden ${isFullScreen ? 'fixed inset-0 z-50' : ''}`}>
-            <FloatingButton open={openBtns} setOpenBtns={setOpenBtns} />
-            <div className='left flex flex-col flex-1 min-w-0 border border-[#ccc] rounded'>
+        <div className='flex h-dvh gap-2 overflow-hidden p-2'>
+            <div className='left flex min-h-0 min-w-0 flex-1 flex-col'>
                 <PosHeader
                     items={items}
                     isDetail={isDetail}
@@ -200,9 +192,11 @@ const POSPage: React.FC = () => {
                     currentOrderNumber={currentOrderNumber}
                     totalPrice={totalPrice}
                     closeDisplayOrderDetail={closeDisplayOrderDetail}
+                    openBtns={openBtns}
+                    setOpenBtns={setOpenBtns}
                 />
-                <div className='flex gap-2 p-2 h-full min-h-0'>
-                    <div className='ordered-items rounded p-4 border flex-1 max-w-80 border-[#ccc]'>
+                <div className='flex min-h-0 flex-1 gap-2'>
+                    <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>
                         <PosOrderList
                             items={currentOrder.items}
                             updateItem={selectUpdateOrderItem}
@@ -244,10 +238,25 @@ const POSPage: React.FC = () => {
                 </div>
             </div>
             {openBtns && (
-                <div className='right flex flex-col justify-end p-2 gap-2 border border-[#ccc] rounded'>
-                    <Button variant='outline' onClick={toggleFullScreen}>
-                        {isFullScreen ? t('fullscreenOff') : t('fullscreenOn')}
-                    </Button>
+                <div className='right flex w-40 shrink-0 flex-col justify-between gap-2 rounded border border-[#ccc] p-2'>
+                    <FloatingButton open={true} setOpenBtns={setOpenBtns} />
+                    <div className='mt-auto flex flex-col gap-2'>
+                    {stores.length > 1 && (
+                        <div className='flex flex-col gap-1 border-b pb-2'>
+                            <span className='text-xs font-medium text-muted-foreground'>{t('switchStore')}</span>
+                            <Select value={activeStoreId} onValueChange={setActiveStoreId}>
+                                <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder={t('store')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {stores.map((store) => <SelectItem key={store._id} value={store._id}>{store.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <div className='border-b pb-2 mb-1'>
+                        <LanguageSwitcher />
+                    </div>
                     <Button variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>
@@ -260,15 +269,17 @@ const POSPage: React.FC = () => {
                     <Button variant='outline' onClick={() => setOpenExpense(true)}>
                         {t('expenses')}
                     </Button>
-                    <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
+                    {/* Temporarily hidden; keep the attendance state, dialog, and logic for the next phase. */}
+                    {showShiftAttendanceButton && <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         {t('attendance')}
-                    </Button>
+                    </Button>}
                     <Button variant='outline' onClick={() => setOpenDailyClosing(true)}>
                         {t('dailyClosing')}
                     </Button>
-                    <Button variant='destructive' onClick={handleLogout}>
-                        {t('logout')}
-                    </Button>
+                    <LogoutConfirmDialog onConfirm={handleLogout}>
+                        <Button variant='destructive'>{t('logout')}</Button>
+                    </LogoutConfirmDialog>
+                    </div>
                 </div>
             )}
             {openExpense && (

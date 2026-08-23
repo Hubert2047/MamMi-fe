@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import axios from 'axios'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ export default function LoginPage() {
         event.preventDefault()
         if (!validate()) return
         setLoading(true)
+        let storeIdForLogin = selectedStoreId
         try {
             if (selectingStore && !selectedStoreId) {
                 setErrors({ account: t('requiredStoreSelection') })
@@ -45,26 +47,31 @@ export default function LoginPage() {
                 const options = await getLoginStores({ account, password })
                 const stores = options.data.data || []
                 const role = options.data.role
-                if (role === 'Admin' && stores.length > 1) {
+                if (role !== 'SuperAdmin' && stores.length > 1) {
                     setLoginStores(stores)
                     setSelectedStoreId(stores[0]._id)
                     setSelectingStore(true)
                     return
                 }
                 if (role !== 'SuperAdmin' && !stores[0]?._id) throw new Error('No store assigned')
-                if (stores[0]?._id) window.localStorage.setItem('activeStoreId', stores[0]._id)
+                if (stores[0]?._id) {
+                    storeIdForLogin = stores[0]._id
+                    setSelectedStoreId(stores[0]._id)
+                    window.localStorage.setItem('activeStoreId', stores[0]._id)
+                }
             }
             const result = await signIn('credentials', {
                 account,
                 password,
-                ...(selectingStore ? { storeId: selectedStoreId } : {}),
+                ...(storeIdForLogin ? { storeId: storeIdForLogin } : {}),
                 callbackUrl: '/',
                 redirect: false,
             })
             if (result?.error) throw new Error('Invalid credentials')
             window.location.href = result?.url || '/'
-        } catch {
-            toast.error(t('invalidCredentials'))
+        } catch (error: unknown) {
+            const backendMessage = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : null
+            toast.error(backendMessage || (error instanceof Error && error.message !== 'Invalid credentials' ? error.message : t('invalidCredentials')))
         } finally {
             setLoading(false)
         }
@@ -76,7 +83,7 @@ export default function LoginPage() {
                 <div className='absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/20 blur-3xl' />
                 <div className='absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl' />
             </div>
-            <div className='relative z-10 flex flex-col items-center gap-4 w-full max-w-sm'>
+            <div className='relative z-10 flex -translate-y-12 flex-col items-center gap-2 w-full max-w-sm'>
                 <div className='flex items-center justify-center'>
                     <Image src='/logo.png' alt='Mâm Mì' width={176} height={128} className='h-28 w-auto object-contain' priority />
                 </div>

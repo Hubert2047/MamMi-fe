@@ -11,7 +11,7 @@ type Props = {
 }
 export default function PosOrderList({items, currentOrderItem, updateItem}: Props) {
     return (
-        <div className='flex flex-col space-y-2 overflow-y-auto h-full'>
+        <div className='flex h-full flex-col space-y-2 overflow-y-auto pr-2 [scrollbar-gutter:stable]'>
             {items.map((item, index) => (
                 <Button
                     key={item.id + '-' + index}

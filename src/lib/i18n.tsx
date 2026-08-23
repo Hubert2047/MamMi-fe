@@ -6,10 +6,14 @@ export const locales = ['vi', 'en', 'zh-TW'] as const
 export type Locale = (typeof locales)[number]
 
 const messages: Record<Locale, Record<string, string>> = {
-  vi: { language: 'Ngôn ngữ', login: 'Đăng nhập', account: 'Tài khoản', password: 'Mật khẩu', accountPlaceholder: 'Tên tài khoản', passwordPlaceholder: 'Nhập mật khẩu', loginDescription: 'Nhập thông tin tài khoản của bạn để tiếp tục', loginLoading: 'Đang xử lý…', loginSubmit: 'Đăng nhập', invalidCredentials: 'Sai tài khoản hoặc mật khẩu', requiredAccount: 'Vui lòng nhập tài khoản', requiredPassword: 'Vui lòng nhập mật khẩu', products: 'Sản phẩm', categories: 'Danh mục', addons: 'Topping / Addon', discounts: 'Khuyến mãi', employees: 'Nhân viên', expenses: 'Chi phí', revenues: 'Doanh thu khác', orders: 'Đơn hàng', dailyClosing: 'Kết sổ', logout: 'Đăng xuất', backToPos: 'Quay lại POS', admin: 'POS Admin', selling: 'Đang bán' },
-  en: { language: 'Language', login: 'Sign in', account: 'Account', password: 'Password', accountPlaceholder: 'Account name', passwordPlaceholder: 'Enter password', loginDescription: 'Enter your account information to continue', loginLoading: 'Signing in…', loginSubmit: 'Sign in', invalidCredentials: 'Invalid account or password', requiredAccount: 'Please enter your account', requiredPassword: 'Please enter your password', products: 'Products', categories: 'Categories', addons: 'Topping / Addons', discounts: 'Discounts', employees: 'Employees', expenses: 'Expenses', revenues: 'Other revenue', orders: 'Orders', dailyClosing: 'Daily closing', logout: 'Log out', backToPos: 'Back to POS', admin: 'POS Admin', selling: 'Active' },
-  'zh-TW': { language: '語言', login: '登入', account: '帳號', password: '密碼', accountPlaceholder: '輸入帳號', passwordPlaceholder: '輸入密碼', loginDescription: '請輸入帳號資訊以繼續', loginLoading: '登入中…', loginSubmit: '登入', invalidCredentials: '帳號或密碼錯誤', requiredAccount: '請輸入帳號', requiredPassword: '請輸入密碼', products: '商品', categories: '分類', addons: '加料 / 配料', discounts: '優惠活動', employees: '員工', expenses: '支出', revenues: '其他收入', orders: '訂單', dailyClosing: '日結', logout: '登出', backToPos: '返回 POS', admin: 'POS 管理', selling: '販售中' },
+  vi: { language: 'Ngôn ngữ', login: 'Đăng nhập', account: 'Tài khoản', password: 'Mật khẩu', accountPlaceholder: 'Tên tài khoản', passwordPlaceholder: 'Nhập mật khẩu', loginDescription: 'Nhập thông tin tài khoản của bạn để tiếp tục', loginLoading: 'Đang xử lý…', loginSubmit: 'Đăng nhập', invalidCredentials: 'Sai tài khoản hoặc mật khẩu', requiredAccount: 'Vui lòng nhập tài khoản', requiredPassword: 'Vui lòng nhập mật khẩu', products: 'Sản phẩm', categories: 'Danh mục', addons: 'Topping / Addon', discounts: 'Khuyến mãi', employees: 'Nhân viên', expenses: 'Chi phí', inventory: 'Kho nguyên liệu', revenues: 'Doanh thu khác', orders: 'Đơn hàng', dailyClosing: 'Kết sổ', logout: 'Đăng xuất', backToPos: 'Quay lại POS', admin: 'POS Admin', selling: 'Đang bán' },
+  en: { language: 'Language', login: 'Sign in', account: 'Account', password: 'Password', accountPlaceholder: 'Account name', passwordPlaceholder: 'Enter password', loginDescription: 'Enter your account information to continue', loginLoading: 'Signing in…', loginSubmit: 'Sign in', invalidCredentials: 'Invalid account or password', requiredAccount: 'Please enter your account', requiredPassword: 'Please enter your password', products: 'Products', categories: 'Categories', addons: 'Topping / Addons', discounts: 'Discounts', employees: 'Employees', expenses: 'Expenses', inventory: 'Inventory', revenues: 'Other revenue', orders: 'Orders', dailyClosing: 'Daily closing', logout: 'Log out', backToPos: 'Back to POS', admin: 'POS Admin', selling: 'Active' },
+  'zh-TW': { language: '語言', login: '登入', account: '帳號', password: '密碼', accountPlaceholder: '輸入帳號', passwordPlaceholder: '輸入密碼', loginDescription: '請輸入帳號資訊以繼續', loginLoading: '登入中…', loginSubmit: '登入', invalidCredentials: '帳號或密碼錯誤', requiredAccount: '請輸入帳號', requiredPassword: '請輸入密碼', products: '商品', categories: '分類', addons: '加料 / 配料', discounts: '優惠活動', employees: '員工', expenses: '支出', inventory: '原料庫存', revenues: '其他收入', orders: '訂單', dailyClosing: '日結', logout: '登出', backToPos: '返回 POS', admin: 'POS 管理', selling: '販售中' },
 } as const
+
+Object.assign(messages.vi, { units: 'Đơn vị tính' })
+Object.assign(messages.en, { units: 'Units' })
+Object.assign(messages['zh-TW'], { units: '單位' })
 
 const loginMessages = {
   vi: { loginStore: 'Chọn cửa hàng', selectStore: 'Chọn cửa hàng', requiredStoreSelection: 'Vui lòng chọn cửa hàng' },
@@ -36,9 +40,9 @@ const categoryMessages = {
 } as const
 
 const commonMessages = {
-  vi: { confirm: '\u0058\u00e1c nh\u1eadn', confirmDeleteTitle: '\u0058\u00e1c nh\u1eadn x\u00f3a' },
-  en: { confirm: 'Confirm', confirmDeleteTitle: 'Confirm deletion' },
-  'zh-TW': { confirm: '\u78ba\u5b9a', confirmDeleteTitle: '\u78ba\u5b9a\u522a\u9664' },
+  vi: { confirm: '\u0058\u00e1c nh\u1eadn', confirmDeleteTitle: '\u0058\u00e1c nh\u1eadn x\u00f3a', confirmLogout: 'B\u1ea1n c\u00f3 ch\u1eafc mu\u1ed1n \u0111\u0103ng xu\u1ea5t kh\u00f4ng?' },
+  en: { confirm: 'Confirm', confirmDeleteTitle: 'Confirm deletion', confirmLogout: 'Are you sure you want to log out?' },
+  'zh-TW': { confirm: '\u78ba\u5b9a', confirmDeleteTitle: '\u78ba\u5b9a\u522a\u9664', confirmLogout: '\u78ba\u5b9a\u8981\u767b\u51fa\u55ce\uff1f' },
 } as const
 
 const addonMessages = {
@@ -67,7 +71,7 @@ const storeProductMessages = {
 
 const availabilityMessages = {
   vi: { permanentSelling: 'Đang bán', permanentHidden: 'Tắt hẳn', temporaryUnavailable: 'Tạm tắt', temporaryUnavailableShort: 'Tạm dừng', selectionUnavailable: 'Món hoặc addon vừa tạm dừng bán. Vui lòng bỏ lựa chọn này trước khi tiếp tục.', discountUnavailable: 'Khuyến mãi vừa được tắt và đã được bỏ khỏi đơn.', temporaryAvailable: 'Đang bán', temporaryAvailability: 'Tắt tạm thời món', temporaryAvailabilityTitle: 'Tắt tạm thời món', temporaryAvailabilitySearch: 'Tìm tên món...', temporaryAvailabilityCategory: 'Lọc theo danh mục', temporaryAvailabilityAllCategories: 'Tất cả danh mục', temporaryAvailabilityEmpty: 'Không tìm thấy món', temporaryAvailabilityError: 'Không thể cập nhật trạng thái tạm thời' },
-  en: { permanentSelling: 'Selling', permanentHidden: 'Permanently off', temporaryUnavailable: 'Temporarily off', temporaryUnavailableShort: 'Paused', selectionUnavailable: 'This product or add-on was just paused. Remove it before continuing.', discountUnavailable: 'This discount was just disabled and has been removed from the order.', temporaryAvailable: 'Temporarily available', temporaryAvailability: 'Temporarily disable items', temporaryAvailabilityTitle: 'Temporarily disable items', temporaryAvailabilitySearch: 'Search item name...', temporaryAvailabilityCategory: 'Filter by category', temporaryAvailabilityAllCategories: 'All categories', temporaryAvailabilityEmpty: 'No items found', temporaryAvailabilityError: 'Unable to update temporary availability' },
+  en: { permanentSelling: 'Selling', permanentHidden: 'Permanently off', temporaryUnavailable: 'Temporarily off', temporaryUnavailableShort: 'Paused', selectionUnavailable: 'This product or add-on was just paused. Remove it before continuing.', discountUnavailable: 'This discount was just disabled and has been removed from the order.', temporaryAvailable: 'Temporarily available', temporaryAvailability: 'Pause items', temporaryAvailabilityTitle: 'Pause items', temporaryAvailabilitySearch: 'Search item name...', temporaryAvailabilityCategory: 'Filter by category', temporaryAvailabilityAllCategories: 'All categories', temporaryAvailabilityEmpty: 'No items found', temporaryAvailabilityError: 'Unable to update temporary availability' },
   'zh-TW': { permanentSelling: '販售中', permanentHidden: '永久關閉', temporaryUnavailable: '暫時關閉', temporaryUnavailableShort: '暫停', selectionUnavailable: '此商品或加料剛剛暫停販售，請移除後再繼續。', discountUnavailable: '此優惠剛剛已停用，已從訂單中移除。', temporaryAvailable: '暫時可售', temporaryAvailability: '暫時關閉商品', temporaryAvailabilityTitle: '暫時關閉商品', temporaryAvailabilitySearch: '搜尋商品名稱...', temporaryAvailabilityCategory: '依分類篩選', temporaryAvailabilityAllCategories: '所有分類', temporaryAvailabilityEmpty: '找不到商品', temporaryAvailabilityError: '無法更新暫時狀態' },
 } as const
 
@@ -122,6 +126,15 @@ const expenseMessages = {
   en: { expenseTableTitle: 'Expenses', totalExpense: 'Total expenses', searchExpense: 'Search by expense name...', addExpense: 'Add expense', expenseName: 'Name', expensePrice: 'Price', expenseNote: 'Note', expenseActions: 'Actions', noExpenseFound: 'No expenses found', expenseCount: 'expenses', expenseAddTitle: 'Add expense', expenseEditTitle: 'Edit expense', requiredName: 'Name is required', requiredPrice: 'Price is required', delete: 'Delete', edit: 'Edit', cancel: 'Cancel', confirmDelete: 'Are you sure you want to delete this?', deleteDescription: 'This action cannot be undone.', deleting: 'Deleting...', save: 'Save', saving: 'Saving...', confirm: 'Confirm', createSuccess: 'Saved successfully', createFailure: 'Failed to save', updateSuccess: 'Updated successfully', updateFailure: 'Failed to update', deleteSuccess: 'Deleted successfully', deleteFailure: 'Failed to delete' },
   'zh-TW': { expenseTableTitle: '支出明細', totalExpense: '支出總額', searchExpense: '依支出名稱搜尋...', addExpense: '新增支出', expenseName: '名稱', expensePrice: '價格', expenseNote: '備註', expenseActions: '操作', noExpenseFound: '找不到支出', expenseCount: '筆支出', expenseAddTitle: '新增支出', expenseEditTitle: '編輯支出', requiredName: '名稱不可為空', requiredPrice: '價格不可為空', delete: '刪除', edit: '編輯', cancel: '取消', confirmDelete: '確定要刪除嗎？', deleteDescription: '此操作無法復原。', deleting: '刪除中...', save: '儲存', saving: '儲存中...', confirm: '確認', createSuccess: '儲存成功', createFailure: '儲存失敗', updateSuccess: '編輯成功', updateFailure: '編輯失敗', deleteSuccess: '刪除成功', deleteFailure: '刪除失敗' },
 } as const
+
+const expenseFieldMessages = {
+  vi: { expenseQuantity: 'Số lượng', expenseUnit: 'Đơn vị', expenseUnitPrice: 'Đơn giá', expenseTotal: 'Thành tiền' },
+  en: { expenseQuantity: 'Quantity', expenseUnit: 'Unit', expenseUnitPrice: 'Unit price', expenseTotal: 'Total' },
+  'zh-TW': { expenseQuantity: '數量', expenseUnit: '單位', expenseUnitPrice: '單價', expenseTotal: '總額' },
+} as const
+Object.assign(expenseMessages.vi as Record<string, string>, expenseFieldMessages.vi)
+Object.assign(expenseMessages.en as Record<string, string>, expenseFieldMessages.en)
+Object.assign(expenseMessages['zh-TW'] as Record<string, string>, expenseFieldMessages['zh-TW'])
 
 const closingMessages = {
   vi: { closingTitle: 'Kết toán hàng ngày', income: 'Thu nhập', expense: 'Chi ra', next: 'Tiếp theo', total: 'Tổng', paymentCash: 'Tiền mặt', paymentBank: 'Ngân hàng', paymentLinepay: 'LinePay', count: 'Số lượng', actual: 'Thực tế', system: 'Hệ thống', difference: 'Chênh lệch', reason: 'Nguyên nhân', countCash: 'Mệnh giá', countMoney: 'Số tiền', countDialogTitle: 'Bạn có chắc muốn kết toán không?', countDialogDescription: 'Mỗi ngày chỉ được phép kết toán một lần.', back: 'Quay lại', counting: 'Kiểm tiền', closing: 'Kết toán', saving: 'Đang lưu...', closeSuccess: 'Kết toán thành công', closeFailure: 'Kết toán không thành công', cancel: 'Hủy', confirm: 'Xác nhận' },

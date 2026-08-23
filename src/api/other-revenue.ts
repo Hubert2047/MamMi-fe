@@ -19,9 +19,11 @@ export interface IUpdateRevenue extends ICreateOtherRevenue {
     _id: string
 }
 
-export const getRevenues = async (date?: string): Promise<Revenue[]> => {
+export type RevenueRange = { from?: string; to?: string }
+
+export const getRevenues = async (range: RevenueRange = {}): Promise<Revenue[]> => {
     const res = await api.get('other-revenues', {
-        params: date ? {date} : {}
+        params: range
     })
     return res.data.data
 }

@@ -11,7 +11,7 @@ export function FloatingButton({open, setOpenBtns}: Props) {
 
     return (
         <Button
-            className="fixed top-14 bg-gray-900 right-1 h-8 w-8 rounded-full shadow-lg"
+            className='h-9 w-9 shrink-0 rounded-full bg-gray-900 shadow-lg'
             size="icon"
             onClick={() => setOpenBtns(!open)}
         >

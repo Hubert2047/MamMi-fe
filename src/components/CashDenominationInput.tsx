@@ -27,7 +27,7 @@ export default function CashDenominationInput({ counts, selectedDenomination, on
     <div className="rounded-lg border bg-muted/20 p-1.5">
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-xs font-semibold">{t('cashDenominations')}</span>
-        <span className="text-xs font-semibold text-primary">
+        <span className="text-lg font-bold tabular-nums text-primary">
           {calculateCashFromDenominations(counts).toLocaleString()}
         </span>
       </div>
@@ -42,8 +42,8 @@ export default function CashDenominationInput({ counts, selectedDenomination, on
               type="button"
               className="flex min-w-0 flex-1 items-center gap-1 text-left"
               onClick={() => onSelect(denomination)}>
-              <span className="text-xs font-semibold">{denomination}</span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
+              <span className="text-sm font-bold tabular-nums">{denomination.toLocaleString()}</span>
+              <span className="text-base font-semibold text-muted-foreground tabular-nums">
                 ×{counts[denomination] ?? 0}
               </span>
             </button>

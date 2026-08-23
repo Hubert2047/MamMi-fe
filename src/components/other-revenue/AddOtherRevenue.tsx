@@ -2,7 +2,7 @@ import {Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTi
 import {Field, FieldGroup} from '@/components/ui/field'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {toast} from 'sonner'
 import {useMutation, useQueryClient} from '@tanstack/react-query'
 import {createRevenue} from "@/api/other-revenue.ts";
@@ -17,11 +17,16 @@ type Props = {
 export function AddOtherRevenue({open, onClose}: Props) {
     const {t} = useI18n()
     const queryClient = useQueryClient()
+    const nameInputRef = useRef<HTMLInputElement>(null)
     const [formData, setFormData] = useState({
         name: '',
         price: '',
         note: '',
     })
+
+    useEffect(() => {
+        if (open) requestAnimationFrame(() => nameInputRef.current?.focus())
+    }, [open])
     const createRevenueMutation = useMutation({
         mutationFn: createRevenue,
         onSuccess: () => {
@@ -68,7 +73,7 @@ export function AddOtherRevenue({open, onClose}: Props) {
             onOpenChange={(isOpen) => {
                 if (!isOpen) onClose()
             }}>
-            <DialogContent className='sm:max-w-sm'>
+            <DialogContent onOpenAutoFocus={(event) => { event.preventDefault(); nameInputRef.current?.focus() }} className='top-1 max-h-[calc(100dvh-1rem)] translate-y-0 overflow-y-auto sm:max-w-sm'>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle className='text-black! font-bold! text-xl'>{t('addRevenueTitle')}</DialogTitle>
@@ -77,7 +82,7 @@ export function AddOtherRevenue({open, onClose}: Props) {
                     <FieldGroup>
                         <Field>
                             <Label htmlFor='name-1'>{t('revenueName')}</Label>
-                            <Input id='name-1' name='name' value={formData.name} onChange={handleChangeRevenue}/>
+                            <Input ref={nameInputRef} id='name-1' name='name' autoFocus value={formData.name} onChange={handleChangeRevenue}/>
                         </Field>
 
                         <Field>
@@ -97,12 +102,12 @@ export function AddOtherRevenue({open, onClose}: Props) {
                         </Field>
                     </FieldGroup>
 
-                    <DialogFooter className='mt-4'>
+                    <DialogFooter className='mt-4 pb-4'>
                         <DialogClose asChild>
-                            <Button variant='outline'>{t('cancel')}</Button>
+                            <Button className='h-10 min-w-24 px-4' variant='outline'>{t('cancel')}</Button>
                         </DialogClose>
 
-                        <Button type='submit' disabled={createRevenueMutation.isPending}>
+                        <Button className='h-10 min-w-24 px-4' type='submit' disabled={createRevenueMutation.isPending}>
                             {createRevenueMutation.isPending ? t('saving') : t('save')}
                         </Button>
                     </DialogFooter>

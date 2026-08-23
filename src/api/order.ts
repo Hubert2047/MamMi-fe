@@ -57,8 +57,10 @@ export type SalesByPayment = {
     totalSales: number
     count: number
 }
-export const getOrders = async (days?: number): Promise<IOrder[]> => {
-    const res = await api.get('orders', { params: days ? { days } : {} })
+export type OrderRange = { from?: string; to?: string }
+
+export const getOrders = async (range: OrderRange = {}): Promise<IOrder[]> => {
+    const res = await api.get('orders', { params: range })
     return res.data.data
 }
 export const getNextOrderNumber = async (): Promise<number> => {
