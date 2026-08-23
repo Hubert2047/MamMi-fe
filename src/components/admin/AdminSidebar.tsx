@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { BarChart3, Package, Tags, Percent, Users, ReceiptText, WalletCards, ClipboardList, CalendarCheck, Settings, LogOut, Store } from 'lucide-react'
+import { BarChart3, Package, Tags, Percent, Users, ReceiptText, WalletCards, ClipboardList, CalendarCheck, Settings, LogOut, Store, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -30,6 +30,7 @@ const storeLinks = [
   { href: '/admin/revenues', icon: WalletCards, key: 'revenues' },
   { href: '/admin/orders', icon: ClipboardList, key: 'orders' },
   { href: '/admin/daily-closing', icon: CalendarCheck, key: 'dailyClosing' },
+  { href: '/admin/print-agents', icon: Printer, key: 'printAgents' },
 ] as const
 
 export default function AdminSidebar() {
