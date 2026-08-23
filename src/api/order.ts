@@ -44,6 +44,7 @@ export interface BaseOrder {
     version?: number
     source?: 'pos' | 'qr' | 'uber' | 'foodpanda'
     externalOrderId?: string
+    printOnConfirm?: boolean
 }
 
 export interface IOrder extends BaseOrder {

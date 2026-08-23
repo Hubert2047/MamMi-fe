@@ -2,7 +2,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 import { DEFAULT_ORDER, PAYMENT_METHOD_ICONS, type PaymentMethod } from '@/constants'
 import { type BaseOrder, createOrder } from '@/api/order.ts'
 import React, { useMemo, useState } from 'react'
-import { capitalize, generateKitchenReceiptHTML, generateReceiptHTML, printReceipt } from '@/lib/utils.ts'
+import { capitalize } from '@/lib/utils.ts'
 import type { Discount } from '@/api/discount.ts'
 import { Label } from '@/components/ui/label.tsx'
 import { Input } from '@/components/ui/input.tsx'
@@ -79,12 +79,9 @@ function Checkout({
             number: currentOrderNumber,
             status: status,
             checkoutPending: isCheckoutPendingOrder,
+            printOnConfirm: isPrint,
         }
         const nextOrder = await createOrderMutation.mutateAsync(newOrder)
-        printReceipt(generateReceiptHTML(newOrder),'customer')
-        newOrder.items.forEach((item, index) => {
-            printReceipt(generateKitchenReceiptHTML(newOrder, item, index),'kitchen')
-        })
         handleOpenCheckout(false)
         handlePendingOrder(false)
         setCurrentOrder(DEFAULT_ORDER)
