@@ -303,11 +303,11 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                         </Table>
                     </div>
                     </div>
+                    {focusOrder && openPrintOptions && (
+                        <PrintOptions order={focusOrder} open={openPrintOptions} onClose={() => setOpenPrintOptions(false)} />
+                    )}
                 </DialogContent>
             </Dialog>
-            {focusOrder && openPrintOptions && (
-                <PrintOptions order={focusOrder} open={openPrintOptions} onClose={() => setOpenPrintOptions(false)} />
-            )}
             {(isOrderLoading || cancelOrderMutation.isPending) && <Loading />}
         </>
     )

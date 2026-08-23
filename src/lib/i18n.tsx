@@ -109,6 +109,8 @@ const posMessages: Record<Locale, Record<string, string>> = {
   'zh-TW': { fullscreenOn: '進入全螢幕', fullscreenOff: '離開全螢幕', orderNumber: '訂單編號', total: '總金額', order: '訂單', placeOrder: '預約', pay: '結帳', otherRevenue: '其他收入', expenses: '支出明細', attendance: '出勤', dailyClosing: '日結', logout: '登出', orderTableTitle: '訂單列表', orderNumberHeader: '訂單編號', totalItems: '商品總數', totalAmount: '總金額', status: '狀態', orderType: '訂單類型', paymentMethod: '付款方式', time: '時間', detail: '詳情', print: '列印', cancelOrder: '取消訂單', confirmCancelOrder: '確定要取消此訂單嗎？', cancel: '取消', confirm: '確認', cancelling: '取消中...', cancelSuccess: '訂單已取消', cancelFailure: '取消訂單失敗', ordersCount: '筆訂單', page: '頁', previous: '上一頁', next: '下一頁', noOrdersFound: '找不到訂單', today: '今天', days: '3天', week: '1週', searchOrder: '依訂單編號搜尋...', clear: '清除', discount: '折扣', paymentMethodTitle: '付款方式', cashGiven: '客人付款', cashBack: '找零', printOnConfirm: '確認時列印', createOrderFailure: '建立訂單失敗', insufficientCash: '客人付款金額不足', paidSuccess: '付款成功', pendingSuccess: '下單成功', pendingOrderInfo: '訂單資訊', customerName: '訂購人姓名', phone: '電話', quantity: '數量', variant: '類型', noAddons: '不要加', addons: '加料', note: '備註', customer: '客戶姓名', payment: '付款方式', updateFailure: '更新訂單失敗', updateSuccess: '訂單更新成功', noProductsToOrder: '沒有可下單的商品', noProductsToPay: '沒有可付款的商品' },
 } as const
 
+;(posMessages as Record<Locale, Record<string, string>>).vi.print = 'Print'
+
 const orderDisplayMessages = {
   vi: { dineIn: 'T\u1ea1i qu\u00e1n', takeaway: 'Mang \u0111i', uber: 'Uber', foodpanda: 'Foodpanda', cash: 'Ti\u1ec1n m\u1eb7t', bank: 'Ng\u00e2n h\u00e0ng', linepay: 'LinePay' },
   en: { dineIn: 'Dine-in', takeaway: 'Takeaway', uber: 'Uber', foodpanda: 'Foodpanda', cash: 'Cash', bank: 'Bank', linepay: 'LinePay' },

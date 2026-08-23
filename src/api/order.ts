@@ -11,6 +11,10 @@ export interface OrderItem {
     addons: OrderItemAddon[]
     noteOptions: string[]
     note: string
+    printName?: string
+    printVariant?: string
+    printAddons?: OrderItemAddon[]
+    printNoteOptions?: string[]
 }
 
 interface Customer {
@@ -23,6 +27,7 @@ interface OrderItemAddon {
     name: string
     priceExtra: number
     amount: number
+    printName?: string
 }
 
 export interface OrderDiscount {
@@ -81,6 +86,9 @@ export const cancelOrder = async ({ id, version }: { id: string; version: number
     const res = await api.patch(`orders/${id}/cancel`, { version })
     if (!res.data?.success || !res.data?.data) throw new Error('Invalid cancel order response')
     return res.data.data
+}
+export const queueKitchenPrint = async (id: string): Promise<void> => {
+    await api.post(`orders/${id}/print-kitchen`)
 }
 
 export const updateOrderPayment = async ({ id, data }: { id: string; data: Partial<{paymentMethod:string;version:number}> }): Promise<BaseOrder> => {

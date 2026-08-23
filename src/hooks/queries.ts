@@ -28,6 +28,7 @@ export function useItems(available?: boolean) {
     queryKey: [...queryKeys.items, available, locale],
     queryFn: () => getItems(available, locale),
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
     refetchInterval: available === undefined ? 60 * 1000 : false,
   })
 }

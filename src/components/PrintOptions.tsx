@@ -1,61 +1,43 @@
-import type {BaseOrder} from '@/api/order'
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {Checkbox} from './ui/checkbox'
-import {useState} from 'react'
-import {Label} from './ui/label'
-import {Button} from './ui/button'
-import {generateKitchenReceiptHTML, generateReceiptHTML, printReceipt} from '@/lib/utils'
+import type { BaseOrder } from '@/api/order'
+import { queueKitchenPrint } from '@/api/order'
+import { Button } from './ui/button'
+import { useState } from 'react'
 
 type Props = {
     order: BaseOrder
     open: boolean
     onClose: () => void
 }
-export default function PrintOptions({order, open, onClose}: Props) {
-    const [isPrintReceipt, setIsPrintReceipt] = useState(true)
-    const [isPrintKitchenReceipt, setIsPrintKitchenReceipt] = useState(true)
 
-    function handlePrint() {
-        if (isPrintReceipt) printReceipt(generateReceiptHTML(order), "customer")
-        if (isPrintKitchenReceipt) {
-            order.items.forEach((item, index) => {
-                printReceipt(generateKitchenReceiptHTML(order, item, index), "kitchen")
-            })
+export default function PrintOptions({ order, open, onClose }: Props) {
+    const [isPrinting, setIsPrinting] = useState(false)
+    if (!open) return null
+
+    async function handlePrint() {
+        setIsPrinting(true)
+        try {
+            await queueKitchenPrint(order._id)
+            onClose()
+        } finally {
+            setIsPrinting(false)
         }
     }
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={(isOpen) => {
-                if (!isOpen) onClose()
-            }}>
-            <DialogContent className='min-w-[90vw] w-[90vw] h-[90vh] flex flex-col'>
-                <DialogHeader>
-                    <DialogTitle className='text-black! font-bold! text-xl'>In Đơn Hàng</DialogTitle>
-                </DialogHeader>
-                <div className='flex flex-col gap-4'>
-                    <div className='flex justify-start items-center gap-4 pt-5 pl-2'>
-                        <Checkbox
-                            id='print-confirm'
-                            checked={isPrintReceipt}
-                            onCheckedChange={(checked) => setIsPrintReceipt(!!checked)}
-                        />
-                        <Label htmlFor='print-confirm'>In cả đơn hàng</Label>
+        <div className='absolute inset-0 z-20 flex items-start justify-center bg-black/35 p-4 pt-10' role='dialog' aria-modal='true' aria-labelledby='print-options-title' onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+            <div className='w-full max-w-sm rounded-xl border bg-background p-5 shadow-2xl'>
+                <div className='mb-5 flex items-start justify-between gap-4'>
+                    <div>
+                        <h2 id='print-options-title' className='text-lg font-semibold'>In Bếp</h2>
+                        <p className='mt-1 text-sm text-muted-foreground'>In từng sản phẩm cho khu vực bếp.</p>
                     </div>
-                    <div className='flex justify-start items-center gap-4 pt-5 pl-2'>
-                        <Checkbox
-                            id='print-kitchen'
-                            checked={isPrintKitchenReceipt}
-                            onCheckedChange={(checked) => setIsPrintKitchenReceipt(!!checked)}
-                        />
-                        <Label htmlFor='print-kitchen'>In theo từng sản phẩm</Label>
-                    </div>
-                    <Button className='h-10 w-10' onClick={handlePrint}>
-                        Bắt đầu in
-                    </Button>
+                    <Button type='button' variant='ghost' size='icon' aria-label='Đóng' onClick={onClose}>×</Button>
                 </div>
-            </DialogContent>
-        </Dialog>
+                <div className='flex justify-end gap-2'>
+                    <Button type='button' size='lg' variant='outline' onClick={onClose}>Hủy</Button>
+                    <Button type='button' size='lg' disabled={isPrinting} onClick={handlePrint}>{isPrinting ? 'Đang gửi...' : 'Bắt đầu in'}</Button>
+                </div>
+            </div>
+        </div>
     )
 }

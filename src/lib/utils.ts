@@ -152,10 +152,12 @@ export function processQueue() {
         .kitchen-item .name { font-size: 18px; }
         .kitchen-item .qty  { font-size: 18px; }
         .detail {
-            font-size: ${isKitchen ? '13px' : '12px'};
+            display: block;
+            font-size: ${isKitchen ? '14px' : '13px'};
             font-weight: normal;
-            margin-top: 1px;
+            margin-top: 3px;
         }
+        .detail.note-options { margin-top: 0; padding-top: 10px; }
         .detail.sub { padding-left: 8px; }
         .addon-price { float: right; font-weight: bold; }
         .footer { text-align: center; padding: 4px 0; }
@@ -226,7 +228,7 @@ export function generateReceiptHTML(order: BaseOrder): string {
         return `
             <tr>
                 <td class="idx">${index + 1}.</td>
-                <td class="name">${item.name}${buildItemDetailsHTML(item, true)}</td>
+                <td class="name">${item.printName || item.name}${buildItemDetailsHTML(item, true)}</td>
                 <td class="qty">x${item.quantity}</td>
                 <td class="price">${price.toLocaleString()}</td>
             </tr>`
@@ -248,7 +250,7 @@ export function generateKitchenReceiptHTML(order: BaseOrder, item: OrderItem, in
         <div class="divider"></div>
         <table class="items kitchen-item">
             <tr>
-                <td class="name">${item.name}${buildItemDetailsHTML(item, false)}</td>
+                <td class="name">${item.printName || item.name}${buildItemDetailsHTML(item, false)}</td>
                 <td class="qty">x${item.quantity}</td>
             </tr>
         </table>
@@ -271,21 +273,21 @@ function buildHeaderHTML(order: BaseOrder): string {
 function buildItemDetailsHTML(item: OrderItem, showPrice: boolean): string {
     const parts: string[] = []
 
-    if (item.variant) {
-        parts.push(`<div class="detail">特選: ${item.variant}</div>`)
+    if (item.printVariant || item.variant) {
+        parts.push(` (${item.printVariant || item.variant})`)
     }
-    if (item.addons.length > 0) {
-        parts.push(`<div class="detail">加料:</div>`)
-        item.addons.forEach(addon => {
+    const noteOptions = item.printNoteOptions || item.noteOptions
+    if (noteOptions.length > 0) {
+        parts.push(`<div class="detail note-options">不加: ${noteOptions.join(', ')}</div>`)
+    }
+    const addons = item.printAddons || item.addons
+    if (addons.length > 0) {
+        parts.push(`<div class="detail">加點: ${addons.map(addon => {
             const priceStr = showPrice
                 ? `<span class="addon-price">${(addon.priceExtra * addon.amount).toLocaleString()}</span>`
                 : ''
-            parts.push(`<div class="detail sub">- ${addon.name} x${addon.amount}${priceStr}</div>`)
-        })
-    }
-    if (item.noteOptions.length > 0) {
-        parts.push(`<div class="detail">不加:</div>`)
-        item.noteOptions.forEach(opt => parts.push(`<div class="detail sub">- ${opt}</div>`))
+            return `${addon.printName || addon.name}${addon.amount > 1 ? ` x${addon.amount}` : ''}${priceStr}`
+        }).join(', ')}</div>`)
     }
     if (item.note) {
         parts.push(`<div class="detail">備註: ${item.note}</div>`)
