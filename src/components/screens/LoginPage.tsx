@@ -85,7 +85,7 @@ export default function LoginPage() {
             </div>
             <div className='relative z-10 flex -translate-y-12 flex-col items-center gap-2 w-full max-w-sm'>
                 <div className='flex items-center justify-center'>
-                    <Image src='/logo.png' alt='Mâm Mì' width={176} height={128} className='h-28 w-auto object-contain' priority />
+                    <Image src='/logo.png' alt='漫迷' width={176} height={128} className='h-28 w-auto object-contain' priority />
                 </div>
                 <Card className='w-full rounded-2xl border border-slate-200 shadow-sm bg-white'>
                     <CardHeader className='pb-2'>

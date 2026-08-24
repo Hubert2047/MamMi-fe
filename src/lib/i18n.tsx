@@ -217,4 +217,11 @@ Object.assign(messages.vi, { posTable: 'Bàn', tableSearch: 'Tìm hoặc chọn 
 Object.assign(messages.en, { posTable: 'Table', tableSearch: 'Search or select table', tableRequired: 'Select a table before creating or paying for a dine-in order' })
 Object.assign(messages['zh-TW'], { posTable: '桌號', tableSearch: '搜尋或選擇桌號', tableRequired: '內用訂單建立或付款前請選擇桌號' })
 
+Object.assign(messages.vi, { tableQrRegenerate: 'Tạo lại QR', tableQrRegenerateConfirm: 'Mã QR cũ sẽ không còn dùng được. Bạn có muốn tạo mã mới không?', tableQrRegenerateSuccess: 'Đã tạo lại mã QR', tableQrRegenerateFailure: 'Không thể tạo lại mã QR' })
+Object.assign(messages.en, { tableQrRegenerate: 'Regenerate QR', tableQrRegenerateConfirm: 'The old QR code will stop working. Do you want to create a new one?', tableQrRegenerateSuccess: 'QR code regenerated', tableQrRegenerateFailure: 'Unable to regenerate QR code' })
+Object.assign(messages['zh-TW'], { tableQrRegenerate: '重新產生 QR', tableQrRegenerateConfirm: '舊的 QR Code 將無法使用。確定要產生新的嗎？', tableQrRegenerateSuccess: '已重新產生 QR Code', tableQrRegenerateFailure: '無法重新產生 QR Code' })
+Object.assign(messages.vi, { tableQrRegenerateAll: 'Tạo lại toàn bộ QR', tableQrRegenerateAllConfirm: 'Mã QR của tất cả bàn sẽ được thay đổi. Bạn có muốn tiếp tục không?' })
+Object.assign(messages.en, { tableQrRegenerateAll: 'Regenerate all QR codes', tableQrRegenerateAllConfirm: 'QR codes for all tables will change. Do you want to continue?' })
+Object.assign(messages['zh-TW'], { tableQrRegenerateAll: '重新產生全部 QR', tableQrRegenerateAllConfirm: '所有桌位的 QR Code 都會變更。確定要繼續嗎？' })
+
 export function useI18n() { const context = useContext(I18nContext); if (!context) throw new Error('useI18n must be used inside I18nProvider'); return context }
