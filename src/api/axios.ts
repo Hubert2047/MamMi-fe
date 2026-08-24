@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { getSession } from 'next-auth/react'
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+const API_BASE_URL = typeof window === 'undefined' ? process.env.INTERNAL_API_BASE_URL || publicApiBaseUrl : publicApiBaseUrl
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 const api = axios.create({
     baseURL: `${API_BASE_URL}/api/`,
