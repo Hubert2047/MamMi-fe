@@ -96,6 +96,10 @@ export const updateOrderPayment = async ({ id, data }: { id: string; data: Parti
     const res = await api.put(`orders/payment/${id}`, data)
     return res.data.data
 }
+export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<BaseOrder, 'items' | 'type' | 'discount' | 'paymentMethod' | 'version' | 'table'> }): Promise<BaseOrder> => {
+    const res = await api.put(`orders/${id}`, data)
+    return res.data.data
+}
 
 export const deleteOrder = async (id: string) => {
     const res = await api.delete(`orders/${id}`)

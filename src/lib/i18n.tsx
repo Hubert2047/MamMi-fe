@@ -191,9 +191,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('vi')
   useEffect(() => {
     const saved = window.localStorage.getItem('pos-locale')
-    if (saved && locales.includes(saved as Locale)) { setLocaleState(saved as Locale); return }
-    const browserLocale = window.navigator.language.toLowerCase()
-    setLocaleState(browserLocale.startsWith('zh') ? 'zh-TW' : browserLocale.startsWith('en') ? 'en' : 'vi')
+    const next = saved && locales.includes(saved as Locale)
+      ? saved as Locale
+      : window.navigator.language.toLowerCase().startsWith('zh') ? 'zh-TW' : window.navigator.language.toLowerCase().startsWith('en') ? 'en' : 'vi'
+    queueMicrotask(() => setLocaleState(next))
   }, [])
   const setLocale = (next: Locale) => { setLocaleState(next); window.localStorage.setItem('pos-locale', next) }
   const value = useMemo(() => ({ locale, setLocale, t: (key: MessageKey) => key in loginMessages[locale] ? loginMessages[locale][key as keyof typeof loginMessages.vi] : key in userMessages[locale] ? userMessages[locale][key as keyof typeof userMessages.vi] : key in cashMessages[locale] ? cashMessages[locale][key as keyof typeof cashMessages.vi] : key in storeProductMessages[locale] ? storeProductMessages[locale][key as keyof typeof storeProductMessages.vi] : key in attendanceMessages[locale] ? attendanceMessages[locale][key as keyof typeof attendanceMessages.vi] : key in closingMessages[locale] ? closingMessages[locale][key as keyof typeof closingMessages.vi] : key in closingHistoryMessages[locale] ? closingHistoryMessages[locale][key as keyof typeof closingHistoryMessages.vi] : key in closingPeriodMessages[locale] ? closingPeriodMessages[locale][key as keyof typeof closingPeriodMessages.vi] : key in closingAdminMessages[locale] ? closingAdminMessages[locale][key as keyof typeof closingAdminMessages.vi] : key in closingRangeMessages[locale] ? closingRangeMessages[locale][key as keyof typeof closingRangeMessages.vi] : key in orderErrorMessages[locale] ? orderErrorMessages[locale][key as keyof typeof orderErrorMessages.vi] : key in expenseMessages[locale] ? expenseMessages[locale][key as keyof typeof expenseMessages.vi] : key in revenueMessages[locale] ? revenueMessages[locale][key as keyof typeof revenueMessages.vi] : key in orderDisplayMessages[locale] ? orderDisplayMessages[locale][key as keyof typeof orderDisplayMessages.vi] : key in posMessages[locale] ? posMessages[locale][key as keyof typeof posMessages.vi] : key in orderMessages[locale] ? orderMessages[locale][key as keyof typeof orderMessages.vi] : key in messages[locale] ? messages[locale][key as keyof typeof messages.vi] : key in extraMessages[locale] ? extraMessages[locale][key as keyof typeof extraMessages.vi] : key in productActionMessages[locale] ? productActionMessages[locale][key as keyof typeof productActionMessages.vi] : key in productDescriptionMessages[locale] ? productDescriptionMessages[locale][key as keyof typeof productDescriptionMessages.vi] : key in dailyClosingMessages[locale] ? dailyClosingMessages[locale][key as keyof typeof dailyClosingMessages.vi] : key in commonMessages[locale] ? commonMessages[locale][key as keyof typeof commonMessages.vi] : key in categoryMessages[locale] ? categoryMessages[locale][key as keyof typeof categoryMessages.vi] : key in addonMessages[locale] ? addonMessages[locale][key as keyof typeof addonMessages.vi] : discountMessages[locale][key as keyof typeof discountMessages.vi] }), [locale])
@@ -223,5 +224,19 @@ Object.assign(messages['zh-TW'], { tableQrRegenerate: '重新產生 QR', tableQr
 Object.assign(messages.vi, { tableQrRegenerateAll: 'Tạo lại toàn bộ QR', tableQrRegenerateAllConfirm: 'Mã QR của tất cả bàn sẽ được thay đổi. Bạn có muốn tiếp tục không?' })
 Object.assign(messages.en, { tableQrRegenerateAll: 'Regenerate all QR codes', tableQrRegenerateAllConfirm: 'QR codes for all tables will change. Do you want to continue?' })
 Object.assign(messages['zh-TW'], { tableQrRegenerateAll: '重新產生全部 QR', tableQrRegenerateAllConfirm: '所有桌位的 QR Code 都會變更。確定要繼續嗎？' })
+
+Object.assign(messages.vi, { editOrder: 'Chỉnh sửa đơn', saveOrderChanges: 'Lưu thay đổi', orderChangedElsewhere: 'Đơn hàng đã được thay đổi trên thiết bị khác. Hãy mở lại để xem dữ liệu mới.' })
+Object.assign(messages.en, { editOrder: 'Edit order', saveOrderChanges: 'Save changes', orderChangedElsewhere: 'This order was changed on another device. Reopen it to see the latest data.' })
+Object.assign(messages['zh-TW'], { editOrder: '編輯訂單', saveOrderChanges: '儲存變更', orderChangedElsewhere: '此訂單已在其他裝置變更，請重新開啟以查看最新資料。' })
+
+Object.assign(messages.vi, { addOrderItem: 'Thêm món', confirmSaveOrderChanges: 'Bạn có chắc muốn lưu toàn bộ thay đổi của đơn hàng không?', confirmDiscardOrderChanges: 'Các thay đổi chưa lưu sẽ bị mất. Bạn có chắc muốn hủy không?' })
+Object.assign(messages.en, { addOrderItem: 'Add item', confirmSaveOrderChanges: 'Save all changes to this order?', confirmDiscardOrderChanges: 'Unsaved changes will be lost. Do you want to cancel?' })
+Object.assign(messages['zh-TW'], { addOrderItem: '新增餐點', confirmSaveOrderChanges: '確定要儲存此訂單的所有變更嗎？', confirmDiscardOrderChanges: '尚未儲存的變更將會遺失，確定要取消嗎？' })
+Object.assign(messages.vi, { createNewOrder: 'Tạo đơn' })
+Object.assign(messages.en, { createNewOrder: 'Create order' })
+Object.assign(messages['zh-TW'], { createNewOrder: '建立訂單' })
+Object.assign(messages.vi, { backToOrder: 'Quay lại đơn' })
+Object.assign(messages.en, { backToOrder: 'Back to order' })
+Object.assign(messages['zh-TW'], { backToOrder: '返回訂單' })
 
 export function useI18n() { const context = useContext(I18nContext); if (!context) throw new Error('useI18n must be used inside I18nProvider'); return context }

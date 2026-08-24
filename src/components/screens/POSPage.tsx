@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { type Item } from '@/api/item'
-import { type BaseOrder, type OrderItem } from '@/api/order.ts'
+import { type BaseOrder, type OrderItem, updatePendingOrder } from '@/api/order.ts'
 import ExpenseTableDialog from '@/components/expense/ExpenseTableDialog'
 import PosOrderList from '@/components/orders/PosOrderList'
 import { DEFAULT_ORDER, DEFAULT_ORDER_ITEM } from '@/constants'
@@ -13,7 +13,7 @@ import Loading from '@/components/Loading.tsx'
 import Checkout from '@/components/Checkout.tsx'
 import { useDiscounts, useItems, useNextOrderNumber, useStoreAddons } from '@/hooks/queries'
 import { getStoreTables } from '@/api/table'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { OrderTable } from '@/components/orders/OrderTable.tsx'
 import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
@@ -29,6 +29,8 @@ import { useStoreContext } from '@/lib/store-context'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import LogoutConfirmDialog from '@/components/LogoutConfirmDialog'
 import { toast } from 'sonner'
+import { isAxiosError } from 'axios'
+import { generateUUID } from '@/lib/utils'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -42,6 +44,8 @@ const POSPage: React.FC = () => {
     const [isEditItem, setIsEditItem] = useState<boolean>(false)
     const [isCheckout, setIsCheckout] = useState<boolean>(false)
     const [isDetail, setIsDetail] = useState<boolean>(false)
+    const [isOrderEditing, setIsOrderEditing] = useState(false)
+    const [orderBeforeEdit, setOrderBeforeEdit] = useState<BaseOrder | null>(null)
     const [isPendingOrder, setIsPendingOrder] = useState<boolean>(false)
     const [isCheckoutPendingOrder, setIsCheckoutPendingOrder] = useState<boolean>(false)
     const [openBtns, setOpenBtns] = useState(true)
@@ -56,12 +60,12 @@ const POSPage: React.FC = () => {
     const { data: discounts = [], isLoading: isDiscountsLoading } = useDiscounts()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const { data: tables = [] } = useQuery({ queryKey: ['store-tables'], queryFn: getStoreTables })
+    const queryClient = useQueryClient()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
     useEffect(() => {
         if (nextOrderNumber === undefined || currentOrder.items.length > 0 || isCheckout || isPendingOrder) return
         // The POS can render once before the store-scoped query resolves.
         // Keep the displayed number synchronized with the backend preview.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentOrderNumber(nextOrderNumber)
     }, [currentOrder.items.length, isCheckout, isPendingOrder, nextOrderNumber])
     // Keep temporarily unavailable products visible but not selectable.
@@ -117,6 +121,19 @@ const POSPage: React.FC = () => {
     }
 
     const totalPrice = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
+    const updatePendingOrderMutation = useMutation({
+        mutationFn: updatePendingOrder,
+        onSuccess: (updatedOrder) => {
+            setCurrentOrder(updatedOrder)
+            setOrderBeforeEdit(null)
+            setIsOrderEditing(false)
+            queryClient.invalidateQueries({ queryKey: ['orders'] })
+            toast.success(t('updateSuccess'))
+        },
+        onError: (error: unknown) => {
+            toast.error(isAxiosError(error) && error.response?.data?.code === 'ORDER_VERSION_CONFLICT' ? t('orderChangedElsewhere') : t('updateFailure'))
+        },
+    })
 
     function setCheckoutOpen(checkout: boolean) {
         if (checkout && !isCheckout) {
@@ -147,17 +164,30 @@ const POSPage: React.FC = () => {
     }
 
     function displayOrderDetail(order: BaseOrder) {
-        setCurrentOrder(order)
-        setCurrentOrderItem(order.items[0])
-        const item = items.find((item) => order.items[0].id === item._id)
+        const lineIds = new Set<string>()
+        const orderWithLineIds: BaseOrder = {
+            ...order,
+            items: order.items.map((orderItem) => {
+                const itemId = orderItem.itemId && !lineIds.has(orderItem.itemId) ? orderItem.itemId : generateUUID()
+                lineIds.add(itemId)
+                return { ...orderItem, itemId }
+            }),
+        }
+        setCurrentOrder(orderWithLineIds)
+        setCurrentOrderItem(orderWithLineIds.items[0])
+        const item = items.find((item) => orderWithLineIds.items[0].id === item._id)
         if (item) setSelectedItem(item)
         setOpenOrderTable(false)
         setIsDetail(true)
+        setIsOrderEditing(false)
+        setOrderBeforeEdit(null)
         setCheckoutOpen(false)
     }
 
     function closeDisplayOrderDetail() {
         setIsDetail(false)
+        setIsOrderEditing(false)
+        setOrderBeforeEdit(null)
         setIsEditItem(false)
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setCurrentOrder(DEFAULT_ORDER)
@@ -168,8 +198,39 @@ const POSPage: React.FC = () => {
         setCurrentOrder(order)
         setSelectedItem(null)
         setOpenOrderTable(false)
+        setIsDetail(false)
+        setIsOrderEditing(false)
         setCheckoutOpen(true)
         setIsCheckoutPendingOrder(true)
+    }
+
+    function cancelOrderEdit() {
+        if (orderBeforeEdit) setCurrentOrder(orderBeforeEdit)
+        setOrderBeforeEdit(null)
+        setIsOrderEditing(false)
+        setSelectedItem(null)
+        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setIsEditItem(false)
+    }
+
+    function startOrderEdit() {
+        setOrderBeforeEdit(currentOrder)
+        setIsOrderEditing(true)
+    }
+
+    function startAddOrderItem() {
+        setSelectedItem(null)
+        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setIsEditItem(false)
+    }
+
+    function saveOrderEdit() {
+        if (currentOrder.items.length === 0) { toast.error(t('noProductsToOrder')); return }
+        if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
+        void updatePendingOrderMutation.mutateAsync({
+            id: currentOrder._id,
+            data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, discount: currentOrder.discount, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
+        })
     }
     async function handleLogout() {
         try {
@@ -186,6 +247,7 @@ const POSPage: React.FC = () => {
                 <PosHeader
                     items={items}
                     isDetail={isDetail}
+                    isOrderEditing={isOrderEditing}
                     isPendingOrder={isPendingOrder}
                     currentOrder={currentOrder}
                     setCurrentOrder={setCurrentOrder}
@@ -198,6 +260,7 @@ const POSPage: React.FC = () => {
                     openBtns={openBtns}
                     setOpenBtns={setOpenBtns}
                     tables={tables}
+                    onCheckoutPendingOrder={() => checkoutPendingOrder(currentOrder)}
                 />
                 <div className='flex min-h-0 flex-1 gap-2'>
                     <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>
@@ -205,6 +268,12 @@ const POSPage: React.FC = () => {
                             items={currentOrder.items}
                             updateItem={selectUpdateOrderItem}
                             currentOrderItem={currentOrderItem}
+                            canEdit={isDetail && currentOrder.status === 'pending'}
+                            isOrderEditing={isOrderEditing}
+                            onStartOrderEdit={startOrderEdit}
+                            onStartAddItem={startAddOrderItem}
+                            onCancelOrderEdit={cancelOrderEdit}
+                            onSaveOrderEdit={saveOrderEdit}
                         />
                     </div>
                     {isCheckout || isPendingOrder ? (
@@ -224,6 +293,7 @@ const POSPage: React.FC = () => {
                     ) : (
                         <PosItemSection
                             isDetail={isDetail}
+                            isOrderEditing={isOrderEditing}
                             currentOrderNumber={currentOrderNumber}
                             itemsByCategory={itemsByCategory}
                             currentOrder={currentOrder}
@@ -261,27 +331,27 @@ const POSPage: React.FC = () => {
                     <div className='border-b pb-2 mb-1'>
                         <LanguageSwitcher />
                     </div>
-                    <Button variant='outline' onClick={() => setOpenOrderTable(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>
-                    <Button variant='outline' onClick={() => setOpenTemporaryAvailability(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenTemporaryAvailability(true)}>
                         {t('temporaryAvailabilityTitle')}
                     </Button>
-                    <Button variant='outline' onClick={() => setOpenOtherRevenue(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenOtherRevenue(true)}>
                         {t('otherRevenue')}
                     </Button>
-                    <Button variant='outline' onClick={() => setOpenExpense(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenExpense(true)}>
                         {t('expenses')}
                     </Button>
                     {/* Temporarily hidden; keep the attendance state, dialog, and logic for the next phase. */}
-                    {showShiftAttendanceButton && <Button variant='outline' onClick={() => setOpenShiftAttendance(true)}>
+                    {showShiftAttendanceButton && <Button className='h-11 text-base' variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         {t('attendance')}
                     </Button>}
-                    <Button variant='outline' onClick={() => setOpenDailyClosing(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenDailyClosing(true)}>
                         {t('dailyClosing')}
                     </Button>
                     <LogoutConfirmDialog onConfirm={handleLogout}>
-                        <Button variant='destructive'>{t('logout')}</Button>
+                        <Button className='h-11 text-base' variant='destructive'>{t('logout')}</Button>
                     </LogoutConfirmDialog>
                     </div>
                 </div>

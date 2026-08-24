@@ -167,7 +167,7 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
                     {paginatedOrders.map((exp) => {
                         const isDeleting = deleteMutation.isPending && deleteMutation.variables === exp._id
                         return (
-                            <TableRow key={exp._id}>
+                            <TableRow key={exp._id} className='h-14'>
                                 <TableCell>{exp.name}</TableCell>
                                 <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{formatDateTime(exp.createdAt)}</TableCell>
                                 <TableCell>{expenseTypeLabel(exp)}</TableCell>
@@ -177,13 +177,13 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
                                 <TableCell>{exp.price.toLocaleString()}</TableCell>
                                 <TableCell>{exp.note}</TableCell>
                                 {!showOnly && <TableCell>
-                                    <Button variant='default' className='w-20'
+                                    <Button variant='default' className='h-10 w-20 px-3 text-base'
                                             onClick={() => handleEditData(exp)}>{t('edit')}</Button>
 
                                     {/* Confirm Delete */}
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button className='ml-2 w-20' variant='destructive'
+                                            <Button className='ml-2 h-10 w-20 px-3 text-base' variant='destructive'
                                                     disabled={isDeleting}>
                                                 {t('delete')}
                                             </Button>

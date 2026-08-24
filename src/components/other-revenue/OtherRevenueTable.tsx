@@ -34,7 +34,7 @@ export function OtherRevenueTable({revenues, showOnly = false, range, onRangeCha
     const [addRevenue, setAddRevenue] = useState<boolean>(false)
     const [editData, setEditData] = useState<IUpdateRevenue | null>(null)
     const [page, setPage] = useState(1)
-    const [pageSize, setPageSize] = useState(6)
+    const [pageSize, setPageSize] = useState(8)
     const [currentTime] = useState(() => new Date().toISOString())
     const tableRef = useRef<HTMLDivElement>(null)
     const fromInputRef = useRef<HTMLInputElement>(null)
@@ -56,13 +56,17 @@ export function OtherRevenueTable({revenues, showOnly = false, range, onRangeCha
             const headerHeight = element.querySelector<HTMLElement>('thead')?.getBoundingClientRect().height ?? 48
             const rows = Array.from(element.querySelectorAll<HTMLElement>('tbody tr'))
             const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 52
-            setPageSize(Math.min(10, Math.max(1, Math.floor((element.clientHeight - toolbarHeight - headerHeight - 8) / Math.max(rowHeight, 52)))))
+            setPageSize(Math.min(16, Math.max(1, Math.floor((element.clientHeight - toolbarHeight - headerHeight - 8) / Math.max(rowHeight, 52)))))
         }
         resize()
+        const resizeTimer = window.setTimeout(resize, 80)
         const observer = new ResizeObserver(resize)
         observer.observe(element)
         element.querySelectorAll<HTMLElement>('tbody tr').forEach((row) => observer.observe(row))
-        return () => observer.disconnect()
+        return () => {
+            window.clearTimeout(resizeTimer)
+            observer.disconnect()
+        }
     }, [page, pageSize, revenues.length, search])
     const totalPages = Math.ceil(filteredOrders.length / pageSize)
     const currentPage = Math.min(page, Math.max(1, totalPages))
@@ -144,19 +148,19 @@ export function OtherRevenueTable({revenues, showOnly = false, range, onRangeCha
                     {paginatedOrders.map((exp) => {
                         const isDeleting = deleteMutation.isPending && deleteMutation.variables === exp._id
                         return (
-                            <TableRow key={exp._id}>
+                            <TableRow key={exp._id} className='h-14'>
                                 <TableCell>{exp.name}</TableCell>
                                 <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{formatDateTime(exp.createdAt)}</TableCell>
                                 <TableCell>{exp.price.toLocaleString()}</TableCell>
                                 <TableCell>{exp.note}</TableCell>
                                 {!showOnly && <TableCell>
-                                    <Button variant='default' className='w-20'
+                                    <Button variant='default' className='h-10 w-20 px-3 text-base'
                                             onClick={() => handleEditData(exp)}>{t('edit')}</Button>
 
                                     {/* Confirm Delete */}
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button className='ml-2 w-20' variant='destructive'
+                                            <Button className='ml-2 h-10 w-20 px-3 text-base' variant='destructive'
                                                     disabled={isDeleting}>
                                                 {t('delete')}
                                             </Button>

@@ -36,14 +36,16 @@ export default function CashDenominationInput({ counts, selectedDenomination, on
           <div
             key={denomination}
             className={`flex min-h-10 items-center justify-between gap-0.5 rounded-md border px-1.5 ${
-              selectedDenomination === denomination ? 'border-primary bg-primary/10' : 'bg-background'
+              (counts[denomination] ?? 0) > 0
+                ? `border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 ${selectedDenomination === denomination ? 'ring-2 ring-primary ring-offset-1' : ''}`
+                : selectedDenomination === denomination ? 'border-primary bg-primary/10' : 'bg-background'
             }`}>
             <button
               type="button"
               className="flex min-w-0 flex-1 items-center gap-1 text-left"
               onClick={() => onSelect(denomination)}>
               <span className="text-sm font-bold tabular-nums">{denomination.toLocaleString()}</span>
-              <span className="text-base font-semibold text-muted-foreground tabular-nums">
+              <span className={`text-base font-bold tabular-nums ${(counts[denomination] ?? 0) > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'}`}>
                 ×{counts[denomination] ?? 0}
               </span>
             </button>

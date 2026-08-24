@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 type Props = {
     isDetail: boolean
+    isOrderEditing: boolean
     currentOrder: BaseOrder
     currentOrderNumber: number
     itemsByCategory: Record<string, Item[]>
@@ -35,6 +36,7 @@ type Props = {
 
 function PosItemSection({
     isDetail,
+    isOrderEditing,
     currentOrder,
     itemsByCategory,
     selectedCategory,
@@ -55,6 +57,7 @@ function PosItemSection({
     const selectedItemPrice = calculateOrderItemTotal(currentOrderItem)
     const unavailableAddonIds = selectedItem ? getUnavailableAddonIds(selectedItem, currentOrderItem.addons.map((addon) => addon.id)) : []
     const selectionUnavailable = selectedItem?.temporarilyUnavailable === true || unavailableAddonIds.length > 0
+    const isReadOnly = isDetail && !isOrderEditing
     const displayItemName = (item: Item) => {
         const name = item.name.trim()
         const category = item.categoryName.trim()
@@ -95,10 +98,21 @@ function PosItemSection({
             return
         }
         setCurrentOrder((prev) => ({ ...prev, items: [...prev.items, currentOrderItem] }))
+        if (isDetail && isOrderEditing) {
+            setIsEditItem(true)
+            return
+        }
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setSelectedItem(null)
     }
     const cancelAddItem = () => {
+        if (isDetail && isEditItem) {
+            const originalItem = currentOrder.items.find((item) => item.itemId === currentOrderItem.itemId)
+            if (originalItem) {
+                setCurrentOrderItem(originalItem)
+                return
+            }
+        }
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setSelectedItem(null)
         setIsEditItem(false)
@@ -110,19 +124,17 @@ function PosItemSection({
         }
         setCurrentOrder((prev) => {
             const items = prev.items.map((i) => {
-                if (i.id === currentOrderItem.id) return currentOrderItem
+                if (i.itemId === currentOrderItem.itemId) return currentOrderItem
                 return i
             })
             return { ...prev, items }
         })
-        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
-        setSelectedItem(null)
-        setIsEditItem(false)
+        setIsEditItem(true)
     }
     const deleteItem = () => {
         setCurrentOrder((prev) => {
             const items = prev.items.filter((i) => {
-                return i.id !== currentOrderItem.id
+                return i.itemId !== currentOrderItem.itemId
             })
             return { ...prev, items }
         })
@@ -142,7 +154,7 @@ function PosItemSection({
         <>
             {updateOrderMutation.isPending && <Loading />}
             <div className='categories flex w-22 flex-col gap-2 rounded border border-[#ccc] p-1'>
-                {!isDetail &&
+                {!isReadOnly &&
                     Object.keys(itemsByCategory).map((categoryName) => {
                         return (
                             <Button
@@ -179,14 +191,15 @@ function PosItemSection({
                         ))}
                     </div>
                 ) : (
-                    <div className='flex min-w-0 flex-1 flex-col justify-start gap-3'>
+                    <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col'>
+                        <div className='min-h-0 flex-1 space-y-3 overflow-y-auto pr-2'>
                         <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1'><p className='min-w-0 flex-1 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
                         {selectionUnavailable && <div className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'>{t('selectionUnavailable')}</div>}
                         <div className='variant flex justify-start items-center gap-4'>
                             <Label className='block w-27 font-semibold text-start'>{t('quantity')}:</Label>
                             <Input
                                 id='amount'
-                                disabled={isDetail}
+                                disabled={isReadOnly}
                                 value={currentOrderItem.quantity}
                                 onChange={(e) => {
                                     setCurrentOrderItem((prev) => ({
@@ -203,7 +216,7 @@ function PosItemSection({
                                 <RadioGroup
                                     value={selectedItem.variants.find((option) => option.id === currentOrderItem.variant || optionName(option) === currentOrderItem.variant)?.id || currentOrderItem.variant}
                                     onValueChange={(value) => {
-                                        if (isDetail) return
+                                        if (isReadOnly) return
                                         setCurrentOrderItem((prev) => ({ ...prev, variant: value }))
                                     }}
                                     className='flex gap-4'>
@@ -228,7 +241,7 @@ function PosItemSection({
                                     className='w-full flex-wrap gap-2'
                                     value={currentOrderItem.noteOptions.map((value) => selectedItem.noteOptions.find((option) => option.id === value || optionName(option) === value)?.id || value)}
                                     onValueChange={(value) => {
-                                        if (isDetail) return
+                                        if (isReadOnly) return
                                         setCurrentOrderItem((prev) => ({ ...prev, noteOptions: value }))
                                     }}>
                                     {selectedItem.noteOptions.map((note) => (
@@ -251,7 +264,7 @@ function PosItemSection({
                                     className='flex-wrap gap-2'
                                     value={currentOrderItem.addons.map((a) => a.id)}
                                     onValueChange={(values) => {
-                                        if (isDetail) return
+                                        if (isReadOnly) return
                                         setCurrentOrderItem((prev) => ({
                                             ...prev,
                                             addons: values.map((id) => {
@@ -279,7 +292,7 @@ function PosItemSection({
                             <Label className='w-22 block font-semibold text-start'>{t('note')}: </Label>
                             <Input
                                 id='note'
-                                disabled={isDetail}
+                                disabled={isReadOnly}
                                 value={currentOrderItem.note}
                                 onChange={(e) => {
                                     setCurrentOrderItem((prev) => ({ ...prev, note: e.target.value }))
@@ -300,7 +313,7 @@ function PosItemSection({
                             </>
                         )}
                         {/* edit paymentmedthod */}
-                        {isDetail &&
+                        {isDetail && currentOrder.status === 'paid' &&
                             ['dine_in', 'takeaway'].includes(currentOrder.type) &&
                             ['cash', 'linepay', 'bank'].includes(currentOrder.paymentMethod) && (
                                 <div className='flex flex-wrap items-center gap-2'>
@@ -359,8 +372,10 @@ function PosItemSection({
                                 </div>
                             )}
 
-                        {!isDetail && (
-                            <div className='flex items-end justify-start gap-3 pt-2'>
+                        </div>
+                        {!isReadOnly && (
+                            <div className='shrink-0 border-t pb-5 pt-3'>
+                            <div className='flex items-end justify-start gap-3'>
                                 <NumPad
                                     currentValue={currentOrderItem.quantity.toString()}
                                     large
@@ -417,6 +432,7 @@ function PosItemSection({
                                         Hủy
                                     </Button>
                                 </div>
+                            </div>
                             </div>
                         )}
                     </div>

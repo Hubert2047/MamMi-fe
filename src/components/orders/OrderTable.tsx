@@ -58,7 +58,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('pending')
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
-    const [pageSize, setPageSize] = useState(6)
+    const [pageSize, setPageSize] = useState(8)
     const [currentTime] = useState(() => new Date().toISOString())
     const tableRef = useRef<HTMLDivElement>(null)
     const fromInputRef = useRef<HTMLInputElement>(null)
@@ -105,14 +105,18 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
             const headerHeight = element.querySelector<HTMLElement>('thead')?.getBoundingClientRect().height ?? 48
             const rows = Array.from(element.querySelectorAll<HTMLElement>('tbody tr'))
             const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 52
-            setPageSize(Math.min(10, Math.max(1, Math.floor((element.clientHeight - toolbarHeight - headerHeight - 8) / Math.max(rowHeight, 52)))))
+            setPageSize(Math.min(16, Math.max(8, Math.floor((element.clientHeight - toolbarHeight - headerHeight - 8) / Math.max(rowHeight, 52)))))
         }
         resize()
+        const resizeTimer = window.setTimeout(resize, 80)
         const observer = new ResizeObserver(resize)
         observer.observe(element)
         element.querySelectorAll<HTMLElement>('tbody tr').forEach((row) => observer.observe(row))
-        return () => observer.disconnect()
-    }, [orders.length, page, pageSize, search, statusFilter])
+        return () => {
+            window.clearTimeout(resizeTimer)
+            observer.disconnect()
+        }
+    }, [open, orders.length, page, pageSize, search, statusFilter])
     const totalPages = Math.ceil(filteredOrders.length / pageSize)
     const currentPage = Math.min(page, Math.max(1, totalPages))
     const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -222,7 +226,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                     const isCanceling =
                                         cancelOrderMutation.isPending && cancelOrderMutation.variables?.id === order._id
                                     return (
-                                        <TableRow key={order._id}>
+                                        <TableRow key={order._id} className='h-14'>
                                             <TableCell>{order.number}</TableCell>
                                             <TableCell>{order.items.length}</TableCell>
                                             <TableCell>{order.totalPrice.toLocaleString()}</TableCell>
@@ -244,14 +248,14 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                             <TableCell className='min-w-50'>
                                                 <Button
                                                     variant='outline'
-                                                    className='border-gray-300 text-gray-700 hover:bg-gray-100'
+                                                    className='h-10 border-gray-300 px-3 text-base text-gray-700 hover:bg-gray-100'
                                                     onClick={() => displayOrderDetail(order)}>
                                                     {t('detail')}
                                                 </Button>
                                                 {order.status === 'pending' && (
                                                     <Button
                                                         variant='default'
-                                                        className='ml-1 bg-green-600 hover:bg-green-700 text-white'
+                                                        className='ml-1 h-10 px-3 text-base bg-green-600 hover:bg-green-700 text-white'
                                                         onClick={() => checkoutPendingOrder(order)}>
                                                         {t('pay')}
                                                     </Button>
@@ -259,7 +263,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                 {
                                                     <Button
                                                         variant='default'
-                                                        className='ml-1 bg-blue-500 hover:bg-blue-600 text-white'
+                                                        className='ml-1 h-10 px-3 text-base bg-blue-500 hover:bg-blue-600 text-white'
                                                         onClick={() => {
                                                             setFocusOrder(order)
                                                             setOpenPrintOptions(true)
@@ -271,7 +275,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
                                                             <Button
-                                                                className='ml-1'
+                                                                className='ml-1 h-10 px-3 text-base'
                                                                 variant='destructive'
                                                                 disabled={isCanceling}>
                                                                 {t('cancelOrder')}

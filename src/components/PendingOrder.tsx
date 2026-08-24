@@ -51,18 +51,20 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
                 />
             </div>
             {/* print option */}
-            <div className='flex justify-start items-center gap-4 pt-5 pl-2'>
-                <Checkbox id='print-confirm' checked={isPrint} onCheckedChange={(checked) => setIsPrint(!!checked)} />
-                <Label htmlFor='print-confirm'>{t('printOnConfirm')}</Label>
-            </div>
-            <div className='flex justify-end ml-8'>
+            <div className='mt-3 flex items-center gap-4 border-t pt-4 pl-2'>
+                <div className='flex items-center gap-4'>
+                    <Checkbox id='print-confirm' checked={isPrint} onCheckedChange={(checked) => setIsPrint(!!checked)} />
+                    <Label htmlFor='print-confirm'>{t('printOnConfirm')}</Label>
+                </div>
+                <div className='ml-auto'>
                 <Button
-                    className='bg-yellow-400 hover:bg-yellow-500 text-black'
+                    className='h-12 min-w-32 bg-yellow-400 px-6 text-base text-black hover:bg-yellow-500'
                     variant='default'
                     size='lg'
                     onClick={() => handleCreateOrder('pending')}>
                     {t('placeOrder')}
                 </Button>
+                </div>
             </div>
         </div>
     )

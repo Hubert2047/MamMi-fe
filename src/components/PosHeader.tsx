@@ -15,6 +15,7 @@ type Props = {
 
     items: Item[]
     isDetail: boolean
+    isOrderEditing: boolean
     isPendingOrder: boolean
     totalPrice: number
     currentOrderNumber: number
@@ -27,6 +28,7 @@ type Props = {
     openBtns: boolean
     setOpenBtns: React.Dispatch<React.SetStateAction<boolean>>
     tables: StoreTable[]
+    onCheckoutPendingOrder(): void
 }
 
 function PosHeader({
@@ -34,6 +36,7 @@ function PosHeader({
     items,
     isPendingOrder,
     isDetail,
+    isOrderEditing,
     totalPrice,
     isCheckout,
     setCurrentOrder,
@@ -44,8 +47,10 @@ function PosHeader({
     openBtns,
     setOpenBtns,
     tables,
+    onCheckoutPendingOrder,
 }: Props) {
     const { t } = useI18n()
+    const isReadOnly = isDetail && !isOrderEditing
     
 
     return (
@@ -54,7 +59,7 @@ function PosHeader({
                 <Label htmlFor='stt' className='whitespace-nowrap'>
                     {t('orderNumber')}:
                 </Label>
-                <Input id='stt' className='w-15' value={currentOrderNumber} disabled />
+                <Input id='stt' className='w-15' value={isDetail ? currentOrder.number : currentOrderNumber} disabled />
             </div>
 
             <ToggleGroup
@@ -86,27 +91,31 @@ function PosHeader({
                 }}>
                 <ToggleGroupItem
                     value='takeaway'
+                    disabled={isReadOnly}
                     className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     外帶
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='dine_in'
+                    disabled={isReadOnly}
                     className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     內用
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='uber'
+                    disabled={isReadOnly}
                     className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     Uber
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='foodpanda'
+                    disabled={isReadOnly}
                     className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     FoodPanda
                 </ToggleGroupItem>
             </ToggleGroup>
 
-            {currentOrder.type === 'dine_in' && <div className='flex items-center gap-2'><Label htmlFor='order-table' className='whitespace-nowrap'>{t('posTable')}:</Label><Input id='order-table' list='store-tables' className='w-32' value={currentOrder.table || ''} placeholder={t('tableSearch')} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, table: event.target.value }))} /><datalist id='store-tables'>{tables.filter((table) => table.active).map((table) => <option key={table._id} value={table.code}>{table.name}</option>)}</datalist></div>}
+            {currentOrder.type === 'dine_in' && <div className='flex items-center gap-2'><Label htmlFor='order-table' className='whitespace-nowrap'>{t('posTable')}:</Label><select id='order-table' disabled={isReadOnly} className='h-9 w-16 rounded-md border bg-background px-2 text-sm' value={currentOrder.table || ''} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, table: event.target.value }))}><option value=''></option>{tables.filter((table) => table.active).map((table) => <option key={table._id} value={table.code}>{table.code}</option>)}</select></div>}
 
             <div className='flex-1'></div>
 
@@ -114,19 +123,26 @@ function PosHeader({
                         <Label className='whitespace-nowrap text-base font-semibold'>{t('total')}:</Label>
                 <Input className='h-10 w-30 !text-xl font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />
             </div>
-            <div className='ml-4 flex w-44 shrink-0 justify-end'>
-                {isDetail || isCheckout || isPendingOrder ? (
+            <div className='ml-4 flex shrink-0 justify-end'>
+                {isDetail ? (
+                    isOrderEditing ? (
+                        null
+                    ) : (
+                        <div className='flex gap-1'>
+                            {currentOrder.status === 'pending' && <Button className='h-10 bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
+                            <Button className='h-10 bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
+                        </div>
+                    )
+                ) : isCheckout || isPendingOrder ? (
                     <Button
                         className='h-10 w-36'
                         variant='default'
                         onClick={
-                            isDetail
-                                ? closeDisplayOrderDetail
-                                : isPendingOrder
+                            isPendingOrder
                                   ? () => handlePendingOrder(false)
                                   : () => handleOpenCheckout(false)
                         }>
-                        {t('order')}
+                        {t('backToOrder')}
                     </Button>
                 ) : (
                     <div className='flex justify-end gap-1'>
