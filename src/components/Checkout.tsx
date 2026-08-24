@@ -70,6 +70,10 @@ function Checkout({
         },
     })
     const handleCreateOrder = async (status: 'paid' | 'pending') => {
+        if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) {
+            toast.error(t('tableRequired'))
+            return
+        }
         if (status === 'paid' && currentOrder.paymentMethod === 'cash' && cash < totalPrice) {
             toast.error(t('insufficientCash'))
             return

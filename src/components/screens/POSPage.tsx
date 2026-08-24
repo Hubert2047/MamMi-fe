@@ -12,6 +12,8 @@ import PosHeader from '@/components/PosHeader.tsx'
 import Loading from '@/components/Loading.tsx'
 import Checkout from '@/components/Checkout.tsx'
 import { useDiscounts, useItems, useNextOrderNumber, useStoreAddons } from '@/hooks/queries'
+import { getStoreTables } from '@/api/table'
+import { useQuery } from '@tanstack/react-query'
 import { OrderTable } from '@/components/orders/OrderTable.tsx'
 import { FloatingButton } from '@/components/FloatingButton.tsx'
 import DailyClosing from '@/components/daily-closing/DailyClosing.tsx'
@@ -53,6 +55,7 @@ const POSPage: React.FC = () => {
     const { data: storeAddons = [] } = useStoreAddons()
     const { data: discounts = [], isLoading: isDiscountsLoading } = useDiscounts()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
+    const { data: tables = [] } = useQuery({ queryKey: ['store-tables'], queryFn: getStoreTables })
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
     useEffect(() => {
         if (nextOrderNumber === undefined || currentOrder.items.length > 0 || isCheckout || isPendingOrder) return
@@ -194,6 +197,7 @@ const POSPage: React.FC = () => {
                     closeDisplayOrderDetail={closeDisplayOrderDetail}
                     openBtns={openBtns}
                     setOpenBtns={setOpenBtns}
+                    tables={tables}
                 />
                 <div className='flex min-h-0 flex-1 gap-2'>
                     <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>

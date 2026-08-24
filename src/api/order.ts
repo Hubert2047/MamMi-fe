@@ -47,7 +47,8 @@ export interface BaseOrder {
     customer: Customer | null
     checkoutPending: boolean
     version?: number
-    source?: 'pos' | 'qr' | 'uber' | 'foodpanda'
+    table?: string
+    source?: 'pos' | 'qr' | 'online' | 'uber' | 'foodpanda'
     externalOrderId?: string
     printOnConfirm?: boolean
 }

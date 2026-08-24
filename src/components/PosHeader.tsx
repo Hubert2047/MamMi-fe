@@ -9,6 +9,7 @@ import type { Item } from '@/api/item.ts'
 import type { BaseOrder } from '@/api/order'
 import { useI18n } from '@/lib/i18n'
 import { FloatingButton } from '@/components/FloatingButton'
+import type { StoreTable } from '@/api/table'
 
 type Props = {
 
@@ -25,6 +26,7 @@ type Props = {
     handlePendingOrder(open: boolean): void
     openBtns: boolean
     setOpenBtns: React.Dispatch<React.SetStateAction<boolean>>
+    tables: StoreTable[]
 }
 
 function PosHeader({
@@ -41,6 +43,7 @@ function PosHeader({
     handlePendingOrder,
     openBtns,
     setOpenBtns,
+    tables,
 }: Props) {
     const { t } = useI18n()
     
@@ -103,6 +106,8 @@ function PosHeader({
                 </ToggleGroupItem>
             </ToggleGroup>
 
+            {currentOrder.type === 'dine_in' && <div className='flex items-center gap-2'><Label htmlFor='order-table' className='whitespace-nowrap'>{t('posTable')}:</Label><Input id='order-table' list='store-tables' className='w-32' value={currentOrder.table || ''} placeholder={t('tableSearch')} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, table: event.target.value }))} /><datalist id='store-tables'>{tables.filter((table) => table.active).map((table) => <option key={table._id} value={table.code}>{table.name}</option>)}</datalist></div>}
+
             <div className='flex-1'></div>
 
             <div className='ml-auto flex shrink-0 items-center space-x-1'>
@@ -132,6 +137,7 @@ function PosHeader({
                                     toast.error(t('noProductsToOrder'))
                                     return
                                 }
+                                if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
                                 handlePendingOrder(true)
                             }}>
                             {t('placeOrder')}
@@ -143,6 +149,7 @@ function PosHeader({
                                     toast.error(t('noProductsToPay'))
                                     return
                                 }
+                                if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
                                 handleOpenCheckout(true)
                             }}>
                             {t('pay')}
