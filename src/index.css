@@ -130,6 +130,15 @@ body {
   margin: 0;
 }
 
+/* Prevent iOS Safari/PWA rubber-band page movement on fixed auth screens. */
+html:has(.auth-screen),
+body:has(.auth-screen),
+html:has(.pos-screen),
+body:has(.pos-screen) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 h1, h2 {
   font-family: var(--heading);
   font-weight: 500;

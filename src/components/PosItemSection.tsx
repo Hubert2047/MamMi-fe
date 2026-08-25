@@ -153,7 +153,7 @@ function PosItemSection({
     return (
         <>
             {updateOrderMutation.isPending && <Loading />}
-            <div className='categories flex w-22 flex-col gap-2 rounded border border-[#ccc] p-1'>
+            <div className='categories flex w-26 flex-col gap-2 rounded border border-[#ccc] p-1'>
                 {!isReadOnly &&
                     Object.keys(itemsByCategory).map((categoryName) => {
                         return (

@@ -6,10 +6,11 @@ export type RealtimeClientType = 'pos' | 'admin' | 'customer' | 'order'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 
-export const createRealtimeSocket = (token: string, storeId: string, clientType: RealtimeClientType = 'pos', orderId?: string): Socket => io(API_BASE_URL, {
+export const createRealtimeSocket = (token: string | null | undefined, storeId: string, clientType: RealtimeClientType = 'pos', orderId?: string): Socket => io(API_BASE_URL, {
   autoConnect: true,
+  withCredentials: true,
   transports: ['websocket', 'polling'],
-  auth: { token, storeId, clientType, orderId },
+  auth: { ...(token ? { token } : {}), storeId, clientType, orderId },
 })
 
 export const realtimeClientTypeForPath = (pathname: string): RealtimeClientType => {

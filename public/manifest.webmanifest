@@ -1,6 +1,6 @@
 {
-  "name": "Mâm Mì POS",
-  "short_name": "Mâm Mì POS",
+  "name": "Măm Mi",
+  "short_name": "Măm Mi",
   "description": "Point of sale management system",
   "start_url": "/",
   "display": "standalone",

@@ -29,6 +29,7 @@ import { toast } from 'sonner'
 import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
 import PosStocktakeDialog from '@/components/inventory/PosStocktakeDialog'
+import PosTableSessions from '@/components/PosTableSessions'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -52,6 +53,7 @@ const POSPage: React.FC = () => {
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
     const [openStocktake, setOpenStocktake] = useState(false)
+    const [openTableSessions, setOpenTableSessions] = useState(false)
     const showShiftAttendanceButton = process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === 'true'
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
@@ -234,7 +236,7 @@ const POSPage: React.FC = () => {
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
 
     return (
-        <div className='flex h-dvh gap-2 overflow-hidden p-2'>
+        <div className='pos-screen fixed inset-0 flex h-dvh w-full gap-2 overflow-hidden overscroll-none p-2'>
             <div className='left flex min-h-0 min-w-0 flex-1 flex-col'>
                 <PosHeader
                     items={items}
@@ -326,6 +328,9 @@ const POSPage: React.FC = () => {
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenTableSessions(true)}>
+                        {t('posTableSessions')}
+                    </Button>
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenTemporaryAvailability(true)}>
                         {t('temporaryAvailabilityTitle')}
                     </Button>
@@ -357,6 +362,7 @@ const POSPage: React.FC = () => {
                 />
             )}
             <PosStocktakeDialog open={openStocktake} onClose={() => setOpenStocktake(false)} />
+            <PosTableSessions open={openTableSessions} onClose={() => setOpenTableSessions(false)} />
             {openOrderTable && (
                 <OrderTable
                     open={openOrderTable}

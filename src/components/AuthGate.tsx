@@ -12,7 +12,18 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (pathname !== '/pos') return
-    void getPosDeviceSession().then((session) => { window.localStorage.setItem('activeStoreId', session.storeId); setDeviceAuthorized(true) }).catch(() => router.replace('/pos/enroll'))
+    const recentlyEnrolled = window.sessionStorage.getItem('pos-device-enrolled') === 'true'
+    if (recentlyEnrolled) queueMicrotask(() => setDeviceAuthorized(true))
+    void getPosDeviceSession().then((session) => {
+      window.localStorage.setItem('activeStoreId', session.storeId)
+      window.dispatchEvent(new Event('pos-device-session-ready'))
+      window.sessionStorage.removeItem('pos-device-enrolled')
+      setDeviceAuthorized(true)
+    }).catch(() => {
+      window.sessionStorage.removeItem('pos-device-enrolled')
+      setDeviceAuthorized(false)
+      router.replace('/pos/enroll')
+    })
   }, [pathname, router])
 
   if (pathname === '/pos' && !deviceAuthorized) {

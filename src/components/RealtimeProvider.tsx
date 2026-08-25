@@ -8,10 +8,27 @@ import { useStoreContext } from '@/lib/store-context'
 import { createRealtimeSocket, realtimeClientTypeForPath, realtimeEventsForClient } from '@/lib/realtime'
 
 let sharedOrderAlertAudio: HTMLAudioElement | null = null
+let orderAlertPlaying = false
+let orderAlertQueued = false
+let orderAlertFinalPass = false
+
+const handleOrderAlertEnded = () => {
+  if (orderAlertQueued && !orderAlertFinalPass) {
+    orderAlertQueued = false
+    orderAlertFinalPass = true
+    orderAlertPlaying = false
+    playOrderAlert()
+    return
+  }
+  orderAlertPlaying = false
+  orderAlertQueued = false
+  orderAlertFinalPass = false
+}
 
 const getOrderAlertAudio = () => {
   if (typeof window === 'undefined') return
   sharedOrderAlertAudio ??= new Audio('/order-alert.mp3')
+  sharedOrderAlertAudio.onended = handleOrderAlertEnded
   sharedOrderAlertAudio.preload = 'auto'
   return sharedOrderAlertAudio
 }
@@ -20,20 +37,39 @@ const unlockAudio = () => {
   const audio = getOrderAlertAudio()
   if (!audio) return
   audio.muted = true
+  audio.currentTime = 0
   void audio.play().then(() => {
     audio.pause()
     audio.currentTime = 0
-    audio.muted = false
-  }).catch(() => {
-    audio.muted = false
-  })
+  }).catch(() => undefined)
 }
 
 const playOrderAlert = () => {
+  if (typeof window !== 'undefined' && window.localStorage.getItem('order-alert-enabled') === 'false') return
   const audio = getOrderAlertAudio()
   if (!audio) return
+  if (orderAlertPlaying) {
+    if (!orderAlertFinalPass) orderAlertQueued = true
+    return
+  }
+  orderAlertPlaying = true
+  audio.muted = false
   audio.currentTime = 0
-  void audio.play().catch(() => undefined)
+  void audio.play().catch(() => {
+    orderAlertPlaying = false
+    orderAlertQueued = false
+    orderAlertFinalPass = false
+  })
+}
+
+export const stopOrderAlert = () => {
+  const audio = getOrderAlertAudio()
+  if (!audio) return
+  audio.pause()
+  audio.currentTime = 0
+  orderAlertPlaying = false
+  orderAlertQueued = false
+  orderAlertFinalPass = false
 }
 
 const notifyOrderCreated = () => {
@@ -63,7 +99,8 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
   }, [])
 
   useEffect(() => {
-    if (!isAuthenticated || !token || !activeStoreId) return
+    const isPosDevice = pathname.startsWith('/pos')
+    if (!activeStoreId || (!(isAuthenticated && token) && !isPosDevice)) return
     const clientType = realtimeClientTypeForPath(pathname)
     const socket = createRealtimeSocket(token, activeStoreId, clientType)
     const refreshCatalog = () => {

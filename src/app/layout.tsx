@@ -6,13 +6,13 @@ import AuthGate from '@/components/AuthGate'
 import '@/index.css'
 
 export const metadata: Metadata = {
-  title: '漫迷 POS',
+  title: 'Măm Mi',
   description: 'Point of sale management system',
   icons: { icon: '/logo.png', apple: '/logo.png' },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    title: 'MÃ¢m MÃ¬ POS',
+    title: 'Măm Mi',
     statusBarStyle: 'default',
   },
 }

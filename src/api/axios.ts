@@ -32,6 +32,12 @@ api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<{ message?: string }>) => {
         const originalRequest = error.config as RetryConfig | undefined
+        if (typeof window !== 'undefined' && window.location.pathname === '/pos' && error?.response?.status === 401) {
+            window.sessionStorage.removeItem('pos-device-enrolled')
+            window.localStorage.removeItem('activeStoreId')
+            window.location.replace('/pos/enroll')
+            return Promise.reject(error)
+        }
         // If the error status is 401 and there is no originalRequest._retry flag,
         // it means the token has expired and we need to refresh it
 

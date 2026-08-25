@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -27,7 +27,6 @@ export default function StoreMenuPanel() {
   const canChangePermanentAvailability = user?.role === 'Admin' || user?.role === 'SuperAdmin'
   const embedded = useStorePricingEmbedded()
   const queryClient = useQueryClient()
-  const listRef = useRef<HTMLDivElement>(null)
   const [selectedItemId, setSelectedItemId] = useState('')
   const [price, setPrice] = useState<PriceType>(emptyPrice)
   const [editing, setEditing] = useState<Item | null>(null)
@@ -35,7 +34,7 @@ export default function StoreMenuPanel() {
   const [draftPermanentlyActive, setDraftPermanentlyActive] = useState(true)
   const [draftTemporarilyUnavailable, setDraftTemporarilyUnavailable] = useState(false)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(8)
+  const pageSize = 4
   const [categoryFilter, setCategoryFilter] = useState('all')
   const { data: catalog = [] } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
   const { data: menu = [] } = useQuery({ queryKey: ['store-items', locale], queryFn: () => getStoreItems(locale) })
@@ -63,42 +62,26 @@ export default function StoreMenuPanel() {
     setDraftTemporarilyUnavailable(item.permanentlyActive && item.temporarilyUnavailable)
   }
 
-  useEffect(() => {
-    const element = listRef.current
-    if (!element) return
-    const resize = () => {
-      const rows = Array.from(element.querySelectorAll<HTMLElement>('[data-store-row]'))
-      const rowHeight = rows.length ? Math.max(...rows.map((row) => row.getBoundingClientRect().height)) : 86
-      setPageSize(Math.max(1, Math.floor((element.clientHeight + 12) / (rowHeight + 12))))
-    }
-    resize()
-    const observer = new ResizeObserver(resize)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [paginated.length, page, categoryFilter, locale])
-
-  useEffect(() => setPage((current) => Math.min(current, totalPages)), [totalPages])
-
-  return <div className={`flex h-full min-h-0 flex-col gap-6 overflow-hidden ${embedded ? 'px-1 pb-6' : 'p-6 md:p-8'}`}>
+  return <div className={`flex h-full min-h-0 flex-col gap-3 overflow-hidden ${embedded ? 'px-0 pb-0' : 'p-6 md:p-8'}`}>
     {!embedded && <h1 className="text-3xl font-bold">{t('storePricing')}</h1>}
-    <Card>
-      <CardHeader><CardTitle>{t('createProduct')}</CardTitle></CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-[1fr_repeat(3,120px)_auto] md:items-end">
-        <div className="space-y-2"><Label>{t('products')}</Label><Select value={selectedItemId} onValueChange={setSelectedItemId} disabled={!available.length}><SelectTrigger><SelectValue placeholder={available.length ? t('products') : ''} /></SelectTrigger><SelectContent>{available.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent></Select></div>
-        {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label><Input type="number" value={price[key] ?? 0} onChange={(event) => setPrice({ ...price, [key]: Number(event.target.value) })} /></div>)}
-        <Button disabled={!selectedItemId || add.isPending} onClick={() => add.mutate({ itemId: selectedItemId, price })}>{t('createProduct')}</Button>
+    <Card className="min-h-[104px] border border-slate-300 shadow-sm">
+      <CardHeader className="px-4 py-2"><CardTitle>{t('createProduct')}</CardTitle></CardHeader>
+      <CardContent className="grid gap-2 px-4 pt-0 pb-1 md:grid-cols-[1fr_repeat(3,96px)_auto] md:items-end">
+        <div className="space-y-1"><Label>{t('products')}</Label><Select value={selectedItemId} onValueChange={setSelectedItemId} disabled={!available.length}><SelectTrigger className="h-8"><SelectValue placeholder={available.length ? t('products') : ''} /></SelectTrigger><SelectContent>{available.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent></Select></div>
+        {priceKeys.map((key) => <div className="space-y-1" key={key}><Label className="capitalize">{key}</Label><Input className="h-7" type="number" value={price[key] ?? 0} onChange={(event) => setPrice({ ...price, [key]: Number(event.target.value) })} /></div>)}
+        <Button className="h-8 w-fit" disabled={!selectedItemId || add.isPending} onClick={() => add.mutate({ itemId: selectedItemId, price })}>{t('createProduct')}</Button>
       </CardContent>
     </Card>
-    <Card className="min-h-0 flex-1 flex flex-col">
-      <CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><CardTitle>{t('productList')}</CardTitle><div className="w-52"><Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setPage(1) }}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t('allCategories')}</SelectItem>{categories.map((category) => <SelectItem key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</SelectItem>)}</SelectContent></Select></div></div><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {filteredMenu.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader>
-      <CardContent ref={listRef} className="min-h-0 flex-1 overflow-hidden space-y-3">
+    <Card className="min-h-0 flex-1 flex flex-col border border-slate-300 shadow-sm">
+      <CardHeader className="shrink-0 px-4 py-0"><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><CardTitle>{t('productList')}</CardTitle><div className="w-36"><Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setPage(1) }}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t('allCategories')}</SelectItem>{categories.map((category) => <SelectItem key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</SelectItem>)}</SelectContent></Select></div></div><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {filteredMenu.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader>
+      <CardContent className="min-h-0 flex-1 overflow-hidden space-y-2 px-4 pt-0 pb-0">
         {paginated.map((item) => {
           const isEditing = editing?._id === item._id
           const saving = isEditing && update.isPending
-          return <div data-store-row="true" className="grid min-h-[86px] gap-3 rounded-lg border p-3 md:grid-cols-[1fr_repeat(3,120px)_minmax(230px,auto)] md:items-end" key={item._id}>
+          return <div data-store-row="true" className="grid min-h-[70px] gap-2 rounded-lg border border-slate-300 p-2 shadow-sm md:grid-cols-[1fr_repeat(3,96px)_minmax(230px,auto)] md:items-end" key={item._id}>
             <div><div className="font-medium">{item.name}</div><div className="text-xs text-muted-foreground">{item.categoryName}</div></div>
-            {priceKeys.map((key) => <div className="space-y-2" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input disabled={saving} className="h-9" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-9 rounded-md border px-3 py-2 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
-            <div className="flex min-h-9 flex-wrap items-center gap-2">
+            {priceKeys.map((key) => <div className="space-y-1" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input disabled={saving} className="h-7" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-7 rounded-md border px-2 py-1 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
+            <div className="flex min-h-8 flex-wrap items-center gap-1">
               {isEditing ? <>
                 {canChangePermanentAvailability && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftPermanentlyActive} onCheckedChange={(value) => { setDraftPermanentlyActive(value === true); if (value !== true) setDraftTemporarilyUnavailable(false) }} />{t('permanentSelling')}</label>}
                 {draftPermanentlyActive && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>}

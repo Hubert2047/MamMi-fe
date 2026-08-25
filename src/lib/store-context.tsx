@@ -18,8 +18,18 @@ const StoreContext = createContext<StoreContextValue | null>(null)
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
   const client = useQueryClient()
-  const [activeStoreId, setActiveStoreIdState] = useState('')
+  const [activeStoreId, setActiveStoreIdState] = useState(() => typeof window === 'undefined' ? '' : window.localStorage.getItem('activeStoreId') || '')
   const { data: stores = [], isLoading } = useQuery({ queryKey: ['stores'], queryFn: getStores, enabled: isAuthenticated })
+
+  useEffect(() => {
+    const restoreDeviceStore = () => {
+      const saved = window.localStorage.getItem('activeStoreId')
+      if (saved) setActiveStoreIdState(saved)
+    }
+    restoreDeviceStore()
+    window.addEventListener('pos-device-session-ready', restoreDeviceStore)
+    return () => window.removeEventListener('pos-device-session-ready', restoreDeviceStore)
+  }, [])
 
   useEffect(() => {
     if (!stores.length) return

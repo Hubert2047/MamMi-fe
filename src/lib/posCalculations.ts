@@ -44,6 +44,6 @@ export function syncOrderItemsWithCatalog(orderItems: OrderItem[], catalogItems:
       const catalogAddon = catalogItem.addons.find((addon) => addon._id === orderAddon.id)
       return catalogAddon ? { ...orderAddon, priceExtra: catalogAddon.priceExtra } : orderAddon
     })
-    return { ...orderItem, addons }
+    return { ...orderItem, name: catalogItem.name, addons }
   })
 }

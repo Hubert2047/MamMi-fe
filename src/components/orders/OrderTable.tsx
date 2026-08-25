@@ -22,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PrintOptions from '../PrintOptions'
 import { useI18n } from '@/lib/i18n'
 import type { AxiosError } from 'axios'
+import { RefreshCw, Volume2, VolumeX } from 'lucide-react'
+import { stopOrderAlert } from '@/components/RealtimeProvider'
 
 type Props = {
     open: boolean
@@ -72,6 +74,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const fromInputRef = useRef<HTMLInputElement>(null)
     const toInputRef = useRef<HTMLInputElement>(null)
     const [selectedRange, setSelectedRange] = useState<OrderRange | null>(null)
+    const [orderAlertEnabled, setOrderAlertEnabled] = useState(() => typeof window === 'undefined' || window.localStorage.getItem('order-alert-enabled') !== 'false')
     const { t, locale } = useI18n()
     const { data: summary } = useDailyClosingSummary()
     const range = selectedRange ?? (summary ? { from: summary.periodStart } : undefined)
@@ -183,6 +186,27 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                             onChange={handleSearchChange}
                             className='w-48'
                         />
+                        <Button
+                            variant='outline'
+                            size='icon'
+                            aria-label={t('refreshOrders')}
+                            title={t('refreshOrders')}
+                            onClick={() => void queryClient.invalidateQueries({ queryKey: queryKeys.orders(range) })}>
+                            <RefreshCw className='size-4' />
+                        </Button>
+                        <Button
+                            variant='outline'
+                            size='icon'
+                            aria-label={orderAlertEnabled ? t('orderAlertOff') : t('orderAlertOn')}
+                            title={orderAlertEnabled ? t('orderAlertOff') : t('orderAlertOn')}
+                            onClick={() => setOrderAlertEnabled((enabled) => {
+                                const next = !enabled
+                                window.localStorage.setItem('order-alert-enabled', String(next))
+                                if (!next) stopOrderAlert()
+                                return next
+                            })}>
+                            {orderAlertEnabled ? <Volume2 className='size-4' /> : <VolumeX className='size-4' />}
+                        </Button>
                         {search && (
                             <Button
                                 variant='ghost'

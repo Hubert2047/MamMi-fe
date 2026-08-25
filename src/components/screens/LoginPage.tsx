@@ -79,7 +79,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className='min-h-svh flex items-center justify-center bg-slate-50 px-4 relative overflow-hidden'>
+        <div className='auth-screen fixed inset-0 h-dvh w-full flex touch-none items-center justify-center bg-slate-50 px-4 relative overflow-hidden overscroll-none'>
             <div className='pointer-events-none absolute inset-0'>
                 <div className='absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/20 blur-3xl' />
                 <div className='absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl' />
@@ -142,7 +142,7 @@ export default function LoginPage() {
                                 {loading && <Loader2 size={15} className='animate-spin' />}
                                 {loading ? t('loginLoading') : t('loginSubmit')}
                             </Button>
-                            <Button asChild type='button' variant='outline' className='w-full'>
+                            <Button asChild type='button' variant='ghost' className='h-auto self-end p-0 text-sm font-normal text-primary hover:bg-transparent hover:text-primary/80'>
                                 <Link href='/pos/enroll'>{t('loginPosDevice')}</Link>
                             </Button>
                         </form>

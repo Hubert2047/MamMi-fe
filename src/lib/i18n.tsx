@@ -19,9 +19,9 @@ Object.assign(messages.en, { printAgents: 'Printers', printAgentTitle: 'Print ag
 Object.assign(messages['zh-TW'], { printAgents: '印表機', printAgentTitle: 'Print agent', printAgentCreateDescription: '建立一個分店 agent，再新增多台印表機並為各種列印類型指定印表機。', printAgentName: '印表機名稱', printAgentNamePlaceholder: '廚房 1', printAgentWindowsName: 'Windows 印表機名稱', printAgentWindowsNamePlaceholder: 'Xprinter XP-246B', printAgentProfile: 'Profile', printAgentKitchenProfile: '廚房標籤（TSPL）', printAgentReceiptProfile: '收據（ESC/POS）', printAgentDpi: 'DPI', printAgentLabelSize: '標籤尺寸（mm）', printAgentWidth: '寬', printAgentHeight: '高', printAgentGap: '間距', printAgentCreate: '建立設定', printAgentTokenTitle: '新 Token — 請立即保存', printAgentTokenDescription: '離開此頁面後將無法再次查看 Token。請將以下內容貼到 print-agent/.env。', printAgentCopyConfig: '複製 agent 設定', printAgentList: 'Print agent 清單', printAgentLoading: '載入中...', printAgentEmpty: '尚未設定 agent。', printAgentEnabled: '啟用中', printAgentDisabled: '已停用', printAgentTokenLabel: 'Token', printAgentRotateToken: '重新產生 Token', printAgentDisable: '停用', printAgentEnable: '啟用', printAgentAgentName: 'Agent 名稱', printAgentAgentNamePlaceholder: '分店 1 廚房 agent', printAgentCreateAgent: '建立 agent', printAgentAddPrinter: '新增印表機', printAgentNoPrinters: '此 agent 尚未設定印表機。', printAgentRoutingTitle: '列印路由', printAgentRoutingDescription: '選擇每種列印類型要使用的印表機，設定會儲存在分店。', printAgentKitchenRoute: '廚房列印', printAgentReceiptRoute: '收據列印', printAgentFapiaoRoute: '發票列印', printAgentRouteUnset: '尚未選擇印表機' })
 
 const loginMessages = {
-  vi: { loginStore: 'Chọn cửa hàng', selectStore: 'Chọn cửa hàng', requiredStoreSelection: 'Vui lòng chọn cửa hàng', loginPosDevice: 'Đăng ký thiết bị POS' },
-  en: { loginStore: 'Select store', selectStore: 'Select store', requiredStoreSelection: 'Please select a store', loginPosDevice: 'Register POS device' },
-  'zh-TW': { loginStore: '選擇分店', selectStore: '選擇分店', requiredStoreSelection: '請選擇分店', loginPosDevice: '註冊 POS 裝置' },
+  vi: { loginStore: 'Chọn cửa hàng', selectStore: 'Chọn cửa hàng', requiredStoreSelection: 'Vui lòng chọn cửa hàng', loginPosDevice: 'Đăng ký thiết bị POS', backToLogin: 'Quay lại đăng nhập' },
+  en: { loginStore: 'Select store', selectStore: 'Select store', requiredStoreSelection: 'Please select a store', loginPosDevice: 'Register POS device', backToLogin: 'Back to login' },
+  'zh-TW': { loginStore: '選擇分店', selectStore: '選擇分店', requiredStoreSelection: '請選擇分店', loginPosDevice: '註冊 POS 裝置', backToLogin: '返回登入' },
 } as const
 
 const userMessages = {
@@ -200,6 +200,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ locale, setLocale, t: (key: MessageKey) => key in loginMessages[locale] ? loginMessages[locale][key as keyof typeof loginMessages.vi] : key in userMessages[locale] ? userMessages[locale][key as keyof typeof userMessages.vi] : key in cashMessages[locale] ? cashMessages[locale][key as keyof typeof cashMessages.vi] : key in storeProductMessages[locale] ? storeProductMessages[locale][key as keyof typeof storeProductMessages.vi] : key in attendanceMessages[locale] ? attendanceMessages[locale][key as keyof typeof attendanceMessages.vi] : key in closingMessages[locale] ? closingMessages[locale][key as keyof typeof closingMessages.vi] : key in closingHistoryMessages[locale] ? closingHistoryMessages[locale][key as keyof typeof closingHistoryMessages.vi] : key in closingPeriodMessages[locale] ? closingPeriodMessages[locale][key as keyof typeof closingPeriodMessages.vi] : key in closingAdminMessages[locale] ? closingAdminMessages[locale][key as keyof typeof closingAdminMessages.vi] : key in closingRangeMessages[locale] ? closingRangeMessages[locale][key as keyof typeof closingRangeMessages.vi] : key in orderErrorMessages[locale] ? orderErrorMessages[locale][key as keyof typeof orderErrorMessages.vi] : key in expenseMessages[locale] ? expenseMessages[locale][key as keyof typeof expenseMessages.vi] : key in revenueMessages[locale] ? revenueMessages[locale][key as keyof typeof revenueMessages.vi] : key in orderDisplayMessages[locale] ? orderDisplayMessages[locale][key as keyof typeof orderDisplayMessages.vi] : key in posMessages[locale] ? posMessages[locale][key as keyof typeof posMessages.vi] : key in orderMessages[locale] ? orderMessages[locale][key as keyof typeof orderMessages.vi] : key in messages[locale] ? messages[locale][key as keyof typeof messages.vi] : key in extraMessages[locale] ? extraMessages[locale][key as keyof typeof extraMessages.vi] : key in productActionMessages[locale] ? productActionMessages[locale][key as keyof typeof productActionMessages.vi] : key in productDescriptionMessages[locale] ? productDescriptionMessages[locale][key as keyof typeof productDescriptionMessages.vi] : key in dailyClosingMessages[locale] ? dailyClosingMessages[locale][key as keyof typeof dailyClosingMessages.vi] : key in commonMessages[locale] ? commonMessages[locale][key as keyof typeof commonMessages.vi] : key in categoryMessages[locale] ? categoryMessages[locale][key as keyof typeof categoryMessages.vi] : key in addonMessages[locale] ? addonMessages[locale][key as keyof typeof addonMessages.vi] : discountMessages[locale][key as keyof typeof discountMessages.vi] }), [locale])
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }
+Object.assign(posMessages.vi, { refreshOrders: 'Tải lại đơn', orderAlertOn: 'Bật âm báo đơn', orderAlertOff: 'Tắt âm báo đơn' })
+Object.assign(posMessages.en, { refreshOrders: 'Refresh orders', orderAlertOn: 'Enable order alert', orderAlertOff: 'Disable order alert' })
+Object.assign(posMessages['zh-TW'], { refreshOrders: '重新載入訂單', orderAlertOn: '開啟訂單提示音', orderAlertOff: '關閉訂單提示音' })
 
 Object.assign(messages['zh-TW'], { printAgentList: '印表機清單' })
 Object.assign(messages.vi, { printAgentConfirmRotate: 'Bạn có chắc muốn cấp lại token? Token hiện tại sẽ không còn sử dụng được.', printAgentConfirmDisable: 'Bạn có chắc muốn tạm dừng print agent này?', printAgentConfirmEnable: 'Bạn có muốn bật lại print agent này không?' })
@@ -252,6 +255,41 @@ Object.assign(messages.en, { inventoryStocktake: 'Stocktake' })
 Object.assign(messages['zh-TW'], { inventoryStocktake: '盤點庫存' })
 Object.assign(messages.vi, { posDevices: 'Thiết bị POS' })
 Object.assign(messages.en, { posDevices: 'POS devices' })
+Object.assign(messages.vi, { posDeviceDelete: 'Xóa thiết bị', posDeviceDeleteTitle: 'Xóa thiết bị POS?', posDeviceDeleteConfirm: 'Thiết bị và mã đăng ký đang chờ sẽ bị xóa vĩnh viễn.' })
+Object.assign(messages.en, { posDeviceDelete: 'Delete device', posDeviceDeleteTitle: 'Delete POS device?', posDeviceDeleteConfirm: 'The device and any pending enrollment code will be permanently deleted.' })
+Object.assign(messages['zh-TW'], { posDeviceDelete: '刪除裝置', posDeviceDeleteTitle: '刪除 POS 裝置？', posDeviceDeleteConfirm: '裝置和尚未使用的註冊代碼將永久刪除。' })
 Object.assign(messages['zh-TW'], { posDevices: 'POS 裝置' })
+
+Object.assign(messages.vi, { tableSessionRemaining: 'Còn lại', tableSessionExpired: 'Đã hết hạn' })
+Object.assign(messages.en, { tableSessionRemaining: 'Remaining', tableSessionExpired: 'Expired' })
+Object.assign(messages['zh-TW'], { tableSessionRemaining: '剩餘', tableSessionExpired: '已到期' })
+Object.assign(messages.vi, { tableSessionHours: 'giờ', tableSessionMinutes: 'phút' })
+Object.assign(messages.en, { tableSessionHours: 'h', tableSessionMinutes: 'min' })
+Object.assign(messages['zh-TW'], { tableSessionHours: '小時', tableSessionMinutes: '分鐘' })
+Object.assign(messages.vi, { posTableSessions: 'Bàn' })
+Object.assign(messages.en, { posTableSessions: 'Tables' })
+Object.assign(messages['zh-TW'], { posTableSessions: '桌台' })
+Object.assign(messages.vi, { posTableSessionOpen: 'Mở Bàn', posTableSessionExtend: 'Gia Hạn', posTableSessionClose: 'Đóng Bàn' })
+Object.assign(messages.en, { posTableSessionOpen: 'Open Table', posTableSessionExtend: 'Extend', posTableSessionClose: 'Close Table' })
+Object.assign(messages['zh-TW'], { posTableSessionOpen: '開桌', posTableSessionExtend: '延長', posTableSessionClose: '關桌' })
+Object.assign(messages.vi, { posTableSessionTitle: 'Phiên Đặt Món Tại Bàn' })
+Object.assign(messages.en, { posTableSessionTitle: 'Table Ordering Sessions' })
+Object.assign(messages['zh-TW'], { posTableSessionTitle: '桌邊點餐工作階段' })
+
+Object.assign(messages.vi, { tableQrCopyShort: 'Sao chép', tableQrRegenerateShort: 'Tạo lại' })
+Object.assign(messages.en, { tableQrCopyShort: 'Copy', tableQrRegenerateShort: 'Regenerate' })
+Object.assign(messages['zh-TW'], { tableQrCopyShort: '複製', tableQrRegenerateShort: '重建' })
+
+Object.assign(messages.vi, { posTableSessionOpenAll: 'Bật Toàn Bộ', posTableSessionExtendAll: 'Gia Hạn Toàn Bộ', posTableSessionCloseAll: 'Tắt Toàn Bộ', posTableSessionAllOpened: 'Đã bật phiên cho toàn bộ bàn', posTableSessionAllExtended: 'Đã gia hạn toàn bộ bàn đang mở', posTableSessionAllClosed: 'Đã tắt toàn bộ phiên bàn', posTableSessionCloseAllTitle: 'Tắt Toàn Bộ Phiên Bàn?', posTableSessionCloseAllConfirm: 'Tất cả mã QR bàn đang mở sẽ ngừng nhận đơn mới.' })
+Object.assign(messages.en, { posTableSessionOpenAll: 'Open All', posTableSessionExtendAll: 'Extend All', posTableSessionCloseAll: 'Close All', posTableSessionAllOpened: 'Opened sessions for all tables', posTableSessionAllExtended: 'Extended all open table sessions', posTableSessionAllClosed: 'Closed all table sessions', posTableSessionCloseAllTitle: 'Close All Table Sessions?', posTableSessionCloseAllConfirm: 'All active table QR codes will stop accepting new orders.' })
+Object.assign(messages['zh-TW'], { posTableSessionOpenAll: '全部開桌', posTableSessionExtendAll: '全部延長', posTableSessionCloseAll: '全部關閉', posTableSessionAllOpened: '已開啟所有桌位工作階段', posTableSessionAllExtended: '已延長所有開啟中的工作階段', posTableSessionAllClosed: '已關閉所有桌位工作階段', posTableSessionCloseAllTitle: '關閉所有桌邊點餐？', posTableSessionCloseAllConfirm: '所有已開啟的桌邊 QR Code 將停止接受新訂單。' })
+
+Object.assign(messages.vi, { posTableSessionOpenAllTitle: 'Bật Toàn Bộ Phiên Bàn?', posTableSessionOpenAllConfirm: 'Tất cả bàn chưa mở sẽ bắt đầu nhận đơn QR.', posTableSessionExtendAllTitle: 'Gia Hạn Toàn Bộ Phiên Bàn?', posTableSessionExtendAllConfirm: 'Tất cả bàn đang mở sẽ được gia hạn thêm thời gian nhận đơn QR.' })
+Object.assign(messages.en, { posTableSessionOpenAllTitle: 'Open All Table Sessions?', posTableSessionOpenAllConfirm: 'All unopened tables will begin accepting QR orders.', posTableSessionExtendAllTitle: 'Extend All Table Sessions?', posTableSessionExtendAllConfirm: 'All open tables will receive more time to accept QR orders.' })
+Object.assign(messages['zh-TW'], { posTableSessionOpenAllTitle: '開啟所有桌邊點餐？', posTableSessionOpenAllConfirm: '所有尚未開啟的桌位將開始接受 QR 點餐。', posTableSessionExtendAllTitle: '延長所有桌邊點餐？', posTableSessionExtendAllConfirm: '所有已開啟的桌位將延長接受 QR 點餐的時間。' })
+
+Object.assign(messages.vi, { printAgentAgentSection: 'Print Agent', printAgentPrinters: 'Máy in thuộc Agent' })
+Object.assign(messages.en, { printAgentAgentSection: 'Print Agent', printAgentPrinters: 'Printers managed by this Agent' })
+Object.assign(messages['zh-TW'], { printAgentAgentSection: '列印 Agent', printAgentPrinters: '此 Agent 管理的印表機' })
 
 export function useI18n() { const context = useContext(I18nContext); if (!context) throw new Error('useI18n must be used inside I18nProvider'); return context }

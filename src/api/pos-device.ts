@@ -22,3 +22,4 @@ export const createPosDeviceEnrollment = async (id: string): Promise<PosDeviceEn
 export const deletePosDeviceEnrollment = async (id: string): Promise<void> => { await api.delete(`pos-devices/${id}/enrollment-code`) }
 export const reenrollPosDevice = async (id: string): Promise<PosDeviceEnrollment> => (await api.post(`pos-devices/${id}/re-enroll`)).data.data
 export const updatePosDevice = async ({ id, data }: { id: string; data: { name?: string; active?: boolean } }): Promise<PosDevice> => (await api.patch(`pos-devices/${id}`, data)).data.data
+export const deletePosDevice = async (id: string): Promise<void> => { await api.delete(`pos-devices/${id}`) }
