@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import axios from 'axios'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -140,6 +141,9 @@ export default function LoginPage() {
                             <Button type='submit' disabled={loading} className='mt-1 w-full h-10 bg-primary hover:bg-primary/90 font-semibold tracking-wide gap-2 transition-colors'>
                                 {loading && <Loader2 size={15} className='animate-spin' />}
                                 {loading ? t('loginLoading') : t('loginSubmit')}
+                            </Button>
+                            <Button asChild type='button' variant='outline' className='w-full'>
+                                <Link href='/pos/enroll'>{t('loginPosDevice')}</Link>
                             </Button>
                         </form>
                     </CardContent>

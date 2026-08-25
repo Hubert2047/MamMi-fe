@@ -19,9 +19,9 @@ Object.assign(messages.en, { printAgents: 'Printers', printAgentTitle: 'Print ag
 Object.assign(messages['zh-TW'], { printAgents: '印表機', printAgentTitle: 'Print agent', printAgentCreateDescription: '建立一個分店 agent，再新增多台印表機並為各種列印類型指定印表機。', printAgentName: '印表機名稱', printAgentNamePlaceholder: '廚房 1', printAgentWindowsName: 'Windows 印表機名稱', printAgentWindowsNamePlaceholder: 'Xprinter XP-246B', printAgentProfile: 'Profile', printAgentKitchenProfile: '廚房標籤（TSPL）', printAgentReceiptProfile: '收據（ESC/POS）', printAgentDpi: 'DPI', printAgentLabelSize: '標籤尺寸（mm）', printAgentWidth: '寬', printAgentHeight: '高', printAgentGap: '間距', printAgentCreate: '建立設定', printAgentTokenTitle: '新 Token — 請立即保存', printAgentTokenDescription: '離開此頁面後將無法再次查看 Token。請將以下內容貼到 print-agent/.env。', printAgentCopyConfig: '複製 agent 設定', printAgentList: 'Print agent 清單', printAgentLoading: '載入中...', printAgentEmpty: '尚未設定 agent。', printAgentEnabled: '啟用中', printAgentDisabled: '已停用', printAgentTokenLabel: 'Token', printAgentRotateToken: '重新產生 Token', printAgentDisable: '停用', printAgentEnable: '啟用', printAgentAgentName: 'Agent 名稱', printAgentAgentNamePlaceholder: '分店 1 廚房 agent', printAgentCreateAgent: '建立 agent', printAgentAddPrinter: '新增印表機', printAgentNoPrinters: '此 agent 尚未設定印表機。', printAgentRoutingTitle: '列印路由', printAgentRoutingDescription: '選擇每種列印類型要使用的印表機，設定會儲存在分店。', printAgentKitchenRoute: '廚房列印', printAgentReceiptRoute: '收據列印', printAgentFapiaoRoute: '發票列印', printAgentRouteUnset: '尚未選擇印表機' })
 
 const loginMessages = {
-  vi: { loginStore: 'Chọn cửa hàng', selectStore: 'Chọn cửa hàng', requiredStoreSelection: 'Vui lòng chọn cửa hàng' },
-  en: { loginStore: 'Select store', selectStore: 'Select store', requiredStoreSelection: 'Please select a store' },
-  'zh-TW': { loginStore: '選擇分店', selectStore: '選擇分店', requiredStoreSelection: '請選擇分店' },
+  vi: { loginStore: 'Chọn cửa hàng', selectStore: 'Chọn cửa hàng', requiredStoreSelection: 'Vui lòng chọn cửa hàng', loginPosDevice: 'Đăng ký thiết bị POS' },
+  en: { loginStore: 'Select store', selectStore: 'Select store', requiredStoreSelection: 'Please select a store', loginPosDevice: 'Register POS device' },
+  'zh-TW': { loginStore: '選擇分店', selectStore: '選擇分店', requiredStoreSelection: '請選擇分店', loginPosDevice: '註冊 POS 裝置' },
 } as const
 
 const userMessages = {
