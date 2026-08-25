@@ -1,4 +1,5 @@
 import {getExpenseUnits, type ExpenseUnit, type IUpdateExpense, updateExpense} from '@/api/expense'
+import { updateInventoryReceipt } from '@/api/inventory'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Field, FieldGroup} from '@/components/ui/field'
@@ -23,7 +24,13 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
     const queryClient = useQueryClient()
     const {data: units = []} = useQuery<ExpenseUnit[]>({queryKey: ['expense-units'], queryFn: () => getExpenseUnits(), staleTime: 5 * 60 * 1000})
     const editMutation = useMutation({
-        mutationFn: updateExpense,
+        mutationFn: async ({ id, data }: { id: string; data: Partial<IUpdateExpense> }) => {
+            if (editData.type === 'inventory_purchase' && editData.receipt) {
+                const line = editData.receipt.lines[0]
+                return updateInventoryReceipt({ id: editData.receipt._id, data: { note: data.note, lines: [{ inventoryItemId: line.inventoryItemId, quantity: Number(data.quantity), unitCode: String(data.unit), unitPrice: Number(data.unitPrice) }] } })
+            }
+            return updateExpense({ id, data })
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['expenses']}).then()
             toast.success(t('updateSuccess'), {
@@ -92,7 +99,7 @@ export function EditExpenses({editData, setEditData, open, onClose}: Props) {
                     <FieldGroup className='sm:grid sm:grid-cols-3 sm:gap-x-4 sm:gap-y-3'>
                         <Field className='sm:col-span-3'>
                             <Label htmlFor='name-1'>{t('expenseName')}</Label>
-                            <Input id='name-1' name='name' value={editData.name} onChange={handleChange}/>
+                            <Input id='name-1' name='name' value={editData.name} onChange={handleChange} disabled={editData.type === 'inventory_purchase'}/>
                         </Field>
 
                         <Field>

@@ -1,6 +1,7 @@
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
 import {Button} from '@/components/ui/button'
 import {deleteExpense, type Expense, type ExpenseRange, type IUpdateExpense} from '@/api/expense'
+import { deleteInventoryReceipt } from '@/api/inventory'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -96,7 +97,7 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
     }
 
     const deleteMutation = useMutation({
-        mutationFn: deleteExpense,
+        mutationFn: (expense: Expense) => expense.type === 'inventory_purchase' && expense.receiptId ? deleteInventoryReceipt(expense.receiptId) : deleteExpense(expense._id),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['expenses']}).then()
             toast.success(t('deleteSuccess'))
@@ -105,8 +106,8 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
             toast.error(t('deleteFailure'))
         },
     })
-    const handleDelete = (id: string) => {
-        deleteMutation.mutate(id)
+    const handleDelete = (expense: Expense) => {
+        deleteMutation.mutate(expense)
     }
     return (
         <div ref={tableRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -165,7 +166,7 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
                         </TableRow>
                     )}
                     {paginatedOrders.map((exp) => {
-                        const isDeleting = deleteMutation.isPending && deleteMutation.variables === exp._id
+                        const isDeleting = deleteMutation.isPending && deleteMutation.variables?._id === exp._id
                         return (
                             <TableRow key={exp._id} className='h-14'>
                                 <TableCell>{exp.name}</TableCell>
@@ -203,7 +204,7 @@ export function ExpenseTable({expenses, showOnly = false, range, onRangeChange}:
                                                 <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
 
                                                 <AlertDialogAction
-                                                    onClick={() => handleDelete(exp._id)}
+                                                    onClick={() => handleDelete(exp)}
                                                     disabled={isDeleting}
                                                     className='bg-red-600 hover:bg-red-700'>
                                                     {isDeleting ? t('deleting') : t('delete')}

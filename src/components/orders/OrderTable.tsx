@@ -51,6 +51,14 @@ const paymentMethodMessageKeys = {
     foodpanda: 'foodpanda',
 } as const
 
+const orderSourceMessageKeys = {
+    pos: 'orderSourcePos',
+    qr: 'orderSourceQr',
+    online: 'orderSourceOnline',
+    uber: 'uber',
+    foodpanda: 'foodpanda',
+} as const
+
 export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onClose }: Props) {
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
@@ -208,6 +216,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                     <TableHead>{t('totalItems')}</TableHead>
                                     <TableHead>{t('totalAmount')}</TableHead>
                                     <TableHead>{t('status')}</TableHead>
+                                    <TableHead>{t('orderSource')}</TableHead>
                                     <TableHead>{t('orderType')}</TableHead>
                                     <TableHead>{t('paymentMethod')}</TableHead>
                                     <TableHead>{t('time')}</TableHead>
@@ -217,7 +226,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                             <TableBody>
                                 {paginatedOrders.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={8} className='text-center text-gray-400 py-8'>
+                                        <TableCell colSpan={9} className='text-center text-gray-400 py-8'>
                                             {t('noOrdersFound')}
                                         </TableCell>
                                     </TableRow>
@@ -231,6 +240,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                             <TableCell>{order.items.length}</TableCell>
                                             <TableCell>{order.totalPrice.toLocaleString()}</TableCell>
                                             <TableCell>{t(orderStatusMessageKeys[order.status])}</TableCell>
+                                            <TableCell>{t(orderSourceMessageKeys[order.source || 'pos'])}</TableCell>
                                             <TableCell>{t(orderTypeMessageKeys[order.type])}</TableCell>
                                             <TableCell>{t(paymentMethodMessageKeys[order.paymentMethod])}</TableCell>
                                             <TableCell>

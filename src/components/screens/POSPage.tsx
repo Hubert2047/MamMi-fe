@@ -31,6 +31,7 @@ import LogoutConfirmDialog from '@/components/LogoutConfirmDialog'
 import { toast } from 'sonner'
 import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
+import PosStocktakeDialog from '@/components/inventory/PosStocktakeDialog'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -53,6 +54,7 @@ const POSPage: React.FC = () => {
     const [openDailyClosing, setOpenDailyClosing] = useState(false)
     const [openOtherRevenue, setOpenOtherRevenue] = useState(false)
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
+    const [openStocktake, setOpenStocktake] = useState(false)
     const showShiftAttendanceButton = process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === 'true'
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
@@ -343,6 +345,9 @@ const POSPage: React.FC = () => {
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenExpense(true)}>
                         {t('expenses')}
                     </Button>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenStocktake(true)}>
+                        {t('inventoryStocktake')}
+                    </Button>
                     {/* Temporarily hidden; keep the attendance state, dialog, and logic for the next phase. */}
                     {showShiftAttendanceButton && <Button className='h-11 text-base' variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         {t('attendance')}
@@ -364,6 +369,7 @@ const POSPage: React.FC = () => {
                     }}
                 />
             )}
+            <PosStocktakeDialog open={openStocktake} onClose={() => setOpenStocktake(false)} />
             {openOrderTable && (
                 <OrderTable
                     open={openOrderTable}

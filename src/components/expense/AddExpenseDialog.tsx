@@ -84,7 +84,11 @@ export function AddExpenseDialog({ open, onClose, initialEntryType = 'other' }: 
 
     const filteredInventoryItems = inventoryItems.filter((item) => item.name.toLocaleLowerCase().includes(inventorySearch.toLocaleLowerCase().trim()))
     const unitLabel = (unit: ExpenseUnit) => unit.names[locale] || unit.names.vi || unit.code
-    const filteredUnits = units.filter((unit) => unitLabel(unit).toLocaleLowerCase().includes(unitSearch.toLocaleLowerCase().trim()))
+    const selectedInventoryItem = inventoryItems.find((item) => item._id === formData.name)
+    const allowedUnitCodes = entryType === 'inventory_purchase' && selectedInventoryItem
+        ? new Set(selectedInventoryItem.purchaseUnits.map((unit) => unit.unitCode))
+        : null
+    const filteredUnits = units.filter((unit) => (!allowedUnitCodes || allowedUnitCodes.has(unit.code)) && unitLabel(unit).toLocaleLowerCase().includes(unitSearch.toLocaleLowerCase().trim()))
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()

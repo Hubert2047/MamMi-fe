@@ -27,6 +27,7 @@ export interface Expense {
     note?: string
     type?: 'other' | 'inventory_purchase'
     receiptId?: string
+    receipt?: { _id: string; lines: Array<{ inventoryItemId: string; quantity: number; unitCode: string; unitPrice: number }> }
     category?: string
     createdAt: string
     updatedAt: string
@@ -43,6 +44,9 @@ export interface ICreateExpense {
 }
 export interface IUpdateExpense extends ICreateExpense {
     _id: string
+    type?: Expense['type']
+    receiptId?: string
+    receipt?: Expense['receipt']
 }
 
 export type ExpenseRange = { from?: string; to?: string }
