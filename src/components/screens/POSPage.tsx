@@ -21,13 +21,10 @@ import OtherRevenue from '@/components/other-revenue/OtherRevenue.tsx'
 import ShiftAttendance from '@/components/ShiftAttendance.tsx'
 import TemporaryAvailabilityTable from '@/components/TemporaryAvailabilityTable'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
-import { signOut } from 'next-auth/react'
-import { logoutAPI } from '@/api/auth'
 import { calculateOrderTotal, findFreshSelectedItem, syncOrderItemsWithCatalog } from '@/lib/posCalculations'
 import { useI18n } from '@/lib/i18n'
 import { useStoreContext } from '@/lib/store-context'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import LogoutConfirmDialog from '@/components/LogoutConfirmDialog'
 import { toast } from 'sonner'
 import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
@@ -234,13 +231,6 @@ const POSPage: React.FC = () => {
             data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, discount: currentOrder.discount, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
         })
     }
-    async function handleLogout() {
-        try {
-            await logoutAPI()
-        } finally {
-            await signOut({ callbackUrl: '/login' })
-        }
-    }
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
 
     return (
@@ -355,9 +345,6 @@ const POSPage: React.FC = () => {
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenDailyClosing(true)}>
                         {t('dailyClosing')}
                     </Button>
-                    <LogoutConfirmDialog onConfirm={handleLogout}>
-                        <Button className='h-11 text-base' variant='destructive'>{t('logout')}</Button>
-                    </LogoutConfirmDialog>
                     </div>
                 </div>
             )}

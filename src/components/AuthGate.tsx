@@ -1,21 +1,21 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/auth'
 import Loading from '@/components/Loading'
+import { getPosDeviceSession } from '@/api/pos-device'
 
 export default function AuthGate({ children }: { children: ReactNode }) {
-  const { hydrated, isAuthenticated } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
+  const [deviceAuthorized, setDeviceAuthorized] = useState(false)
 
   useEffect(() => {
-    if (!hydrated) return
-    if (pathname === '/pos' && !isAuthenticated) router.replace('/login')
-  }, [hydrated, isAuthenticated, pathname, router])
+    if (pathname !== '/pos') return
+    void getPosDeviceSession().then((session) => { window.localStorage.setItem('activeStoreId', session.storeId); setDeviceAuthorized(true) }).catch(() => router.replace('/pos/enroll'))
+  }, [pathname, router])
 
-  if (pathname === '/pos' && (!hydrated || !isAuthenticated)) {
+  if (pathname === '/pos' && !deviceAuthorized) {
     return <Loading />
   }
 

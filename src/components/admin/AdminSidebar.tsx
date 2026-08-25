@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { BarChart3, Package, Tags, Percent, Users, ReceiptText, WalletCards, ClipboardList, CalendarCheck, Settings, LogOut, Store, Printer, QrCode } from 'lucide-react'
+import { BarChart3, Package, Tags, Percent, Users, ReceiptText, WalletCards, ClipboardList, CalendarCheck, Settings, LogOut, Store, Printer, QrCode, MonitorSmartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -32,11 +32,11 @@ const storeLinks = [
   { href: '/admin/daily-closing', icon: CalendarCheck, key: 'dailyClosing' },
   { href: '/admin/print-agents', icon: Printer, key: 'printAgents' },
   { href: '/admin/tables', icon: QrCode, key: 'tables' },
+  { href: '/admin/pos-devices', icon: MonitorSmartphone, key: 'posDevices' },
 ] as const
 
 export default function AdminSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user } = useAuth()
   const { t, locale } = useI18n()
   const { stores, activeStore, activeStoreId, setActiveStoreId, isLoading } = useStoreContext()
@@ -52,6 +52,6 @@ export default function AdminSidebar() {
     <nav className="flex-1 space-y-4 overflow-y-auto p-3">
       {isSuperAdmin ? <><section><div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-foreground">{t('overview')}</div><Link href="/admin/overview" className={linkClass('/admin/overview')}><BarChart3 className="size-4" />{t('overview')}</Link></section><section><div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-foreground">{t('commonConfig')}</div>{commonLinks.map(({ href, icon: Icon, key }) => <Link key={href} href={href} className={linkClass(href)}><Icon className="size-4" />{t(key)}</Link>)}</section><section><div className="px-3 text-xs font-bold uppercase tracking-wide text-foreground">{t('currentStoreGroup')} · {activeStore?.name || t('store')}</div>{storeLinks.map(({ href, icon: Icon, key }) => <Link key={href} href={href} className={linkClass(href)}><Icon className="size-4" />{t(key)}</Link>)}</section>{settingsLink}</> : <>{storeLinks.map(({ href, icon: Icon, key }) => <Link key={href} href={href} className={linkClass(href)}><Icon className="size-4" />{t(key)}</Link>)}{settingsLink}</>}
     </nav>
-    <div className="border-t p-3"><LogoutConfirmDialog onConfirm={logout}><Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground"><LogOut className="size-4" />{t('logout')}</Button></LogoutConfirmDialog><Button variant="outline" className="mt-2 w-full" onClick={() => router.push('/pos')}>{t('backToPos')}</Button></div>
+    <div className="border-t p-3"><LogoutConfirmDialog onConfirm={logout}><Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground"><LogOut className="size-4" />{t('logout')}</Button></LogoutConfirmDialog></div>
   </aside>
 }

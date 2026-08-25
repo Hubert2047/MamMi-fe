@@ -250,5 +250,8 @@ Object.assign(messages['zh-TW'], { backToOrder: '返回訂單' })
 Object.assign(messages.vi, { inventoryStocktake: 'Kiểm kho' })
 Object.assign(messages.en, { inventoryStocktake: 'Stocktake' })
 Object.assign(messages['zh-TW'], { inventoryStocktake: '盤點庫存' })
+Object.assign(messages.vi, { posDevices: 'Thiết bị POS' })
+Object.assign(messages.en, { posDevices: 'POS devices' })
+Object.assign(messages['zh-TW'], { posDevices: 'POS 裝置' })
 
 export function useI18n() { const context = useContext(I18nContext); if (!context) throw new Error('useI18n must be used inside I18nProvider'); return context }
