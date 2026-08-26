@@ -5,6 +5,7 @@ import { SiFoodpanda, SiLine, SiUber } from 'react-icons/si'
 export const DEFAULT_ORDER_ITEM: OrderItem = {
   id: '', itemId: '', name: '', quantity: 1, basePrice: 0, variant: '',
   addons: [], noteOptions: [], note: '',
+  componentSelections: [],
 }
 
 export const DEFAULT_ORDER: BaseOrder = {

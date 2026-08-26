@@ -11,6 +11,7 @@ export interface OrderItem {
     addons: OrderItemAddon[]
     noteOptions: string[]
     note: string
+    componentSelections?: { componentId: string; itemId: string; noteOptions: string[]; note: string; name?: string }[]
     printName?: string
     printVariant?: string
     printAddons?: OrderItemAddon[]

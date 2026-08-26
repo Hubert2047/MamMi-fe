@@ -57,6 +57,7 @@ function PosItemSection({
     const queryClient = useQueryClient()
     const { locale, t } = useI18n()
     const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
+    const catalogItems = Object.values(itemsByCategory).flat()
     const selectedItemPrice = calculateOrderItemTotal(currentOrderItem)
     const unavailableAddonIds = selectedItem ? getUnavailableAddonIds(selectedItem, currentOrderItem.addons.map((addon) => addon.id)) : []
     const selectionUnavailable = selectedItem?.temporarilyUnavailable === true || unavailableAddonIds.length > 0
@@ -92,6 +93,8 @@ function PosItemSection({
             name: item.name,
             variant,
             basePrice: getPriceByType(currentOrder.type, item.price),
+            addons: item.type === 'combo' ? [] : prev.addons,
+            componentSelections: item.type === 'combo' ? (item.components || []).flatMap((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); return Array.from({ length: component.quantity }, (_, instance) => ({ componentId: `${component.itemId}-${index}-${instance}`, itemId: component.itemId, noteOptions: [], note: '', name: componentItem?.name || component.itemId })) }) : [],
         }))
         setSelectedItem(item)
     }
@@ -257,6 +260,14 @@ function PosItemSection({
                                         </ToggleGroupItem>
                                     ))}
                                 </ToggleGroup>
+                            </div>
+                        )}
+                        {selectedItem.type === 'combo' && (currentOrderItem.componentSelections || []).length > 0 && (
+                            <div className='space-y-2 rounded border p-3'>
+                                <Label className='font-semibold'>{t('comboComponents')}</Label>
+                                <div className='max-h-64 space-y-2 overflow-y-auto'>
+                                    {(currentOrderItem.componentSelections || []).map((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); if (!componentItem) return null; return <details key={component.componentId} className='rounded border px-3 py-2' open={index === 0}><summary className='cursor-pointer text-sm font-medium'>{component.name || componentItem.name}{(currentOrderItem.componentSelections || []).filter((entry) => entry.itemId === component.itemId).length > 1 ? ` ${index + 1}` : ''}<span className='ml-2 text-xs text-muted-foreground'>{component.noteOptions.length ? component.noteOptions.map((id) => optionName(componentItem.noteOptions.find((option) => option.id === id) || { names: { vi: id, en: id, 'zh-TW': id } })).join(', ') : t('noNoteSelected')}</span></summary><div className='mt-2 space-y-2'>{componentItem.noteOptions.length > 0 && <ToggleGroup type='multiple' variant='outline' className='flex-wrap gap-2' value={component.noteOptions} onValueChange={(value) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, noteOptions: value } : entry) }))}>{componentItem.noteOptions.map((option) => <ToggleGroupItem key={option.id} value={option.id} className='h-auto min-h-8 whitespace-normal px-2 py-1 text-sm'>{optionName(option)}</ToggleGroupItem>)}</ToggleGroup>}{<Input value={component.note} placeholder={t('note')} onChange={(event) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, note: event.target.value } : entry) }))} />}</div></details> })}
+                                </div>
                             </div>
                         )}
                         {/* add-on */}

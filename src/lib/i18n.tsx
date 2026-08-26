@@ -103,6 +103,7 @@ Object.assign(messages.vi, { units: "Đơn vị tính" });
 Object.assign(messages.en, { units: "Units" });
 Object.assign(messages["zh-TW"], { units: "單位" });
 Object.assign(messages.vi, {
+  noNoteSelected: "Chưa chọn ghi chú",
   printAgents: "Máy in",
   printAgentTitle: "Print agent",
   printAgentCreateDescription:
@@ -147,6 +148,7 @@ Object.assign(messages.vi, {
   printAgentRouteUnset: "Chưa chọn máy in",
 });
 Object.assign(messages.en, {
+  noNoteSelected: "No note selected",
   printAgents: "Printers",
   printAgentTitle: "Print agent",
   printAgentCreateDescription:
@@ -191,6 +193,7 @@ Object.assign(messages.en, {
   printAgentRouteUnset: "No printer selected",
 });
 Object.assign(messages["zh-TW"], {
+  noNoteSelected: "尚未選擇備註",
   printAgents: "印表機",
   printAgentTitle: "Print agent",
   printAgentCreateDescription:
