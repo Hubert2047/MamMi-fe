@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, Loader2 } from "lucide-react";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,8 +134,10 @@ export default function PromotionsPage() {
   });
   const remove = useMutation({
     mutationFn: deletePromotion,
-    onSuccess: () =>
-      void queryClient.invalidateQueries({ queryKey: ["promotions"] }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["promotions"] });
+      toast.success(t("promotionDeleteSuccess"));
+    },
     onError: (error) =>
       toast.error(responseMessage(error) || t("promotionDeleteError")),
   });
@@ -151,7 +153,7 @@ export default function PromotionsPage() {
     setForm({
       names: promotion.names,
       mode: promotion.mode,
-      status: promotion.status,
+      status: promotion.status === "active" ? "active" : "draft",
       minSubtotal: promotion.minSubtotal,
       priority: promotion.priority,
       combinable: promotion.combinable,
@@ -220,21 +222,22 @@ export default function PromotionsPage() {
           }
         }}
       >
-        <DialogContent className="flex w-[min(96vw,72rem)] max-w-none flex-col overflow-hidden p-0 sm:max-w-none">
-          <Card className="flex max-h-[90dvh] min-h-0 flex-1 flex-col border-0 shadow-none">
-            <CardHeader className="shrink-0">
+        <DialogContent className="flex h-[min(92dvh,60rem)] w-[min(96vw,72rem)] max-w-none flex-col overflow-hidden p-0 sm:max-w-none">
+          <Card className="flex min-h-0 flex-1 flex-col border-0 shadow-none">
+            <CardHeader className="shrink-0 border-b pb-4">
               <DialogTitle>
                 {editing ? t("editPromotion") : t("createPromotion")}
               </DialogTitle>
             </CardHeader>
-            <CardContent className="min-h-0 flex-1 overflow-hidden">
+            <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <form
-                className="space-y-4"
+                className="flex min-h-0 flex-1 flex-col"
                 onSubmit={(event) => {
                   event.preventDefault();
                   save.mutate();
                 }}
               >
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-4 pr-1 pt-1">
                 <div className="grid gap-2 md:grid-cols-3">
                   {(["vi", "en", "zh-TW"] as const).map((language) => (
                     <Input
@@ -278,29 +281,38 @@ export default function PromotionsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("promotionStatus")}</Label>
-                    <Select
-                      value={form.status}
-                      onValueChange={(status) =>
-                        setForm({
-                          ...form,
-                          status: status as PromotionInput["status"],
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">{t("draft")}</SelectItem>
-                        <SelectItem value="active">{t("active")}</SelectItem>
-                        <SelectItem value="expired" disabled>
-                          {t("expired")}
-                        </SelectItem>
-                        <SelectItem value="archived">
-                          {t("archived")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {editing ? (
+                      <label className="flex h-10 items-center gap-2 rounded-md border px-3 text-sm">
+                        <Checkbox
+                          checked={form.status === "active"}
+                          onCheckedChange={(value) =>
+                            setForm({
+                              ...form,
+                              status: value === true ? "active" : "draft",
+                            })
+                          }
+                        />
+                        {form.status === "active" ? t("active") : t("inactive")}
+                      </label>
+                    ) : (
+                      <Select
+                        value={form.status === "active" ? "active" : "draft"}
+                        onValueChange={(status) =>
+                          setForm({
+                            ...form,
+                            status: status as PromotionInput["status"],
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="draft">{t("draft")}</SelectItem>
+                          <SelectItem value="active">{t("active")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>{t("priority")}</Label>
@@ -323,6 +335,7 @@ export default function PromotionsPage() {
                     <Label>{t("startsAt")}</Label>
                     <Input
                       type="datetime-local"
+                      required={!editing}
                       value={dateInput(form.startsAt)}
                       onChange={(event) =>
                         setForm({
@@ -338,6 +351,7 @@ export default function PromotionsPage() {
                     <Label>{t("endsAt")}</Label>
                     <Input
                       type="datetime-local"
+                      required={!editing}
                       value={dateInput(form.endsAt)}
                       onChange={(event) =>
                         setForm({
@@ -393,74 +407,118 @@ export default function PromotionsPage() {
                       {t("addRule")}
                     </Button>
                   </div>
-                  <div className="max-h-[28dvh] space-y-2 overflow-y-auto pr-1">
+                  <div className="space-y-2 pr-1">
                     {form.rules.map((rule, index) => (
-                      <div className="space-y-2 border-t pt-3" key={index}>
-                      <div className="grid gap-2 md:grid-cols-3">
-                        <Select
-                          value={rule.target}
-                          onValueChange={(target) =>
-                            setRule(index, {
-                              target: target as PromotionRule["target"],
-                              productIds: [],
-                              addonIds: [],
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="order">
-                              {t("targetOrder")}
-                            </SelectItem>
-                            <SelectItem value="product">
-                              {t("targetProduct")}
-                            </SelectItem>
-                            <SelectItem value="addon">
-                              {t("targetAddon")}
-                            </SelectItem>
-                            <SelectItem value="line">
-                              {t("targetLine")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={rule.reward.type}
-                          onValueChange={(type) =>
-                            setRule(index, {
-                              reward: {
-                                ...rule.reward,
-                                type: type as PromotionRule["reward"]["type"],
-                              },
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="percent">
-                              {t("discountPercent")}
-                            </SelectItem>
-                            <SelectItem value="value">
-                              {t("discountValue")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={rule.reward.amount}
-                          onChange={(event) =>
-                            setRule(index, {
-                              reward: {
-                                ...rule.reward,
-                                amount: Number(event.target.value),
-                              },
-                            })
-                          }
-                        />
+                      <div className="rounded-lg border border-border bg-card p-3" key={index}>
+                      <div className="flex items-start justify-between gap-3 border-b pb-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold">{t("promotionRules")} #{index + 1}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {rule.target === "order"
+                                ? t("targetOrder")
+                                : rule.target === "product"
+                                  ? t("targetProduct")
+                                  : rule.target === "addon"
+                                    ? t("targetAddon")
+                                    : t("targetLine")}
+                            </p>
+                          </div>
+                        </div>
+                        {form.rules.length > 1 && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0"
+                            onClick={() =>
+                              setForm({
+                                ...form,
+                                rules: form.rules.filter((_, i) => i !== index),
+                              })
+                            }
+                          >
+                            {t("removeRule")}
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-3 pt-3 md:grid-cols-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">{t("target")}</Label>
+                          <Select
+                            value={rule.target}
+                            onValueChange={(target) =>
+                              setRule(index, {
+                                target: target as PromotionRule["target"],
+                                productIds: [],
+                                addonIds: [],
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="order">
+                                {t("targetOrder")}
+                              </SelectItem>
+                              <SelectItem value="product">
+                                {t("targetProduct")}
+                              </SelectItem>
+                              <SelectItem value="addon">
+                                {t("targetAddon")}
+                              </SelectItem>
+                              <SelectItem value="line">
+                                {t("targetLine")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">{t("discount")}</Label>
+                          <Select
+                            value={rule.reward.type}
+                            onValueChange={(type) =>
+                              setRule(index, {
+                                reward: {
+                                  ...rule.reward,
+                                  type: type as PromotionRule["reward"]["type"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percent">
+                                {t("discountPercent")}
+                              </SelectItem>
+                              <SelectItem value="value">
+                                {t("discountValue")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">{t("discountValue")}</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={rule.reward.amount}
+                            onChange={(event) =>
+                              setRule(index, {
+                                reward: {
+                                  ...rule.reward,
+                                  amount: Number(event.target.value),
+                                },
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                       {rule.target !== "order" &&
                         (() => {
@@ -559,21 +617,6 @@ export default function PromotionsPage() {
                             </details>
                           );
                         })()}
-                      {form.rules.length > 1 && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setForm({
-                              ...form,
-                              rules: form.rules.filter((_, i) => i !== index),
-                            })
-                          }
-                        >
-                          {t("removeRule")}
-                        </Button>
-                      )}
                       </div>
                     ))}
                   </div>
@@ -615,7 +658,8 @@ export default function PromotionsPage() {
                     })}
                   </div>
                 </details>
-                <div className="flex flex-wrap gap-3">
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-3 border-t bg-card pt-4">
                   <Button disabled={save.isPending}>{t("save")}</Button>
                   <Button
                     type="button"
@@ -831,10 +875,23 @@ export default function PromotionsPage() {
               className="flex items-center justify-between rounded border p-3"
               key={promotion._id}
             >
-              <div>
-                <p className="font-medium">
-                  {promotion.names[locale] || promotion.name}
-                </p>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">
+                    {promotion.names[locale] || promotion.name}
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                      promotion.status === "active"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : promotion.status === "draft"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-muted bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {t(promotion.status)}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {promotion.mode === "automatic"
                     ? t("automatic")
@@ -881,9 +938,15 @@ export default function PromotionsPage() {
                       <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         variant="destructive"
+                        disabled={remove.isPending}
                         onClick={() => remove.mutate(promotion._id)}
                       >
-                        {t("confirm")}
+                        {remove.isPending && remove.variables === promotion._id ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : null}
+                        {remove.isPending && remove.variables === promotion._id
+                          ? t("loading")
+                          : t("confirm")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

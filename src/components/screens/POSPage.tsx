@@ -30,7 +30,7 @@ import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
 import PosStocktakeDialog from '@/components/inventory/PosStocktakeDialog'
 import PosTableSessions from '@/components/PosTableSessions'
-import { previewPromotions } from '@/api/promotion'
+import { calculatePromotionPreview } from '@/api/promotion'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -55,6 +55,7 @@ const POSPage: React.FC = () => {
     const [openShiftAttendance, setOpenShiftAttendance] = useState(false)
     const [openStocktake, setOpenStocktake] = useState(false)
     const [openTableSessions, setOpenTableSessions] = useState(false)
+    const [promotionInfoOpen, setPromotionInfoOpen] = useState(false)
     const showShiftAttendanceButton = process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === 'true'
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
@@ -64,8 +65,6 @@ const POSPage: React.FC = () => {
     const { data: tables = [] } = useQuery({ queryKey: ['store-tables'], queryFn: getStoreTables })
     const queryClient = useQueryClient()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
-    const [promotionPreview, setPromotionPreview] = useState<{ total: number; appliedPromotions: NonNullable<BaseOrder['appliedPromotions']> } | null>(null)
-    const [promotionPreviewRevision, setPromotionPreviewRevision] = useState(0)
     useEffect(() => {
         if (nextOrderNumber === undefined || currentOrder.items.length > 0 || isCheckout || isPendingOrder) return
         // The POS can render once before the store-scoped query resolves.
@@ -75,6 +74,7 @@ const POSPage: React.FC = () => {
     // Keep temporarily unavailable products visible but not selectable.
     const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive !== false), [items])
     const activePromotions = useMemo(() => promotions.filter((promotion) => promotion.enabled && promotion.status === 'active'), [promotions])
+    const promotionPreview = useMemo(() => calculatePromotionPreview({ items: currentOrder.items, promotions: activePromotions, selectedPromotionIds: currentOrder.selectedPromotionIds }), [activePromotions, currentOrder.items, currentOrder.selectedPromotionIds])
     const itemsByCategory = useMemo(() => {
         const grouped: Record<string, Item[]> = {}
         sellableItems.forEach((item) => {
@@ -124,10 +124,6 @@ const POSPage: React.FC = () => {
         setIsEditItem(true)
     }
 
-    useEffect(() => {
-        const timeout = window.setTimeout(() => { void previewPromotions({ items: currentOrder.items, selectedPromotionIds: currentOrder.selectedPromotionIds }).then(setPromotionPreview).catch(() => setPromotionPreview(null)) }, 200)
-        return () => window.clearTimeout(timeout)
-    }, [currentOrder.items, currentOrder.selectedPromotionIds, promotionPreviewRevision])
     const draftTotal = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
     const totalPrice = promotionPreview?.total ?? draftTotal
     const updatePendingOrderMutation = useMutation({
@@ -142,8 +138,7 @@ const POSPage: React.FC = () => {
         onError: (error: unknown) => {
             const code = isAxiosError(error) ? error.response?.data?.code : undefined
             if (code === 'PROMOTION_PRICE_CHANGED') {
-                setPromotionPreview(null)
-                setPromotionPreviewRevision((revision) => revision + 1)
+            void queryClient.invalidateQueries({ queryKey: ['promotions'] })
                 toast.error(t('promotionPriceChanged'))
                 return
             }
@@ -232,6 +227,9 @@ const POSPage: React.FC = () => {
     function startOrderEdit() {
         setOrderBeforeEdit(currentOrder)
         setIsOrderEditing(true)
+        setSelectedItem(null)
+        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setIsEditItem(false)
     }
 
     function startAddOrderItem() {
@@ -243,11 +241,6 @@ const POSPage: React.FC = () => {
     function saveOrderEdit() {
         if (currentOrder.items.length === 0) { toast.error(t('noProductsToOrder')); return }
         if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
-        if (!promotionPreview) {
-            setPromotionPreviewRevision((revision) => revision + 1)
-            toast.error(t('loading'))
-            return
-        }
         void updatePendingOrderMutation.mutateAsync({
             id: currentOrder._id,
             data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, selectedPromotionIds: currentOrder.selectedPromotionIds, expectedPricing: promotionPreview, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
@@ -302,7 +295,7 @@ const POSPage: React.FC = () => {
                             setIsCheckoutPendingOrder={setIsCheckoutPendingOrder}
                             promotions={activePromotions}
                             promotionPreview={promotionPreview}
-                            onPromotionPriceChanged={() => { setPromotionPreview(null); setPromotionPreviewRevision((revision) => revision + 1) }}
+                            onPromotionPriceChanged={() => { void queryClient.invalidateQueries({ queryKey: ['promotions'] }) }}
                             handlePendingOrder={handlePendingOrder}
                             handleOpenCheckout={handleOpenCheckout}
                             setCurrentOrderNumber={setCurrentOrderNumber}
@@ -325,6 +318,8 @@ const POSPage: React.FC = () => {
                             setSelectedCategory={setSelectedCategory}
                             setSelectedItem={setSelectedItem}
                             setIsEditItem={setIsEditItem}
+                            promotionInfoOpen={promotionInfoOpen}
+                            setPromotionInfoOpen={setPromotionInfoOpen}
                         />
                     )}
                 </div>
@@ -349,6 +344,9 @@ const POSPage: React.FC = () => {
                     <div className='border-b pb-2 mb-1'>
                         <LanguageSwitcher />
                     </div>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setPromotionInfoOpen(true)}>
+                        {t('promotions')}
+                    </Button>
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>

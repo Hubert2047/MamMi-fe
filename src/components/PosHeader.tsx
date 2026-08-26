@@ -10,6 +10,7 @@ import type { BaseOrder } from '@/api/order'
 import { useI18n } from '@/lib/i18n'
 import { FloatingButton } from '@/components/FloatingButton'
 import type { StoreTable } from '@/api/table'
+import { calculateOrderSubtotal } from '@/lib/posCalculations'
 
 type Props = {
 
@@ -51,6 +52,8 @@ function PosHeader({
 }: Props) {
     const { t } = useI18n()
     const isReadOnly = isDetail && !isOrderEditing
+    const originalTotal = calculateOrderSubtotal(currentOrder.items)
+    const hasPromotionDiscount = totalPrice < originalTotal
     
 
     return (
@@ -121,7 +124,10 @@ function PosHeader({
 
             <div className='ml-auto flex shrink-0 items-center space-x-1'>
                         <Label className='whitespace-nowrap text-base font-semibold'>{t('total')}:</Label>
-                <Input className='h-10 w-30 !text-xl font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />
+                {hasPromotionDiscount ? <div className='flex min-w-30 items-baseline justify-center gap-1 leading-tight'>
+                    <span className='text-xl font-extrabold tabular-nums text-primary'>{totalPrice.toLocaleString()}</span>
+                    <span className='text-xs text-muted-foreground line-through'>{originalTotal.toLocaleString()}</span>
+                </div> : <Input className='h-10 w-30 !text-xl font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />}
             </div>
             <div className='ml-4 flex shrink-0 justify-end'>
                 {isDetail ? (

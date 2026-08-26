@@ -62,7 +62,7 @@ export default function PosOrderList({ items, appliedPromotions = [], currentOrd
             </div>
             <div className='flex min-h-0 flex-1 flex-col space-y-2 overflow-y-auto pr-2 [scrollbar-gutter:stable]'>
             {items.map((item, index) => {
-                const discount = appliedPromotions.flatMap((promotion) => promotion.allocations).filter((allocation) => allocation.itemId === item.id).reduce((total, allocation) => total + allocation.productDiscountAmount + allocation.addonDiscounts.reduce((addonTotal, addon) => addonTotal + addon.discountAmount, 0), 0)
+                const discount = appliedPromotions.filter((promotion) => !promotion.targets?.includes('order')).flatMap((promotion) => promotion.allocations).filter((allocation) => allocation.itemId === item.id).reduce((total, allocation) => total + allocation.productDiscountAmount + allocation.addonDiscounts.reduce((addonTotal, addon) => addonTotal + addon.discountAmount, 0), 0)
                 const original = item.quantity * item.basePrice + item.addons.reduce((acc, addon) => acc + addon.amount * addon.priceExtra * item.quantity, 0)
                 return (
                 <Button

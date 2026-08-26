@@ -15,6 +15,7 @@ import Loading from './Loading'
 import { useI18n } from '@/lib/i18n'
 import { calculateOrderItemTotal, getUnavailableAddonIds } from '@/lib/posCalculations'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { getCatalogAddonPromotionPrice, getCatalogProductPromotionPrice, type Promotion } from '@/api/promotion'
 
 type Props = {
@@ -34,6 +35,8 @@ type Props = {
     setSelectedCategory: React.Dispatch<React.SetStateAction<string>>
     setSelectedItem: React.Dispatch<React.SetStateAction<Item | null>>
     setIsEditItem: React.Dispatch<React.SetStateAction<boolean>>
+    promotionInfoOpen: boolean
+    setPromotionInfoOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function PosItemSection({
@@ -51,6 +54,8 @@ function PosItemSection({
     setCurrentOrder,
     setSelectedItem,
     setIsEditItem,
+    promotionInfoOpen,
+    setPromotionInfoOpen,
     currentOrderNumber,
     promotions,
 }: Props) {
@@ -58,7 +63,25 @@ function PosItemSection({
     const { locale, t } = useI18n()
     const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
     const catalogItems = Object.values(itemsByCategory).flat()
+    const catalogAddons = catalogItems.flatMap((item) => item.addons)
+    const visiblePromotions = promotions.filter((promotion) => {
+        const now = new Date()
+        return promotion.mode === 'automatic' && (!promotion.startsAt || new Date(promotion.startsAt) <= now) && (!promotion.endsAt || new Date(promotion.endsAt) >= now)
+    })
+    const labelsFor = (ids: string[] | undefined, entries: Array<{ _id: string; name: string }>, allLabel: string) => !ids?.length ? allLabel : ids.map((id) => entries.find((entry) => entry._id === id)?.name || id).join(', ')
+    const targetLabel = (target: Promotion['rules'][number]['target']) => target === 'order' ? t('targetOrder') : target === 'product' ? t('targetProduct') : target === 'addon' ? t('targetAddon') : t('targetLine')
+    const formatPromotionDate = (value?: string | null) => value ? new Intl.DateTimeFormat(locale === 'zh-TW' ? 'zh-TW' : locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—'
     const selectedItemPrice = calculateOrderItemTotal(currentOrderItem)
+    const selectedItemOriginalPrice = selectedItem ? getPriceByType(currentOrder.type, selectedItem.price) : 0
+    const selectedItemPromotionPrice = selectedItem
+        ? getCatalogProductPromotionPrice({ productId: selectedItem._id, price: selectedItemOriginalPrice, promotions, includeConditional: true })
+        : 0
+    const selectedItemAddonPromotionTotal = selectedItem
+        ? currentOrderItem.addons.reduce((total, addon) => total + addon.amount * getCatalogAddonPromotionPrice({ productId: selectedItem._id, addonId: addon.id, price: addon.priceExtra, promotions }) * currentOrderItem.quantity, 0)
+        : 0
+    const selectedItemPromotionTotal = selectedItem
+        ? selectedItemPromotionPrice * currentOrderItem.quantity + selectedItemAddonPromotionTotal
+        : 0
     const unavailableAddonIds = selectedItem ? getUnavailableAddonIds(selectedItem, currentOrderItem.addons.map((addon) => addon.id)) : []
     const selectionUnavailable = selectedItem?.temporarilyUnavailable === true || unavailableAddonIds.length > 0
     const isReadOnly = isDetail && !isOrderEditing
@@ -159,6 +182,30 @@ function PosItemSection({
     return (
         <>
             {updateOrderMutation.isPending && <Loading />}
+            <Dialog open={promotionInfoOpen} onOpenChange={setPromotionInfoOpen}>
+                <DialogContent className='top-[8%] max-h-[88dvh] w-[min(94vw,40rem)] max-w-none translate-y-0 overflow-y-auto sm:max-w-none'>
+                    <div className='space-y-4'>
+                        <DialogTitle className='text-xl'>{t('promotions')}</DialogTitle>
+                        {visiblePromotions.length === 0 ? <p className='text-sm text-muted-foreground'>{t('emptyPromotions')}</p> : visiblePromotions.map((promotion) => <div className='rounded-lg border p-3' key={promotion._id}>
+                            <div className='flex flex-wrap items-start justify-between gap-2'>
+                                <div>
+                                    <p className='text-lg font-semibold'>{promotion.names[locale] || promotion.name}</p>
+                                    {promotion.minSubtotal !== undefined && promotion.minSubtotal > 0 ? <p className='mt-1 text-sm font-semibold text-foreground'>{t('minSubtotal')}: {promotion.minSubtotal.toLocaleString(locale)}</p> : null}
+                                </div>
+                                <div className='text-right text-xs text-muted-foreground'>
+                                    <p>{t('startsAt')}: {formatPromotionDate(promotion.startsAt)}<br />{t('endsAt')}: {formatPromotionDate(promotion.endsAt)}</p>
+                                </div>
+                            </div>
+                            <div className='mt-3 space-y-2'>
+                                {promotion.rules.map((rule, index) => <div className='rounded-md bg-muted/50 px-2.5 py-2 text-sm' key={index}>
+                                    <div className='flex flex-wrap items-center justify-between gap-2'><span className='font-medium'>{targetLabel(rule.target)}</span><span className='font-semibold text-primary'>-{rule.reward.type === 'percent' ? `${rule.reward.amount}%` : rule.reward.amount}</span></div>
+                                    <p className='mt-1 text-xs text-muted-foreground'>{rule.target === 'order' ? t('promotionPreviewOrderScope') : rule.target === 'addon' ? labelsFor(rule.addonIds, catalogAddons, t('promotionPreviewAllAddons')) : labelsFor(rule.productIds, catalogItems, t('promotionPreviewAllProducts'))}</p>
+                                </div>)}
+                            </div>
+                        </div>)}
+                    </div>
+                </DialogContent>
+            </Dialog>
             <div className='categories flex w-26 flex-col gap-2 rounded border border-[#ccc] p-1'>
                 {!isReadOnly &&
                     Object.keys(itemsByCategory).map((categoryName) => {
@@ -181,11 +228,12 @@ function PosItemSection({
             </div>
             <div className='select-items flex h-full w-50 flex-1 flex-wrap items-start justify-start gap-2 rounded border border-[#ccc] p-1'>
                 {selectedItem === null ? (
-                    <div className='w-full grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2'>
+                    <div className='w-full'>
+                        <div className='grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2'>
                         {filteredItems.map((item) => (
                             <Button
                                 key={item._id}
-                                className='h-14 w-full px-2'
+                                className='h-auto min-h-18 w-full px-2 py-1.5'
                                 variant='default'
                                 disabled={item.temporarilyUnavailable === true}
                                 onClick={() => selectItem(item)}>
@@ -193,17 +241,18 @@ function PosItemSection({
                                         <span className='w-full truncate text-sm' title={item.name}>{displayItemName(item)}</span>
                                         {item.temporarilyUnavailable ? <span>{t('temporaryUnavailableShort')}</span> : (() => {
                                             const originalPrice = getPriceByType(currentOrder.type, item.price)
-                                            const promotionPrice = getCatalogProductPromotionPrice({ productId: item._id, price: originalPrice, promotions })
-                                            return promotionPrice < originalPrice ? <span><span className='mr-1 text-xs opacity-70 line-through'>{originalPrice.toLocaleString(locale)}</span>{promotionPrice.toLocaleString(locale)}</span> : <span>{originalPrice.toLocaleString(locale)}</span>
+                                            const promotionPrice = getCatalogProductPromotionPrice({ productId: item._id, price: originalPrice, promotions, includeConditional: true })
+                                            return promotionPrice < originalPrice ? <div className='flex flex-col items-center leading-tight'><span className='text-[11px] text-primary-foreground/70'>{t('originalPrice')}: <span className='line-through'>{originalPrice.toLocaleString(locale)}</span></span><span className='mt-0.5 text-base font-bold text-primary-foreground'>{t('price')}: {promotionPrice.toLocaleString(locale)}</span></div> : <span>{t('price')}: {originalPrice.toLocaleString(locale)}</span>
                                         })()}
                                     </div>
                             </Button>
                         ))}
+                        </div>
                     </div>
                 ) : (
                     <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col'>
                         <div className='min-h-0 flex-1 space-y-3 overflow-y-auto pr-2'>
-                        <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1'><p className='min-w-0 flex-1 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><span className='shrink-0 text-lg font-bold text-primary'>{selectedItemPrice.toLocaleString(locale)}</span></div></div>
+                        <div className='border-b pb-2'><div className='text-xs font-semibold uppercase tracking-wide text-primary'>{t(isEditItem ? 'posEditItem' : 'posAddItem')}</div><div className='mt-1 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1'><p className='min-w-0 flex-1 truncate text-xl' title={currentOrderItem.name}>{currentOrderItem.name}</p><div className='shrink-0 text-right text-sm'>{selectedItemPromotionTotal < selectedItemPrice ? <div className='flex flex-col'><span className='text-xs text-muted-foreground'>{t('originalPrice')}: <span className='line-through'>{selectedItemPrice.toLocaleString(locale)}</span></span><span className='text-lg font-bold text-primary'>{t('price')}: {selectedItemPromotionTotal.toLocaleString(locale)}</span></div> : <span className='text-lg font-bold text-primary'>{t('price')}: {selectedItemPrice.toLocaleString(locale)}</span>}</div></div></div>
                         {selectionUnavailable && <div className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'>{t('selectionUnavailable')}</div>}
                         <div className='variant flex justify-start items-center gap-4'>
                             <Label className='block w-27 font-semibold text-start'>{t('quantity')}:</Label>

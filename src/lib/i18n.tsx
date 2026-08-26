@@ -1149,6 +1149,9 @@ const posMessages: Record<Locale, Record<string, string>> = {
 Object.assign(posMessages.vi, {
   checkoutBreakdown: "Chi tiết thanh toán",
   checkoutBreakdownHint: "Xem giá gốc và các khoản giảm giá",
+  itemDiscountTotal: "Giảm theo món",
+  afterItemDiscount: "Sau giảm theo món",
+  orderDiscount: "Giảm toàn đơn",
   originalPrice: "Giá gốc",
   productSubtotal: "Tiền sản phẩm",
   addonSubtotal: "Tiền topping",
@@ -1163,6 +1166,9 @@ Object.assign(posMessages.vi, {
 Object.assign(posMessages.en, {
   checkoutBreakdown: "Payment details",
   checkoutBreakdownHint: "View original prices and discounts",
+  itemDiscountTotal: "Item discounts",
+  afterItemDiscount: "After item discounts",
+  orderDiscount: "Order discount",
   originalPrice: "Original price",
   productSubtotal: "Products",
   addonSubtotal: "Add-ons",
@@ -1177,6 +1183,9 @@ Object.assign(posMessages.en, {
 Object.assign(posMessages["zh-TW"], {
   checkoutBreakdown: "付款明細",
   checkoutBreakdownHint: "查看原價與優惠折扣",
+  itemDiscountTotal: "商品折扣",
+  afterItemDiscount: "商品折扣後",
+  orderDiscount: "整單折扣",
   originalPrice: "原價",
   productSubtotal: "商品金額",
   addonSubtotal: "加料金額",
@@ -1198,6 +1207,7 @@ Object.assign(promotionMessages.vi as Record<string, string>, {
   promotionStatus: "Trạng thái",
   draft: "Nháp",
   active: "Đang áp dụng",
+  inactive: "Không áp dụng",
   expired: "Đã hết hạn",
   archived: "Lưu trữ",
   promotionRules: "Quy tắc giảm",
@@ -1224,6 +1234,7 @@ Object.assign(promotionMessages.vi as Record<string, string>, {
   emptyPromotions: "Chưa có khuyến mại nào",
   confirmDeletePromotion: "Bạn có chắc muốn xóa khuyến mại này không?",
   promotionSaveError: "Không thể lưu khuyến mại",
+  promotionDeleteSuccess: "Đã xóa khuyến mại",
   promotionDeleteError: "Không thể xóa khuyến mại",
 });
 Object.assign(promotionMessages.en as Record<string, string>, {
@@ -1236,6 +1247,7 @@ Object.assign(promotionMessages.en as Record<string, string>, {
   promotionStatus: "Status",
   draft: "Draft",
   active: "Active",
+  inactive: "Inactive",
   expired: "Expired",
   archived: "Archived",
   promotionRules: "Promotion rules",
@@ -1262,6 +1274,7 @@ Object.assign(promotionMessages.en as Record<string, string>, {
   emptyPromotions: "No promotions yet",
   confirmDeletePromotion: "Are you sure you want to delete this promotion?",
   promotionSaveError: "Unable to save promotion",
+  promotionDeleteSuccess: "Promotion deleted",
   promotionDeleteError: "Unable to delete promotion",
 });
 Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
@@ -1274,6 +1287,7 @@ Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
   promotionStatus: "狀態",
   draft: "草稿",
   active: "啟用中",
+  inactive: "未啟用",
   expired: "已過期",
   archived: "封存",
   promotionRules: "優惠規則",
@@ -1300,6 +1314,7 @@ Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
   emptyPromotions: "尚無優惠活動",
   confirmDeletePromotion: "確定要刪除此優惠活動嗎？",
   promotionSaveError: "無法儲存優惠活動",
+  promotionDeleteSuccess: "優惠活動已刪除",
   promotionDeleteError: "無法刪除優惠活動",
 });
 Object.assign(promotionMessages.vi as Record<string, string>, {

@@ -31,7 +31,7 @@ interface OrderItemAddon {
     printName?: string
 }
 
-export interface AppliedPromotion { promotionId: string; promotionVersion: number; name: string; mode: 'automatic' | 'manual'; discountAmount: number; allocations: { itemId: string; productDiscountAmount: number; addonDiscounts: { addonId: string; discountAmount: number }[] }[] }
+export interface AppliedPromotion { promotionId: string; promotionVersion: number; name: string; mode: 'automatic' | 'manual'; targets?: ('order' | 'product' | 'addon' | 'line')[]; discountAmount: number; allocations: { itemId: string; productDiscountAmount: number; addonDiscounts: { addonId: string; discountAmount: number }[] }[] }
 export type ExpectedPricing = { total: number; appliedPromotions: AppliedPromotion[] }
 
 export interface BaseOrder {
