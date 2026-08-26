@@ -12,6 +12,7 @@ export type LocalizedOption = { id: string; names: LocalizedText }
 
 export interface Item {
     _id: string
+    type?: 'product' | 'combo'
     name: string
     names: LocalizedText
     description: LocalizedText
@@ -24,9 +25,11 @@ export interface Item {
     permanentlyActive: boolean
     temporarilyUnavailable: boolean
     temporarilyUnavailableUntil?: string | null
+    components?: Array<{ itemId: string; quantity: number }>
 }
 
 export interface ItemInput {
+    type?: 'product' | 'combo'
     names: LocalizedText
     description: LocalizedText
     variants: LocalizedOption[]
@@ -34,6 +37,7 @@ export interface ItemInput {
     categoryId: string
     addons: string[]
     noteOptions: LocalizedOption[]
+    components?: Array<{ itemId: string; quantity: number }>
 }
 
 interface Addon {

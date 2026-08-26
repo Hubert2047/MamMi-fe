@@ -19,6 +19,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
 
 const emptyForm: ItemInput = {
+  type: 'product',
   names: { vi: '', en: '', 'zh-TW': '' },
   description: { vi: '', en: '', 'zh-TW': '' },
   variants: [],
@@ -26,6 +27,7 @@ const emptyForm: ItemInput = {
   categoryId: '',
   addons: [],
   noteOptions: [],
+  components: [],
 }
 
 type OptionInputs = { vi: string; en: string; 'zh-TW': string }
@@ -104,6 +106,7 @@ export default function ProductsPage() {
   function itemForm(item: Item): ItemInput {
     const categoryId = typeof item.categoryId === 'string' ? item.categoryId : item.categoryId?._id || ''
     return {
+      type: item.type || 'product',
       names: item.names,
       description: item.description || { vi: '', en: '', 'zh-TW': '' },
       categoryId,
@@ -111,6 +114,7 @@ export default function ProductsPage() {
       variants: item.variants || [],
       noteOptions: item.noteOptions || [],
       price: { base: 0, uber: 0, foodpanda: 0 },
+      components: item.components || [],
     }
   }
 
@@ -153,6 +157,8 @@ export default function ProductsPage() {
               <div className="space-y-2"><Label>{t('productName')} (EN)</Label><Input value={form.names.en} onChange={(event) => setForm({ ...form, names: { ...form.names, en: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('productName')} (繁中)</Label><Input value={form.names['zh-TW']} onChange={(event) => setForm({ ...form, names: { ...form.names, 'zh-TW': event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('categories')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })}><option value="">{t('chooseCategory')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select></div>
+              <div className="space-y-2"><Label>{t('productType')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.type || 'product'} onChange={(event) => setForm({ ...form, type: event.target.value as ItemInput['type'], components: event.target.value === 'combo' ? (form.components || []) : [] })}><option value="product">{t('regularProduct')}</option><option value="combo">{t('comboProduct')}</option></select></div>
+              {form.type === 'combo' && <div className="space-y-2"><Label>{t('comboComponents')}</Label><div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-3 sm:grid-cols-2">{allItems.filter((item) => item._id !== editing?._id).map((item) => { const selected = (form.components || []).some((component) => component.itemId === item._id); return <label key={item._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={selected} onCheckedChange={(checked) => setForm({ ...form, components: checked ? [...(form.components || []), { itemId: item._id, quantity: 1 }] : (form.components || []).filter((component) => component.itemId !== item._id) })} /><span className="truncate">{item.name}</span></label> })}</div></div>}
               <div className="space-y-2"><Label>{t('variants')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={variantInputs.vi} onChange={(event) => setVariantInputs({ ...variantInputs, vi: event.target.value })} placeholder={`${t('variantPlaceholder')} (VI)`} /><Input value={variantInputs.en} onChange={(event) => setVariantInputs({ ...variantInputs, en: event.target.value })} placeholder={`${t('variantPlaceholder')} (EN)`} /><Input value={variantInputs['zh-TW']} onChange={(event) => setVariantInputs({ ...variantInputs, 'zh-TW': event.target.value })} placeholder={`${t('variantPlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('notes')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={noteOptionInputs.vi} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, vi: event.target.value })} placeholder={`${t('notePlaceholder')} (VI)`} /><Input value={noteOptionInputs.en} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, en: event.target.value })} placeholder={`${t('notePlaceholder')} (EN)`} /><Input value={noteOptionInputs['zh-TW']} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, 'zh-TW': event.target.value })} placeholder={`${t('notePlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('addons')}</Label><div className="grid grid-cols-2 gap-2 rounded-lg border p-3">{addons.map((addon) => <label key={addon._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={form.addons.includes(addon._id)} onCheckedChange={(checked) => setForm({ ...form, addons: checked ? [...form.addons, addon._id] : form.addons.filter((id) => id !== addon._id) })} /><span className="truncate">{addon.names[locale] || addon.names.vi || addon.names.en || addon.names['zh-TW']}</span></label>)}</div></div>
