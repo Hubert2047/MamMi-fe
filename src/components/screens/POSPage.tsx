@@ -11,7 +11,7 @@ import PosItemSection from '@/components/PosItemSection.tsx'
 import PosHeader from '@/components/PosHeader.tsx'
 import Loading from '@/components/Loading.tsx'
 import Checkout from '@/components/Checkout.tsx'
-import { useDiscounts, useItems, useNextOrderNumber, useStoreAddons } from '@/hooks/queries'
+import { usePromotions, useItems, useNextOrderNumber, useStoreAddons } from '@/hooks/queries'
 import { getStoreTables } from '@/api/table'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { OrderTable } from '@/components/orders/OrderTable.tsx'
@@ -30,6 +30,7 @@ import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
 import PosStocktakeDialog from '@/components/inventory/PosStocktakeDialog'
 import PosTableSessions from '@/components/PosTableSessions'
+import { previewPromotions } from '@/api/promotion'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -58,11 +59,13 @@ const POSPage: React.FC = () => {
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
     const { data: storeAddons = [] } = useStoreAddons()
-    const { data: discounts = [], isLoading: isDiscountsLoading } = useDiscounts()
+    const { data: promotions = [], isLoading: isPromotionsLoading } = usePromotions()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const { data: tables = [] } = useQuery({ queryKey: ['store-tables'], queryFn: getStoreTables })
     const queryClient = useQueryClient()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
+    const [promotionPreview, setPromotionPreview] = useState<{ total: number; appliedPromotions: NonNullable<BaseOrder['appliedPromotions']> } | null>(null)
+    const [promotionPreviewRevision, setPromotionPreviewRevision] = useState(0)
     useEffect(() => {
         if (nextOrderNumber === undefined || currentOrder.items.length > 0 || isCheckout || isPendingOrder) return
         // The POS can render once before the store-scoped query resolves.
@@ -71,7 +74,7 @@ const POSPage: React.FC = () => {
     }, [currentOrder.items.length, isCheckout, isPendingOrder, nextOrderNumber])
     // Keep temporarily unavailable products visible but not selectable.
     const sellableItems = useMemo(() => items.filter((item) => item.permanentlyActive !== false), [items])
-    const activeDiscounts = useMemo(() => discounts.filter((discount) => discount.active), [discounts])
+    const activePromotions = useMemo(() => promotions.filter((promotion) => promotion.enabled && promotion.status === 'active'), [promotions])
     const itemsByCategory = useMemo(() => {
         const grouped: Record<string, Item[]> = {}
         sellableItems.forEach((item) => {
@@ -102,15 +105,15 @@ const POSPage: React.FC = () => {
     }, [items])
 
     useEffect(() => {
-        if (isDiscountsLoading) return
+        if (isPromotionsLoading) return
         setCurrentOrder((current) => {
-            if (!current.discount) return current
-            const stillActive = activeDiscounts.some((discount) => discount.name === current.discount?.name)
+            if (!current.selectedPromotionIds?.length) return current
+            const stillActive = current.selectedPromotionIds.every((id) => activePromotions.some((promotion) => promotion._id === id))
             if (stillActive) return current
             toast.error(t('discountUnavailable'))
-            return { ...current, discount: null }
+            return { ...current, selectedPromotionIds: [] }
         })
-    }, [activeDiscounts, isDiscountsLoading, t])
+    }, [activePromotions, isPromotionsLoading, t])
 
     const filteredItems = itemsByCategory[selectedCategory] ?? []
 
@@ -121,7 +124,12 @@ const POSPage: React.FC = () => {
         setIsEditItem(true)
     }
 
-    const totalPrice = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
+    useEffect(() => {
+        const timeout = window.setTimeout(() => { void previewPromotions({ items: currentOrder.items, selectedPromotionIds: currentOrder.selectedPromotionIds }).then(setPromotionPreview).catch(() => setPromotionPreview(null)) }, 200)
+        return () => window.clearTimeout(timeout)
+    }, [currentOrder.items, currentOrder.selectedPromotionIds, promotionPreviewRevision])
+    const draftTotal = useMemo(() => calculateOrderTotal(currentOrder), [currentOrder])
+    const totalPrice = promotionPreview?.total ?? draftTotal
     const updatePendingOrderMutation = useMutation({
         mutationFn: updatePendingOrder,
         onSuccess: (updatedOrder) => {
@@ -132,7 +140,14 @@ const POSPage: React.FC = () => {
             toast.success(t('updateSuccess'))
         },
         onError: (error: unknown) => {
-            toast.error(isAxiosError(error) && error.response?.data?.code === 'ORDER_VERSION_CONFLICT' ? t('orderChangedElsewhere') : t('updateFailure'))
+            const code = isAxiosError(error) ? error.response?.data?.code : undefined
+            if (code === 'PROMOTION_PRICE_CHANGED') {
+                setPromotionPreview(null)
+                setPromotionPreviewRevision((revision) => revision + 1)
+                toast.error(t('promotionPriceChanged'))
+                return
+            }
+            toast.error(code === 'ORDER_VERSION_CONFLICT' ? t('orderChangedElsewhere') : t('updateFailure'))
         },
     })
 
@@ -228,9 +243,14 @@ const POSPage: React.FC = () => {
     function saveOrderEdit() {
         if (currentOrder.items.length === 0) { toast.error(t('noProductsToOrder')); return }
         if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
+        if (!promotionPreview) {
+            setPromotionPreviewRevision((revision) => revision + 1)
+            toast.error(t('loading'))
+            return
+        }
         void updatePendingOrderMutation.mutateAsync({
             id: currentOrder._id,
-            data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, discount: currentOrder.discount, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
+            data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, selectedPromotionIds: currentOrder.selectedPromotionIds, expectedPricing: promotionPreview, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
         })
     }
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
@@ -260,6 +280,7 @@ const POSPage: React.FC = () => {
                     <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>
                         <PosOrderList
                             items={currentOrder.items}
+                            appliedPromotions={promotionPreview?.appliedPromotions ?? currentOrder.appliedPromotions}
                             updateItem={selectUpdateOrderItem}
                             currentOrderItem={currentOrderItem}
                             canEdit={isDetail && currentOrder.status === 'pending'}
@@ -279,7 +300,9 @@ const POSPage: React.FC = () => {
                             currentOrder={currentOrder}
                             isCheckoutPendingOrder={isCheckoutPendingOrder}
                             setIsCheckoutPendingOrder={setIsCheckoutPendingOrder}
-                            discounts={activeDiscounts}
+                            promotions={activePromotions}
+                            promotionPreview={promotionPreview}
+                            onPromotionPriceChanged={() => { setPromotionPreview(null); setPromotionPreviewRevision((revision) => revision + 1) }}
                             handlePendingOrder={handlePendingOrder}
                             handleOpenCheckout={handleOpenCheckout}
                             setCurrentOrderNumber={setCurrentOrderNumber}
@@ -289,6 +312,7 @@ const POSPage: React.FC = () => {
                             isDetail={isDetail}
                             isOrderEditing={isOrderEditing}
                             currentOrderNumber={currentOrderNumber}
+                            promotions={activePromotions}
                             itemsByCategory={itemsByCategory}
                             currentOrder={currentOrder}
                             selectedCategory={selectedCategory}

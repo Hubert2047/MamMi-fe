@@ -107,7 +107,7 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
       void queryClient.invalidateQueries({ queryKey: ['items'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['store-items'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['store-addons'], refetchType: 'all' })
-      void queryClient.invalidateQueries({ queryKey: ['discounts'], refetchType: 'all' })
+      void queryClient.invalidateQueries({ queryKey: ['promotions'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['inventory-items'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['inventory-stock'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['expense-units'], refetchType: 'all' })
@@ -129,7 +129,7 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
       'catalog.store-item.availability.updated': refreshCatalog,
       'catalog.store-addon.updated': refreshCatalog,
       'catalog.store-addon.availability.updated': refreshCatalog,
-      'catalog.discount.updated': refreshCatalog,
+      'catalog.promotion.updated': refreshCatalog,
       'catalog.changed': refreshCatalog,
       'inventory.item.updated': refreshCatalog,
       'inventory.unit.updated': refreshCatalog,

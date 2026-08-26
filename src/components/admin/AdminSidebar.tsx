@@ -17,7 +17,7 @@ const commonLinks = [
   { href: '/admin/categories', icon: Tags, key: 'categories' },
   { href: '/admin/products', icon: Package, key: 'products' },
   { href: '/admin/addons', icon: WalletCards, key: 'addons' },
-  { href: '/admin/discounts', icon: Percent, key: 'discounts' },
+  { href: '/admin/promotions', icon: Percent, key: 'promotions' },
   { href: '/admin/accounts', icon: Users, key: 'userAccounts' },
   { href: '/admin/units', icon: Package, key: 'units' },
 ] as const

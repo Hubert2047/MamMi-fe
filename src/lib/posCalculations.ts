@@ -1,11 +1,19 @@
-import type { BaseOrder, OrderDiscount, OrderItem } from '@/api/order'
+import type { BaseOrder, OrderItem } from '@/api/order'
 import type { Item } from '@/api/item'
 
 type PosOrderItem = Pick<OrderItem, 'basePrice' | 'quantity' | 'addons'>
 
+export type OrderPriceBreakdown = {
+  productSubtotal: number
+  addonSubtotal: number
+  subtotal: number
+  discountAmount: number
+  total: number
+}
+
 export function calculateOrderItemTotal(item: PosOrderItem): number {
   const baseTotal = item.basePrice * item.quantity
-  const addonTotal = item.addons.reduce((total, addon) => total + addon.amount * addon.priceExtra, 0)
+  const addonTotal = item.addons.reduce((total, addon) => total + addon.amount * addon.priceExtra * item.quantity, 0)
   return baseTotal + addonTotal
 }
 
@@ -13,18 +21,20 @@ export function calculateOrderSubtotal(items: PosOrderItem[]): number {
   return items.reduce((total, item) => total + calculateOrderItemTotal(item), 0)
 }
 
-export function applyOrderDiscount(subtotal: number, discount: OrderDiscount | null): number {
-  if (!discount) return subtotal
-
-  const discountedTotal = discount.type === 'percent'
-    ? subtotal * (1 - discount.amount / 100)
-    : subtotal - discount.amount
-
-  return Math.max(0, discountedTotal)
+export function calculateOrderTotal(order: Pick<BaseOrder, 'items' | 'appliedPromotions'>): number {
+  return calculateOrderPriceBreakdown(order).total
 }
 
-export function calculateOrderTotal(order: Pick<BaseOrder, 'items' | 'discount'>): number {
-  return applyOrderDiscount(calculateOrderSubtotal(order.items), order.discount)
+export function calculateOrderPriceBreakdown(order: Pick<BaseOrder, 'items' | 'appliedPromotions'>): OrderPriceBreakdown {
+  const productSubtotal = order.items.reduce((total, item) => total + item.basePrice * item.quantity, 0)
+  const addonSubtotal = order.items.reduce((total, item) => total + item.addons.reduce(
+    (addonTotal, addon) => addonTotal + addon.amount * addon.priceExtra * item.quantity,
+    0,
+  ), 0)
+  const subtotal = productSubtotal + addonSubtotal
+  const discountAmount = (order.appliedPromotions ?? []).reduce((total, promotion) => total + promotion.discountAmount, 0)
+  const total = Math.max(0, subtotal - discountAmount)
+  return { productSubtotal, addonSubtotal, subtotal, discountAmount: subtotal - total, total }
 }
 
 export function findFreshSelectedItem(selectedItemId: string | null, items: Item[]): Item | null {

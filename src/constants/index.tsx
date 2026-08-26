@@ -9,7 +9,7 @@ export const DEFAULT_ORDER_ITEM: OrderItem = {
 
 export const DEFAULT_ORDER: BaseOrder = {
   _id: '', number: 1, items: [], status: 'pending', paymentMethod: 'cash',
-  discount: null, type: 'takeaway', customer: null, checkoutPending: false,
+  selectedPromotionIds: [], appliedPromotions: [], type: 'takeaway', customer: null, checkoutPending: false,
   source: 'pos',
 }
 

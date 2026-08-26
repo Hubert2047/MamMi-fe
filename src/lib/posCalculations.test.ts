@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateOrderTotal, findFreshSelectedItem, getUnavailableAddonIds, syncOrderItemsWithCatalog } from './posCalculations'
+import { calculateOrderPriceBreakdown, calculateOrderTotal, findFreshSelectedItem, getUnavailableAddonIds, syncOrderItemsWithCatalog } from './posCalculations'
 
 const item = (priceExtra: number) => ({
   _id: 'item-1', name: 'Item', names: { vi: 'Item', en: 'Item', 'zh-TW': 'Item' }, description: { vi: '', en: '', 'zh-TW': '' },
@@ -30,7 +30,7 @@ describe('POS selected item synchronization', () => {
     const draft = { ...item(10), id: 'item-1', itemId: 'item-1', quantity: 1, basePrice: 10, variant: '', note: '', addons: [{ id: 'addon-1', name: 'Addon', amount: 1, priceExtra: 10 }] }
     const synced = syncOrderItemsWithCatalog([draft], [item(25)])[0]
     expect(synced?.addons[0]?.priceExtra).toBe(25)
-    expect(calculateOrderTotal({ items: synced ? [synced] : [], discount: null })).toBe(35)
+    expect(calculateOrderTotal({ items: synced ? [synced] : [], appliedPromotions: [] })).toBe(35)
   })
 
   it('does not change addon snapshots that are no longer present in the catalog', () => {
@@ -45,5 +45,19 @@ describe('POS selected item synchronization', () => {
     const synced = syncOrderItemsWithCatalog([first, second], [item(25)])
     expect(synced[0]?.addons[0]?.priceExtra).toBe(25)
     expect(synced[1]?.addons[0]?.priceExtra).toBe(5)
+  })
+
+  it('keeps product, addon, and discount values visible in the checkout breakdown', () => {
+    const order = {
+      items: [{ ...item(10), id: 'item-1', itemId: 'item-1', quantity: 2, basePrice: 20, variant: '', note: '', addons: [{ id: 'addon-1', name: 'Addon', amount: 1, priceExtra: 10 }] }],
+      appliedPromotions: [{ promotionId: 'ten', promotionVersion: 1, name: 'Ten percent', mode: 'manual' as const, discountAmount: 6, allocations: [] }],
+    }
+    expect(calculateOrderPriceBreakdown(order)).toEqual({
+      productSubtotal: 40,
+      addonSubtotal: 20,
+      subtotal: 60,
+      discountAmount: 6,
+      total: 54,
+    })
   })
 })

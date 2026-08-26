@@ -1,4 +1,4 @@
-import type {OrderItem} from '@/api/order.ts'
+import type {AppliedPromotion, OrderItem} from '@/api/order.ts'
 import {Button} from '@/components/ui/button'
 import { useI18n } from '@/lib/i18n'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 type Props = {
 
     items: OrderItem[]
+    appliedPromotions?: AppliedPromotion[]
     currentOrderItem: OrderItem
     updateItem(
         item: OrderItem,
@@ -18,7 +19,7 @@ type Props = {
     onCancelOrderEdit?: () => void
     onSaveOrderEdit?: () => void
 }
-export default function PosOrderList({ items, currentOrderItem, updateItem, disabled = false, canEdit = false, isOrderEditing = false, onStartOrderEdit, onStartAddItem, onCancelOrderEdit, onSaveOrderEdit }: Props) {
+export default function PosOrderList({ items, appliedPromotions = [], currentOrderItem, updateItem, disabled = false, canEdit = false, isOrderEditing = false, onStartOrderEdit, onStartAddItem, onCancelOrderEdit, onSaveOrderEdit }: Props) {
     const { t } = useI18n()
     const itemCount = items.reduce((total, item) => total + item.quantity, 0)
     return (
@@ -60,7 +61,10 @@ export default function PosOrderList({ items, currentOrderItem, updateItem, disa
                 ))}
             </div>
             <div className='flex min-h-0 flex-1 flex-col space-y-2 overflow-y-auto pr-2 [scrollbar-gutter:stable]'>
-            {items.map((item, index) => (
+            {items.map((item, index) => {
+                const discount = appliedPromotions.flatMap((promotion) => promotion.allocations).filter((allocation) => allocation.itemId === item.id).reduce((total, allocation) => total + allocation.productDiscountAmount + allocation.addonDiscounts.reduce((addonTotal, addon) => addonTotal + addon.discountAmount, 0), 0)
+                const original = item.quantity * item.basePrice + item.addons.reduce((acc, addon) => acc + addon.amount * addon.priceExtra * item.quantity, 0)
+                return (
                 <Button
                     key={item.id + '-' + index}
                     variant={currentOrderItem.itemId === item.itemId ? "default" : 'outline'}
@@ -69,12 +73,9 @@ export default function PosOrderList({ items, currentOrderItem, updateItem, disa
                     onClick={() => updateItem(item)}>
                     <span className='flex-1 text-left'>{item.name}</span>
                     <span className='w-20 text-center'>x{item.quantity}</span>
-                    <span className='w-24 text-right'>
-                        {item.quantity * item.basePrice +
-                            item.addons.reduce((acc, i) => acc + i.amount * i.priceExtra, 0)}
-                    </span>
+                    <span className='w-24 text-right'>{discount ? <><span className='mr-1 text-xs text-muted-foreground line-through'>{original}</span>{original - discount}</> : original}</span>
                 </Button>
-            ))}
+            )})}
             </div>
         </div>
     )

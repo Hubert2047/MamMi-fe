@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { getDiscounts, type Discount } from '@/api/discount'
+import { getPromotions, type Promotion } from '@/api/promotion'
 import { getExpenses, type Expense, type ExpenseRange } from '@/api/expense'
 import { getItems, type Item } from '@/api/item'
 import { getStoreAddons } from '@/api/store-addon'
@@ -13,7 +13,7 @@ import { useStoreContext } from '@/lib/store-context'
 
 export const queryKeys = {
   items: ['items'] as const,
-  discounts: ['discounts'] as const,
+  promotions: ['promotions'] as const,
   nextOrderNumber: ['next-order-number'] as const,
   orders: (range?: OrderRange) => ['orders', range?.from, range?.to] as const,
   expenses: (range?: ExpenseRange) => ['expenses', range?.from, range?.to] as const,
@@ -33,10 +33,10 @@ export function useItems(available?: boolean) {
   })
 }
 
-export function useDiscounts() {
-  return useQuery<Discount[], Error>({
-    queryKey: queryKeys.discounts,
-    queryFn: () => getDiscounts(),
+export function usePromotions() {
+  return useQuery<Promotion[], Error>({
+    queryKey: queryKeys.promotions,
+    queryFn: () => getPromotions(),
     staleTime: 5 * 60 * 1000,
   })
 }

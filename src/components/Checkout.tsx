@@ -3,7 +3,7 @@ import { DEFAULT_ORDER, PAYMENT_METHOD_ICONS, type PaymentMethod } from '@/const
 import { type BaseOrder, createOrder } from '@/api/order.ts'
 import React, { useMemo, useState } from 'react'
 import { capitalize } from '@/lib/utils.ts'
-import type { Discount } from '@/api/discount.ts'
+import { previewPromotions, type Promotion } from '@/api/promotion.ts'
 import { Label } from '@/components/ui/label.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import NumPad from '@/components/NumPad.tsx'
@@ -17,13 +17,17 @@ import { useI18n } from '@/lib/i18n'
 import CashDenominationInput from '@/components/CashDenominationInput'
 import { calculateCashChange, calculateCashFromDenominations, setCashCount, type CashCounts, type CashDenomination } from '@/lib/cashDenominations'
 import { isAxiosError } from 'axios'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { calculateOrderItemTotal, calculateOrderPriceBreakdown } from '@/lib/posCalculations'
 
 type Props = {
     isPendingOrder: boolean
     isCheckoutPendingOrder: boolean
     currentOrderNumber: number
     totalPrice: number
-    discounts: Discount[]
+    promotions: Promotion[]
+    promotionPreview?: { total: number; appliedPromotions: NonNullable<BaseOrder['appliedPromotions']> } | null
+    onPromotionPriceChanged?(): void
     currentOrder: BaseOrder
     setCurrentOrder: React.Dispatch<React.SetStateAction<BaseOrder>>
     setCurrentOrderNumber: React.Dispatch<React.SetStateAction<number>>
@@ -38,7 +42,7 @@ function Checkout({
     currentOrderNumber,
     isCheckoutPendingOrder,
     setCurrentOrder,
-    discounts,
+    promotions, promotionPreview: externalPromotionPreview, onPromotionPriceChanged,
     totalPrice,
     handleOpenCheckout,
     setCurrentOrderNumber,
@@ -51,6 +55,8 @@ function Checkout({
     const [isPrint, setIsPrint] = useState(!isCheckoutPendingOrder)
     const queryClient = useQueryClient()
     const [cash, setCash] = useState<number>(0)
+    const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
+    const [promotionPreview, setPromotionPreview] = useState<{ total: number; appliedPromotions: NonNullable<BaseOrder['appliedPromotions']> } | null>(null)
     const [cashDenominations, setCashDenominations] = useState<CashCounts>({})
     const [selectedDenomination, setSelectedDenomination] = useState<CashDenomination>(100)
     const isDeferredPayment = currentOrder.paymentMethod === 'uber' || currentOrder.paymentMethod === 'foodpanda'
@@ -66,7 +72,8 @@ function Checkout({
         },
         onError: (error) => {
             const code = isAxiosError(error) ? error.response?.data?.code : undefined
-            toast.error(code === 'ITEM_NOT_AVAILABLE' ? t('itemNotAvailable') : code === 'ADDON_NOT_AVAILABLE' ? t('addonNotAvailable') : t('createOrderFailure'))
+            if (code === 'PROMOTION_PRICE_CHANGED') onPromotionPriceChanged?.()
+            toast.error(code === 'ITEM_NOT_AVAILABLE' ? t('itemNotAvailable') : code === 'ADDON_NOT_AVAILABLE' ? t('addonNotAvailable') : code === 'PROMOTION_PRICE_CHANGED' ? t('promotionPriceChanged') : t('createOrderFailure'))
         },
     })
     const handleCreateOrder = async (status: 'paid' | 'pending') => {
@@ -74,8 +81,12 @@ function Checkout({
             toast.error(t('tableRequired'))
             return
         }
-        if (status === 'paid' && currentOrder.paymentMethod === 'cash' && cash < totalPrice) {
+        if (status === 'paid' && currentOrder.paymentMethod === 'cash' && cash < effectiveTotal) {
             toast.error(t('insufficientCash'))
+            return
+        }
+        if (!effectivePromotionPreview) {
+            toast.error(t('loading'))
             return
         }
         const newOrder: BaseOrder = {
@@ -84,6 +95,7 @@ function Checkout({
             status: status,
             checkoutPending: isCheckoutPendingOrder,
             printOnConfirm: isPrint,
+            expectedPricing: effectivePromotionPreview,
         }
         const nextOrder = await createOrderMutation.mutateAsync(newOrder)
         handleOpenCheckout(false)
@@ -95,17 +107,22 @@ function Checkout({
         toast.success(status === 'paid' ? t('paidSuccess') : t('pendingSuccess'))
     }
 
-    const cashBack = calculateCashChange(displayedCash, totalPrice)
+    React.useEffect(() => {
+        if (externalPromotionPreview) return
+        let cancelled = false
+        void previewPromotions({ items: currentOrder.items, selectedPromotionIds: currentOrder.selectedPromotionIds }).then((preview) => { if (!cancelled) setPromotionPreview(preview) }).catch(() => { if (!cancelled) setPromotionPreview(null) })
+        return () => { cancelled = true }
+    }, [currentOrder.items, currentOrder.selectedPromotionIds, externalPromotionPreview])
+    const effectivePromotionPreview = externalPromotionPreview ?? promotionPreview
+    const previewOrder = useMemo(() => ({ ...currentOrder, appliedPromotions: effectivePromotionPreview?.appliedPromotions ?? [] }), [currentOrder, effectivePromotionPreview])
+    const priceBreakdown = useMemo(() => calculateOrderPriceBreakdown(previewOrder), [previewOrder])
+    const effectiveTotal = effectivePromotionPreview?.total ?? totalPrice
+    const cashBack = calculateCashChange(displayedCash, effectiveTotal)
+    const allocationFor = (itemId: string) => (effectivePromotionPreview?.appliedPromotions ?? []).flatMap((promotion) => promotion.allocations).filter((allocation) => allocation.itemId === itemId).reduce((total, allocation) => ({ product: total.product + allocation.productDiscountAmount, addons: [...total.addons, ...allocation.addonDiscounts] }), { product: 0, addons: [] as { addonId: string; discountAmount: number }[] })
+    const formatPrice = (value: number) => value.toLocaleString(locale)
 
-    function onDiscountChange(value: string) {
-        if (!value) {
-            setCurrentOrder((prev) => ({ ...prev, discount: null }))
-            return
-        }
-        const discount = discounts.find((d) => d.name === value)
-        if (discount) {
-            setCurrentOrder((prev) => ({ ...prev, discount }))
-        }
+    function onPromotionChange(value: string) {
+        setCurrentOrder((prev) => ({ ...prev, selectedPromotionIds: value ? [value] : [] }))
     }
 
     const paymentMethods = useMemo(() => {
@@ -135,19 +152,19 @@ function Checkout({
                                 size='lg'
                                 variant='outline'
                                 className='flex flex-col gap-2'
-                                value={currentOrder.discount?.name ?? ''}
-                                onValueChange={(value: string) => onDiscountChange(value)}>
-                                {discounts.map((discount) => (
+                                value={currentOrder.selectedPromotionIds?.[0] ?? ''}
+                                onValueChange={(value: string) => onPromotionChange(value)}>
+                                {promotions.filter((promotion) => promotion.mode === 'manual').map((promotion) => (
                                     <ToggleGroupItem
-                                        key={discount.name}
-                                        value={discount.name}
+                                        key={promotion._id}
+                                        value={promotion._id}
                                         className='flex min-w-24 max-w-full items-center justify-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-primary/10 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground'>
                                         <div className='flex flex-col'>
                                             <span>
                                                 {' '}
-                                                {discount.type === 'percent' ? `${discount.amount}%` : discount.amount}
+                                                {promotion.rules.map((rule) => rule.reward.type === 'percent' ? `${rule.reward.amount}%` : rule.reward.amount).join(', ')}
                                             </span>
-                                            <span className='text-[10px]'>{discount.name}</span>
+                                            <span className='text-[10px]'>{promotion.name}</span>
                                         </div>
                                     </ToggleGroupItem>
                                 ))}
@@ -155,7 +172,13 @@ function Checkout({
                         </div>
                     </div>
                     <div className='payment-method h-full min-h-0 flex-1 space-y-2 overflow-y-auto rounded border border-[#ccc] p-1.5'>
-                        <p className='text-xl'>{t('paymentMethodTitle')}</p>
+                        <div className='flex flex-wrap items-center justify-between gap-2 border-b pb-2'>
+                            <div>
+                                <p className='text-xl'>{t('paymentMethodTitle')}</p>
+                                <p className='text-2xl font-bold tabular-nums'>{formatPrice(priceBreakdown.total)}</p>
+                            </div>
+                            <Button variant='outline' onClick={() => setIsBreakdownOpen(true)}>{t('detail')}</Button>
+                        </div>
                         <div className='flex justify-start items-center gap-4 pt-6 pl-2'>
                             <ToggleGroup
                                 size='lg'
@@ -239,6 +262,43 @@ function Checkout({
                 </>
             )}
             {createOrderMutation.isPending && <Loading />}
+            <Dialog open={isBreakdownOpen} onOpenChange={setIsBreakdownOpen}>
+                <DialogContent className='h-[100svh] max-w-none gap-0 rounded-none p-0 sm:max-w-none'>
+                    <DialogHeader className='border-b px-6 py-5 pr-14'>
+                        <DialogTitle>{t('checkoutBreakdown')}</DialogTitle>
+                        <DialogDescription>{t('checkoutBreakdownHint')}</DialogDescription>
+                    </DialogHeader>
+                    <div className='grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+                        <section>
+                            <h3 className='mb-3 font-semibold'>{t('orderItems')}</h3>
+                            <div className='space-y-3'>
+                                {currentOrder.items.map((item, index) => {
+                                    const allocation = allocationFor(item.id)
+                                    const itemOriginal = calculateOrderItemTotal(item)
+                                    const addonDiscount = allocation.addons.reduce((total, addon) => total + addon.discountAmount, 0)
+                                    const itemDiscount = allocation.product + addonDiscount
+                                    return <div key={`${item.id}-${index}`} className='rounded-lg border p-4'>
+                                        <div className='flex items-start justify-between gap-3'>
+                                            <div><p className='font-medium'>{item.name} × {item.quantity}</p><p className='text-sm text-muted-foreground'>{t('originalPrice')}: {formatPrice(itemOriginal)}</p>{itemDiscount > 0 && <p className='text-sm text-destructive'>-{formatPrice(itemDiscount)}</p>}</div>
+                                            <span className='font-medium tabular-nums'>{formatPrice(itemOriginal - itemDiscount)}</span>
+                                        </div>
+                                        {item.addons.length > 0 && <div className='mt-2 border-t pt-2 text-sm text-muted-foreground'>{item.addons.map((addon) => { const original = addon.priceExtra * addon.amount * item.quantity; const discount = allocation.addons.filter((entry) => entry.addonId === addon.id).reduce((total, entry) => total + entry.discountAmount, 0); return <p key={addon.id}>+ {addon.name} × {item.quantity}: <span className={discount ? 'line-through' : ''}>{formatPrice(original)}</span>{discount ? <span className='ml-2 text-destructive'>→ {formatPrice(original - discount)}</span> : null}</p> })}</div>}
+                                    </div>
+                                })}
+                            </div>
+                        </section>
+                        <aside className='h-fit rounded-lg border p-4 text-sm'>
+                            <div className='space-y-3'>
+                                <div className='flex justify-between gap-4'><span>{t('productSubtotal')}</span><span>{formatPrice(priceBreakdown.productSubtotal)}</span></div>
+                                <div className='flex justify-between gap-4'><span>{t('addonSubtotal')}</span><span>{formatPrice(priceBreakdown.addonSubtotal)}</span></div>
+                                <div className='flex justify-between gap-4 border-t pt-3'><span>{t('subtotal')}</span><span>{formatPrice(priceBreakdown.subtotal)}</span></div>
+                                {currentOrder.appliedPromotions?.length ? currentOrder.appliedPromotions.map((promotion) => <div key={promotion.promotionId} className='flex justify-between gap-4 text-destructive'><span>{promotion.name}</span><span>-{formatPrice(promotion.discountAmount)}</span></div>) : <p className='text-muted-foreground'>{t('noDiscountApplied')}</p>}
+                                <div className='flex justify-between gap-4 border-t pt-3 text-lg font-bold'><span>{t('amountDue')}</span><span>{formatPrice(priceBreakdown.total)}</span></div>
+                            </div>
+                        </aside>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

@@ -15,12 +15,14 @@ import Loading from './Loading'
 import { useI18n } from '@/lib/i18n'
 import { calculateOrderItemTotal, getUnavailableAddonIds } from '@/lib/posCalculations'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { getCatalogAddonPromotionPrice, getCatalogProductPromotionPrice, type Promotion } from '@/api/promotion'
 
 type Props = {
     isDetail: boolean
     isOrderEditing: boolean
     currentOrder: BaseOrder
     currentOrderNumber: number
+    promotions: Promotion[]
     itemsByCategory: Record<string, Item[]>
     selectedCategory: string
     selectedItem: Item | null
@@ -50,6 +52,7 @@ function PosItemSection({
     setSelectedItem,
     setIsEditItem,
     currentOrderNumber,
+    promotions,
 }: Props) {
     const queryClient = useQueryClient()
     const { locale, t } = useI18n()
@@ -185,7 +188,11 @@ function PosItemSection({
                                 onClick={() => selectItem(item)}>
                                     <div className='flex min-w-0 w-full justify-center items-center flex-col gap-1'>
                                         <span className='w-full truncate text-sm' title={item.name}>{displayItemName(item)}</span>
-                                        <span>{item.temporarilyUnavailable ? t('temporaryUnavailableShort') : getPriceByType(currentOrder.type,item.price)}</span>
+                                        {item.temporarilyUnavailable ? <span>{t('temporaryUnavailableShort')}</span> : (() => {
+                                            const originalPrice = getPriceByType(currentOrder.type, item.price)
+                                            const promotionPrice = getCatalogProductPromotionPrice({ productId: item._id, price: originalPrice, promotions })
+                                            return promotionPrice < originalPrice ? <span><span className='mr-1 text-xs opacity-70 line-through'>{originalPrice.toLocaleString(locale)}</span>{promotionPrice.toLocaleString(locale)}</span> : <span>{originalPrice.toLocaleString(locale)}</span>
+                                        })()}
                                     </div>
                             </Button>
                         ))}
@@ -282,7 +289,10 @@ function PosItemSection({
                                             disabled={addon.temporarilyUnavailable === true && !currentOrderItem.addons.some((selectedAddon) => selectedAddon.id === addon._id)}
                                             className='flex h-auto min-h-8 min-w-16 max-w-28 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-1.5 py-1 text-sm text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
                                             <span className='line-clamp-2'>{addon.name}</span>
-                                            <span className='text-[11px] opacity-80'>+{addon.priceExtra}</span>
+                                            {(() => {
+                                                const promotionPrice = getCatalogAddonPromotionPrice({ productId: selectedItem._id, addonId: addon._id, price: addon.priceExtra, promotions })
+                                                return promotionPrice < addon.priceExtra ? <span className='text-[11px] opacity-80'><span className='mr-1 line-through'>+{addon.priceExtra.toLocaleString(locale)}</span>+{promotionPrice.toLocaleString(locale)}</span> : <span className='text-[11px] opacity-80'>+{addon.priceExtra.toLocaleString(locale)}</span>
+                                            })()}
                                         </ToggleGroupItem>
                                     ))}
                                 </ToggleGroup>

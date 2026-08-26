@@ -30,11 +30,8 @@ interface OrderItemAddon {
     printName?: string
 }
 
-export interface OrderDiscount {
-    name: string
-    amount: number
-    type: 'percent' | 'value'
-}
+export interface AppliedPromotion { promotionId: string; promotionVersion: number; name: string; mode: 'automatic' | 'manual'; discountAmount: number; allocations: { itemId: string; productDiscountAmount: number; addonDiscounts: { addonId: string; discountAmount: number }[] }[] }
+export type ExpectedPricing = { total: number; appliedPromotions: AppliedPromotion[] }
 
 export interface BaseOrder {
     _id: string
@@ -42,7 +39,9 @@ export interface BaseOrder {
     items: OrderItem[]
     status: 'pending' | 'paid' | 'cancelled'
     paymentMethod: PaymentMethod
-    discount: OrderDiscount | null
+    selectedPromotionIds?: string[]
+    appliedPromotions?: AppliedPromotion[]
+    expectedPricing?: ExpectedPricing
     type: 'dine_in' | 'takeaway' | 'uber' | 'foodpanda'
     customer: Customer | null
     checkoutPending: boolean
@@ -96,7 +95,7 @@ export const updateOrderPayment = async ({ id, data }: { id: string; data: Parti
     const res = await api.put(`orders/payment/${id}`, data)
     return res.data.data
 }
-export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<BaseOrder, 'items' | 'type' | 'discount' | 'paymentMethod' | 'version' | 'table'> }): Promise<BaseOrder> => {
+export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<BaseOrder, 'items' | 'type' | 'selectedPromotionIds' | 'expectedPricing' | 'paymentMethod' | 'version' | 'table'> }): Promise<BaseOrder> => {
     const res = await api.put(`orders/${id}`, data)
     return res.data.data
 }
