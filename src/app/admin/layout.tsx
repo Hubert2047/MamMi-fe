@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { hydrated, isAuthenticated, user } = useAuth()
   const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin'
   const isSuperAdmin = user?.role === 'SuperAdmin'
-  const adminOnlyRoutes = ['/admin/store-pricing', '/admin/employees', '/admin/expenses', '/admin/inventory', '/admin/inventory-receipts', '/admin/stocktakes', '/admin/revenues', '/admin/orders', '/admin/daily-closing', '/admin/settings', '/admin/print-agents', '/admin/tables', '/admin/pos-devices']
+  const adminOnlyRoutes = ['/admin/store-pricing', '/admin/employees', '/admin/expenses', '/admin/inventory', '/admin/inventory-receipts', '/admin/stocktakes', '/admin/revenues', '/admin/orders', '/admin/daily-closing', '/admin/settings', '/admin/print-agents', '/admin/tables', '/admin/pos-devices', '/admin/line-groups']
   const canAccessRoute = isSuperAdmin || (user?.role === 'Admin' && adminOnlyRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`)))
 
   useEffect(() => {
