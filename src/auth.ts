@@ -3,19 +3,20 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { loginAPI } from '@/api/auth'
 
 const isProduction = process.env.NODE_ENV === 'production'
+const useSecureCookies = isProduction && process.env.NEXTAUTH_USE_SECURE_COOKIES !== 'false'
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  useSecureCookies,
   debug: process.env.NEXTAUTH_DEBUG === 'true',
   cookies: {
     sessionToken: {
-      name: `${isProduction ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: isProduction,
+        secure: useSecureCookies,
       },
     },
   },
