@@ -1,6 +1,6 @@
 import api from './axios'
 
-export type LineNotificationType = 'daily_closing' | 'new_order'
+export type LineNotificationType = 'daily_closing'
 export type LineGroup = { _id: string; lineGroupId: string; storeId?: string | null; name: string; status: 'pending' | 'active' | 'disabled'; enabled: boolean; notificationTypes: LineNotificationType[] }
 
 export async function getLineGroups(): Promise<LineGroup[]> {

@@ -14,7 +14,6 @@ import { getLineGroups, updateLineGroup, type LineGroup, type LineNotificationTy
 
 const notificationOptions: { value: LineNotificationType; label: string }[] = [
   { value: 'daily_closing', label: 'lineNotificationDailyClosing' },
-  { value: 'new_order', label: 'lineNotificationNewOrder' },
 ]
 
 export default function LineGroupsPage() {
