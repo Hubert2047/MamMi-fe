@@ -2,7 +2,7 @@ import api from './axios'
 import type { AppliedPromotion, OrderItem } from './order'
 
 export type PromotionRule = { target: 'order' | 'product' | 'addon' | 'line'; productIds?: string[]; addonIds?: string[]; reward: { type: 'percent' | 'value'; amount: number } }
-export interface Promotion { _id: string; names: { vi: string; en: string; 'zh-TW': string }; name: string; mode: 'automatic' | 'manual'; minSubtotal?: number; priority: number; combinable: boolean; exclusiveGroup: string; rules: PromotionRule[]; status: 'draft' | 'active' | 'expired' | 'archived'; version: number; startsAt?: string | null; endsAt?: string | null; enabled: boolean; assigned: boolean; assignedStoreIds: string[] }
+export interface Promotion { _id: string; names: { vi: string; en: string; 'zh-TW': string }; name: string; imageUrl?: string; imagePublicId?: string; mode: 'automatic' | 'manual'; minSubtotal?: number; priority: number; combinable: boolean; exclusiveGroup: string; rules: PromotionRule[]; status: 'draft' | 'active' | 'expired' | 'archived'; version: number; startsAt?: string | null; endsAt?: string | null; enabled: boolean; assigned: boolean; assignedStoreIds: string[] }
 export type PromotionInput = Omit<Promotion, '_id' | 'name' | 'version' | 'enabled' | 'assigned' | 'assignedStoreIds'> & { storeIds?: string[] }
 export const getPromotions = async (): Promise<Promotion[]> => (await api.get('promotions')).data.data
 export const createPromotion = async (data: PromotionInput): Promise<Promotion> => (await api.post('promotions', data)).data.data

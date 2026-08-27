@@ -16,7 +16,13 @@ export interface Item {
     name: string
     names: LocalizedText
     description: LocalizedText
+    imageUrl?: string
+    imagePublicId?: string
+    recommended?: boolean
+    popular?: boolean
+    new?: boolean
     categoryName: string
+    categorySortOrder?: number
     categoryId?: string | { _id: string; names?: LocalizedText; name?: string }
     price: PriceType
     addons: Addon[]
@@ -32,6 +38,11 @@ export interface ItemInput {
     type?: 'product' | 'combo'
     names: LocalizedText
     description: LocalizedText
+    imageUrl?: string
+    imagePublicId?: string
+    recommended?: boolean
+    popular?: boolean
+    new?: boolean
     variants: LocalizedOption[]
     price: PriceType
     categoryId: string

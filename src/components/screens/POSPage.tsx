@@ -30,7 +30,7 @@ import { isAxiosError } from 'axios'
 import { generateUUID } from '@/lib/utils'
 import PosStocktakeDialog from '@/components/inventory/PosStocktakeDialog'
 import PosTableSessions from '@/components/PosTableSessions'
-import { calculatePromotionPreview } from '@/api/promotion'
+import { calculatePromotionPreview, getCatalogProductPromotionPrice } from '@/api/promotion'
 
 const POSPage: React.FC = () => {
     const { t } = useI18n()
@@ -81,8 +81,18 @@ const POSPage: React.FC = () => {
             if (!grouped[item.categoryName]) grouped[item.categoryName] = []
             grouped[item.categoryName].push(item)
         })
-        return grouped
-    }, [sellableItems])
+        const smartGroups: Array<[string, Item[]]> = [
+            [t('recommended'), sellableItems.filter((item) => item.recommended === true)],
+            [t('popular'), sellableItems.filter((item) => item.popular === true)],
+            [t('newProduct'), sellableItems.filter((item) => item.new === true)],
+            [t('promotion'), sellableItems.filter((item) => getCatalogProductPromotionPrice({ productId: item._id, price: item.price.base ?? 0, promotions: activePromotions }) < (item.price.base ?? 0))],
+        ]
+        const orderedGroups = [...smartGroups.filter(([, items]) => items.length > 0), ...Object.entries(grouped).sort(([leftName, leftItems], [rightName, rightItems]) => {
+            const orderDifference = (leftItems[0]?.categorySortOrder ?? 0) - (rightItems[0]?.categorySortOrder ?? 0)
+            return orderDifference || leftName.localeCompare(rightName)
+        })]
+        return Object.fromEntries(orderedGroups)
+    }, [activePromotions, sellableItems, t])
 
     useEffect(() => {
         if (!selectedItem) return

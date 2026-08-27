@@ -42,6 +42,8 @@ import { getCatalogItems } from "@/api/catalog-item";
 import { getAddons } from "@/api/addon";
 import { getStores } from "@/api/store";
 import { useI18n } from "@/lib/i18n";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import { uploadImage } from "@/lib/cloudinary";
 
 const emptyRule = (): PromotionRule => ({
   target: "order",
@@ -49,6 +51,8 @@ const emptyRule = (): PromotionRule => ({
 });
 const initial = (): PromotionInput => ({
   names: { vi: "", en: "", "zh-TW": "" },
+  imageUrl: "",
+  imagePublicId: "",
   mode: "automatic",
   status: "draft",
   priority: 0,
@@ -85,6 +89,8 @@ export default function PromotionsPage() {
   const [pageSize, setPageSize] = useState(6);
   const [ruleSearch, setRuleSearch] = useState<Record<string, string>>({});
   const [ruleCategory, setRuleCategory] = useState<Record<string, string>>({});
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { data: promotions = [] } = useQuery({
     queryKey: ["promotions"],
     queryFn: getPromotions,
@@ -119,13 +125,14 @@ export default function PromotionsPage() {
     return () => window.removeEventListener("resize", measure);
   }, []);
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (data: PromotionInput) =>
       editing
-        ? updatePromotion({ id: editing._id, data: form })
-        : createPromotion(form),
+        ? updatePromotion({ id: editing._id, data })
+        : createPromotion(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["promotions"] });
       setForm(initial());
+      setPendingImage(null);
       setEditing(null);
       setFormOpen(false);
     },
@@ -152,6 +159,8 @@ export default function PromotionsPage() {
     setEditing(promotion);
     setForm({
       names: promotion.names,
+      imageUrl: promotion.imageUrl || "",
+      imagePublicId: promotion.imagePublicId || "",
       mode: promotion.mode,
       status: promotion.status === "active" ? "active" : "draft",
       minSubtotal: promotion.minSubtotal,
@@ -163,7 +172,23 @@ export default function PromotionsPage() {
       endsAt: promotion.endsAt || undefined,
       storeIds: promotion.assignedStoreIds,
     });
+    setPendingImage(null);
     setFormOpen(true);
+  };
+  const savePromotion = async () => {
+    setIsUploadingImage(true);
+    try {
+      const uploadedImage = pendingImage ? await uploadImage(pendingImage) : null;
+      save.mutate({
+        ...form,
+        imageUrl: uploadedImage?.url || form.imageUrl,
+        imagePublicId: uploadedImage?.publicId || form.imagePublicId,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? `${t("imageUploadError")}: ${error.message}` : t("imageUploadError"));
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
   const filteredPromotions = promotions
     .filter(
@@ -219,6 +244,7 @@ export default function PromotionsPage() {
           if (!open) {
             setEditing(null);
             setForm(initial());
+            setPendingImage(null);
           }
         }}
       >
@@ -234,7 +260,7 @@ export default function PromotionsPage() {
                 className="flex min-h-0 flex-1 flex-col"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  save.mutate();
+                  void savePromotion();
                 }}
               >
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-4 pr-1 pt-1">
@@ -256,7 +282,7 @@ export default function PromotionsPage() {
                     />
                   ))}
                 </div>
-                <div className="grid gap-2 md:grid-cols-3">
+                <div className="grid min-w-0 grid-cols-1 items-start gap-3 [&>*]:min-w-0 md:grid-cols-4">
                   <div className="space-y-2">
                     <Label>{t("promotionMode")}</Label>
                     <Select
@@ -268,7 +294,7 @@ export default function PromotionsPage() {
                         })
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -304,7 +330,7 @@ export default function PromotionsPage() {
                           })
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10 w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -317,6 +343,7 @@ export default function PromotionsPage() {
                   <div className="space-y-2">
                     <Label>{t("priority")}</Label>
                     <Input
+                      className="h-10"
                       type="number"
                       min="0"
                       placeholder="0"
@@ -329,6 +356,7 @@ export default function PromotionsPage() {
                       }
                     />
                   </div>
+                  <ImageUploadField className="!mt-0 w-full self-start" label={t("promotionImage")} hint={t("imageUploadHint")} chooseLabel={t("chooseImage")} removeLabel={t("removeImage")} value={form.imageUrl} pendingFile={pendingImage} onChange={(imageUrl) => setForm((current) => ({ ...current, imageUrl, imagePublicId: imageUrl ? current.imagePublicId : "" }))} onFileChange={setPendingImage} onError={() => toast.error(t("imageUploadError"))} />
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
                   <div className="space-y-2">
@@ -660,7 +688,7 @@ export default function PromotionsPage() {
                 </details>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-3 border-t bg-card pt-4">
-                  <Button disabled={save.isPending}>{t("save")}</Button>
+                  <Button disabled={save.isPending || isUploadingImage}>{isUploadingImage ? t("uploadingImage") : t("save")}</Button>
                   <Button
                     type="button"
                     variant="outline"
@@ -668,6 +696,7 @@ export default function PromotionsPage() {
                       setFormOpen(false);
                       setEditing(null);
                       setForm(initial());
+                      setPendingImage(null);
                     }}
                   >
                     {t("cancel")}

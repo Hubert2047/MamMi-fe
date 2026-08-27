@@ -17,11 +17,18 @@ import { getCategories, type Category } from '@/api/category'
 import { getAddons, type Addon } from '@/api/addon'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
+import { ImageUploadField } from '@/components/admin/ImageUploadField'
+import { uploadImage } from '@/lib/cloudinary'
 
 const emptyForm: ItemInput = {
   type: 'product',
   names: { vi: '', en: '', 'zh-TW': '' },
   description: { vi: '', en: '', 'zh-TW': '' },
+  imageUrl: '',
+  imagePublicId: '',
+  recommended: false,
+  popular: false,
+  new: false,
   variants: [],
   price: { base: 0, uber: 0, foodpanda: 0 },
   categoryId: '',
@@ -60,6 +67,8 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useState(10)
   const [variantInputs, setVariantInputs] = useState<OptionInputs>(emptyOptionInputs)
   const [noteOptionInputs, setNoteOptionInputs] = useState<OptionInputs>(emptyOptionInputs)
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const { data: allItems = [], isLoading } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: getCategories })
   const { data: addons = [] } = useQuery<Addon[]>({ queryKey: ['addons', locale], queryFn: () => getAddons(locale) })
@@ -101,6 +110,7 @@ export default function ProductsPage() {
     setConfirmAction(null)
     setVariantInputs(emptyOptionInputs)
     setNoteOptionInputs(emptyOptionInputs)
+    setPendingImage(null)
   }
 
   function itemForm(item: Item): ItemInput {
@@ -109,6 +119,11 @@ export default function ProductsPage() {
       type: item.type || 'product',
       names: item.names,
       description: item.description || { vi: '', en: '', 'zh-TW': '' },
+      imageUrl: item.imageUrl || '',
+      imagePublicId: item.imagePublicId || '',
+      recommended: item.recommended === true,
+      popular: item.popular === true,
+      new: item.new === true,
       categoryId,
       addons: item.addons.map((addon) => addon._id),
       variants: item.variants || [],
@@ -140,9 +155,19 @@ export default function ProductsPage() {
     setConfirmAction(editing ? 'update' : 'create')
   }
 
-  function confirmSave() {
-    save.mutate({ ...form, variants: buildOptions(variantInputs, 'variant'), noteOptions: buildOptions(noteOptionInputs, 'note') })
-    setConfirmAction(null)
+  async function confirmSave() {
+    setIsUploadingImage(true)
+    try {
+      const uploadedImage = pendingImage ? await uploadImage(pendingImage) : null
+      const imageUrl = uploadedImage?.url || form.imageUrl
+      const imagePublicId = uploadedImage?.publicId || form.imagePublicId
+      save.mutate({ ...form, imageUrl, imagePublicId, variants: buildOptions(variantInputs, 'variant'), noteOptions: buildOptions(noteOptionInputs, 'note') })
+      setConfirmAction(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? `${t('imageUploadError')}: ${error.message}` : t('imageUploadError'))
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   return (
@@ -156,8 +181,10 @@ export default function ProductsPage() {
               <div className="space-y-2"><Label>{t('productName')} (VI)</Label><Input value={form.names.vi} onChange={(event) => setForm({ ...form, names: { ...form.names, vi: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('productName')} (EN)</Label><Input value={form.names.en} onChange={(event) => setForm({ ...form, names: { ...form.names, en: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('productName')} (繁中)</Label><Input value={form.names['zh-TW']} onChange={(event) => setForm({ ...form, names: { ...form.names, 'zh-TW': event.target.value } })} /></div>
+              <ImageUploadField label={t('productImage')} hint={t('imageUploadHint')} chooseLabel={t('chooseImage')} removeLabel={t('removeImage')} value={form.imageUrl} pendingFile={pendingImage} onChange={(imageUrl) => setForm({ ...form, imageUrl, imagePublicId: imageUrl ? form.imagePublicId : '' })} onFileChange={setPendingImage} onError={() => toast.error(t('imageUploadError'))} />
               <div className="space-y-2"><Label>{t('categories')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })}><option value="">{t('chooseCategory')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select></div>
               <div className="space-y-2"><Label>{t('productType')}</Label><select className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm" value={form.type || 'product'} onChange={(event) => setForm({ ...form, type: event.target.value as ItemInput['type'], components: event.target.value === 'combo' ? (form.components || []) : [] })}><option value="product">{t('regularProduct')}</option><option value="combo">{t('comboProduct')}</option></select></div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3"><label className="flex items-center gap-2 text-sm"><Checkbox checked={form.recommended === true} onCheckedChange={(checked) => setForm({ ...form, recommended: checked === true })} />{t('recommended')}</label><label className="flex items-center gap-2 text-sm"><Checkbox checked={form.popular === true} onCheckedChange={(checked) => setForm({ ...form, popular: checked === true })} />{t('popular')}</label><label className="flex items-center gap-2 text-sm"><Checkbox checked={form.new === true} onCheckedChange={(checked) => setForm({ ...form, new: checked === true })} />{t('newProduct')}</label></div>
               {form.type === 'combo' && <div className="space-y-2"><Label>{t('comboComponents')}</Label><div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-3 sm:grid-cols-2">{allItems.filter((item) => item._id !== editing?._id).map((item) => { const selected = (form.components || []).some((component) => component.itemId === item._id); return <label key={item._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={selected} onCheckedChange={(checked) => setForm({ ...form, components: checked ? [...(form.components || []), { itemId: item._id, quantity: 1 }] : (form.components || []).filter((component) => component.itemId !== item._id) })} /><span className="truncate">{item.name}</span></label> })}</div></div>}
               <div className="space-y-2"><Label>{t('variants')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={variantInputs.vi} onChange={(event) => setVariantInputs({ ...variantInputs, vi: event.target.value })} placeholder={`${t('variantPlaceholder')} (VI)`} /><Input value={variantInputs.en} onChange={(event) => setVariantInputs({ ...variantInputs, en: event.target.value })} placeholder={`${t('variantPlaceholder')} (EN)`} /><Input value={variantInputs['zh-TW']} onChange={(event) => setVariantInputs({ ...variantInputs, 'zh-TW': event.target.value })} placeholder={`${t('variantPlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('notes')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={noteOptionInputs.vi} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, vi: event.target.value })} placeholder={`${t('notePlaceholder')} (VI)`} /><Input value={noteOptionInputs.en} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, en: event.target.value })} placeholder={`${t('notePlaceholder')} (EN)`} /><Input value={noteOptionInputs['zh-TW']} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, 'zh-TW': event.target.value })} placeholder={`${t('notePlaceholder')} (繁中)`} /></div>
@@ -181,7 +208,7 @@ export default function ProductsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-w-20">{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction className="min-w-20" onClick={confirmSave}>{t('confirm')}</AlertDialogAction>
+            <AlertDialogAction className="min-w-20" disabled={isUploadingImage || save.isPending} onClick={confirmSave}>{isUploadingImage ? t('uploadingImage') : t('confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
