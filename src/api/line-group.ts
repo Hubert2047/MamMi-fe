@@ -10,3 +10,11 @@ export async function getLineGroups(): Promise<LineGroup[]> {
 export async function updateLineGroup({ id, data }: { id: string; data: Partial<Pick<LineGroup, 'name' | 'storeId' | 'enabled' | 'notificationTypes'>> }): Promise<LineGroup> {
   return (await api.patch(`line-groups/${id}`, data)).data.data
 }
+
+export async function deleteLineGroup(id: string): Promise<void> {
+  await api.delete(`line-groups/${id}`)
+}
+
+export async function testLineGroup(id: string): Promise<void> {
+  await api.post(`line-groups/${id}/test`)
+}

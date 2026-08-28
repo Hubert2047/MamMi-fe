@@ -20,6 +20,7 @@ const commonLinks = [
   { href: '/admin/promotions', icon: Percent, key: 'promotions' },
   { href: '/admin/accounts', icon: Users, key: 'userAccounts' },
   { href: '/admin/units', icon: Package, key: 'units' },
+  { href: '/admin/line-groups', icon: MessageCircle, key: 'lineGroups' },
 ] as const
 
 const storeLinks = [
@@ -33,7 +34,6 @@ const storeLinks = [
   { href: '/admin/print-agents', icon: Printer, key: 'printAgents' },
   { href: '/admin/tables', icon: QrCode, key: 'tables' },
   { href: '/admin/pos-devices', icon: MonitorSmartphone, key: 'posDevices' },
-  { href: '/admin/line-groups', icon: MessageCircle, key: 'lineGroups' },
 ] as const
 
 export default function AdminSidebar() {
