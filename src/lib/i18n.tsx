@@ -2653,6 +2653,10 @@ Object.assign(messages.vi, { optionGroups: 'Nhóm tùy chọn', addOptionGroup: 
 Object.assign(messages.en, { optionGroups: 'Option groups', addOptionGroup: 'Add group', removeOptionGroup: 'Remove group', optionGroupName: 'Group name', optionGroupOptions: 'Options (comma separated)', optionGroupDefault: 'Default', optionGroupSingle: 'Choose one', optionGroupMultiple: 'Choose many' });
 Object.assign(messages['zh-TW'], { optionGroups: '選項群組', addOptionGroup: '新增群組', removeOptionGroup: '刪除群組', optionGroupName: '群組名稱', optionGroupOptions: '選項（以逗號分隔）', optionGroupDefault: '預設', optionGroupSingle: '單選', optionGroupMultiple: '多選' });
 
+Object.assign(messages.vi, { contact: 'Liên hệ' });
+Object.assign(messages.en, { contact: 'Contact' });
+Object.assign(messages['zh-TW'], { contact: '聯絡資料' });
+
 export function useI18n() {
   const context = useContext(I18nContext);
   if (!context) throw new Error("useI18n must be used inside I18nProvider");

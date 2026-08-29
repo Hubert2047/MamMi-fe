@@ -101,6 +101,10 @@ export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<
     const res = await api.put(`orders/${id}`, data)
     return res.data.data
 }
+export const updateOrderCustomer = async ({ id, customer }: { id: string; customer: Customer }): Promise<BaseOrder> => {
+    const res = await api.put(`orders/${id}/customer`, { customer })
+    return res.data.data
+}
 
 export const deleteOrder = async (id: string) => {
     const res = await api.delete(`orders/${id}`)
