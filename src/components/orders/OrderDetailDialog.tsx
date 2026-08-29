@@ -1,10 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import type { BaseOrder, OrderItem } from '@/api/order'
+import type { BaseOrder, IOrder, OrderItem } from '@/api/order'
 import { useI18n } from '@/lib/i18n'
 import { useItems } from '@/hooks/queries'
 
-type Props = { order: BaseOrder | null; onClose: () => void }
+type Props = { order: IOrder | null; onClose: () => void }
 const money = (value: number) => value.toLocaleString()
 const sourceKey = (source: BaseOrder['source']) => source === 'online' ? 'orderSourceOnline' : source === 'qr' ? 'orderSourceQr' : source === 'uber' ? 'uber' : source === 'foodpanda' ? 'foodpanda' : 'orderSourcePos'
 const typeKey = (type: BaseOrder['type']) => type === 'dine_in' ? 'dineIn' : type === 'takeaway' ? 'takeaway' : type
