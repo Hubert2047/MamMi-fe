@@ -118,6 +118,10 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
       void queryClient.invalidateQueries({ queryKey: ['expense-units-all'], refetchType: 'all' })
     }
     const refreshOrders = () => void queryClient.invalidateQueries({ queryKey: ['orders'] })
+    const refreshOrderPayment = () => {
+      refreshOrders()
+      void queryClient.invalidateQueries({ queryKey: ['daily-closing-summary'] })
+    }
     const handleOrderCreated = (payload?: { source?: string }) => {
       refreshOrders()
       if (clientType !== 'pos' || payload?.source === 'pos') return
@@ -140,7 +144,7 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
       'order.created': handleOrderCreated,
       'order.updated': refreshOrders,
       'order.cancelled': refreshOrders,
-      'order.payment.updated': refreshOrders,
+      'order.payment.updated': refreshOrderPayment,
       'closing.created': refreshClosings,
       'closing.voided': refreshClosings,
     }

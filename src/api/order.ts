@@ -41,6 +41,7 @@ export interface BaseOrder {
     items: OrderItem[]
     status: 'pending' | 'paid' | 'cancelled'
     paymentMethod: PaymentMethod
+    pickupAt?: string
     selectedPromotionIds?: string[]
     appliedPromotions?: AppliedPromotion[]
     expectedPricing?: ExpectedPricing
@@ -97,12 +98,12 @@ export const updateOrderPayment = async ({ id, data }: { id: string; data: Parti
     const res = await api.put(`orders/payment/${id}`, data)
     return res.data.data
 }
-export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<BaseOrder, 'items' | 'type' | 'selectedPromotionIds' | 'expectedPricing' | 'paymentMethod' | 'version' | 'table'> }): Promise<BaseOrder> => {
+export const updatePendingOrder = async ({ id, data }: { id: string; data: Pick<BaseOrder, 'items' | 'type' | 'selectedPromotionIds' | 'expectedPricing' | 'paymentMethod' | 'version' | 'table' | 'pickupAt'> }): Promise<BaseOrder> => {
     const res = await api.put(`orders/${id}`, data)
     return res.data.data
 }
-export const updateOrderCustomer = async ({ id, customer }: { id: string; customer: Customer }): Promise<BaseOrder> => {
-    const res = await api.put(`orders/${id}/customer`, { customer })
+export const updateOrderCustomer = async ({ id, customer, pickupAt }: { id: string; customer: Customer; pickupAt?: string }): Promise<BaseOrder> => {
+    const res = await api.put(`orders/${id}/customer`, { customer, pickupAt })
     return res.data.data
 }
 

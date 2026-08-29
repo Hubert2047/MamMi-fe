@@ -12,7 +12,7 @@ import {
 } from '../ui/alert-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
-import { cancelOrder, type BaseOrder, type OrderRange, updateOrderCustomer } from '@/api/order.ts'
+import { cancelOrder, type BaseOrder, type IOrder, type OrderRange, updateOrderCustomer, updateOrderPayment } from '@/api/order.ts'
 import { useDailyClosingSummary, useOrders, queryKeys } from '@/hooks/queries'
 import Loading from '@/components/Loading.tsx'
 import { toast } from 'sonner'
@@ -25,6 +25,7 @@ import { useI18n } from '@/lib/i18n'
 import type { AxiosError } from 'axios'
 import { RefreshCw, Volume2, VolumeX } from 'lucide-react'
 import { stopOrderAlert } from '@/components/RealtimeProvider'
+import OrderDetailDialog from './OrderDetailDialog'
 
 type Props = {
     open: boolean
@@ -61,19 +62,30 @@ const orderSourceMessageKeys = {
     uber: 'uber',
     foodpanda: 'foodpanda',
 } as const
+const ORDER_STATUS_FILTER_STORAGE_KEY = 'mammi-pos-order-status-filter'
+const taipeiInputValue = (date: Date) => new Date(date.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16)
 
 export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onClose }: Props) {
     const queryClient = useQueryClient()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
-    const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('pending')
+    const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>(() => {
+        if (typeof window === 'undefined') return 'pending'
+        const saved = window.localStorage.getItem(ORDER_STATUS_FILTER_STORAGE_KEY)
+        return saved === 'all' || saved === 'paid' || saved === 'pending' || saved === 'cancelled' ? saved : 'pending'
+    })
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
     const [customerOrder, setCustomerOrder] = useState<BaseOrder | null>(null)
+    const [detailOrder, setDetailOrder] = useState<IOrder | null>(null)
+    const [paymentOrder, setPaymentOrder] = useState<BaseOrder | null>(null)
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank' | 'linepay'>('cash')
     const [customerDraft, setCustomerDraft] = useState({ name: '', phone: '' })
+    const [pickupDraft, setPickupDraft] = useState('')
     const [pageSize, setPageSize] = useState(8)
     const [currentTime] = useState(() => new Date().toISOString())
     const tableRef = useRef<HTMLDivElement>(null)
+    const detailClosingRef = useRef(false)
     const fromInputRef = useRef<HTMLInputElement>(null)
     const toInputRef = useRef<HTMLInputElement>(null)
     const [selectedRange, setSelectedRange] = useState<OrderRange | null>(null)
@@ -110,16 +122,38 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
         },
         onError: () => toast.error(t('updateFailure')),
     })
+    const updatePaymentMutation = useMutation({
+        mutationFn: updateOrderPayment,
+        onSuccess: () => {
+            setPaymentOrder(null)
+            queryClient.invalidateQueries({ queryKey: ['orders'] })
+            toast.success(t('updateSuccess'))
+        },
+        onError: () => toast.error(t('updateFailure')),
+    })
 
     const openCustomerEditor = (order: BaseOrder) => {
         if (!order.customer) return
         setCustomerDraft({ name: order.customer.name || '', phone: order.customer.phone || '' })
+        setPickupDraft(order.pickupAt ? taipeiInputValue(new Date(order.pickupAt)) : taipeiInputValue(new Date(Date.now() + 60 * 60 * 1000)))
         setCustomerOrder(order)
     }
 
     const saveCustomer = () => {
         if (!customerOrder?.customer) return
-        updateCustomerMutation.mutate({ id: customerOrder._id, customer: customerDraft })
+        updateCustomerMutation.mutate({ id: customerOrder._id, customer: customerDraft, pickupAt: pickupDraft ? new Date(`${pickupDraft}:00+08:00`).toISOString() : undefined })
+    }
+
+    const openPaymentEditor = (order: BaseOrder) => {
+        if (order.status !== 'paid' || !['dine_in', 'takeaway'].includes(order.type) || order.source === 'uber' || order.source === 'foodpanda') return
+        if (!['cash', 'bank', 'linepay'].includes(order.paymentMethod)) return
+        setPaymentMethod(order.paymentMethod as 'cash' | 'bank' | 'linepay')
+        setPaymentOrder(order)
+    }
+
+    const savePaymentMethod = () => {
+        if (!paymentOrder) return
+        updatePaymentMutation.mutate({ id: paymentOrder._id, data: { paymentMethod, version: paymentOrder.version } })
     }
 
     const filteredOrders = orders.filter((o) => {
@@ -131,6 +165,9 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const dateInputValue = (value?: string) => { const date = new Date(value || currentTime); const pad = (part: number) => String(part).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}` }
     const dateInputToIso = (value: string) => value ? new Date(value).toISOString() : undefined
     const formatDateTime = (value?: string) => new Intl.DateTimeFormat(locale === 'zh-TW' ? 'zh-TW' : locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value || currentTime))
+    useEffect(() => {
+        window.localStorage.setItem(ORDER_STATUS_FILTER_STORAGE_KEY, statusFilter)
+    }, [statusFilter])
     useEffect(() => {
         const element = tableRef.current
         if (!element) return
@@ -172,8 +209,10 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                 open={open}
                 onOpenChange={(isOpen) => {
                     if (isOpen) {
-                        setStatusFilter('pending')
                         setPage(1)
+                    } else if (detailOrder || detailClosingRef.current) {
+                        detailClosingRef.current = false
+                        setDetailOrder(null)
                     } else onClose()
                 }}>
                 <DialogContent key={locale} className='left-0 top-0 flex h-dvh min-h-0 max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-3 pb-[env(safe-area-inset-bottom)] sm:max-w-none'>
@@ -289,7 +328,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                             <TableCell>{t(orderStatusMessageKeys[order.status])}</TableCell>
                                             <TableCell>{t(orderSourceMessageKeys[order.source || 'pos'])}</TableCell>
                                             <TableCell>{t(orderTypeMessageKeys[order.type])}</TableCell>
-                                            <TableCell>{t(paymentMethodMessageKeys[order.paymentMethod])}</TableCell>
+                                            <TableCell>{order.status === 'pending' ? t('pendingPayment') : t(paymentMethodMessageKeys[order.paymentMethod])}</TableCell>
                                             <TableCell>
                                                 {order.createdAt
                                                     ? new Date(order.createdAt).toLocaleString('vi-VN', {
@@ -306,10 +345,10 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                 <Button
                                                     variant='outline'
                                                     className='h-10 border-gray-300 px-3 text-base text-gray-700 hover:bg-gray-100'
-                                                    onClick={() => displayOrderDetail(order)}>
-                                                    {t('detail')}
+                                                    onClick={() => order.status === 'pending' ? displayOrderDetail(order) : setDetailOrder(order)}>
+                                                    {order.status === 'pending' ? t('edit') : t('detail')}
                                                 </Button>
-                                                {order.customer && <Button variant='outline' className='ml-1 h-10 px-3 text-base' onClick={() => openCustomerEditor(order)}>{t('contact')}</Button>}
+                                                {order.status === 'paid' && ['dine_in', 'takeaway'].includes(order.type) && order.source !== 'uber' && order.source !== 'foodpanda' && ['cash', 'bank', 'linepay'].includes(order.paymentMethod) && <Button variant='outline' className='ml-1 h-10 px-3 text-base' onClick={() => openPaymentEditor(order)}>{t('paymentShort')}</Button>}
                                                 {order.status === 'pending' && (
                                                     <Button
                                                         variant='default'
@@ -329,6 +368,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                         {t('print')}
                                                     </Button>
                                                 }
+                                                {order.customer && <Button variant='outline' className='ml-1 h-10 px-3 text-base' onClick={() => openCustomerEditor(order)}>{t('contact')}</Button>}
                                                 {order.status !== 'cancelled' && (
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
@@ -374,13 +414,29 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                             <div className='grid gap-3'>
                                 <div className='grid gap-1'><Label htmlFor='order-customer-name'>{t('customer')}</Label><Input id='order-customer-name' value={customerDraft.name} maxLength={120} onChange={(event) => setCustomerDraft((current) => ({ ...current, name: event.target.value }))} /></div>
                                 <div className='grid gap-1'><Label htmlFor='order-customer-phone'>{t('phone')}</Label><Input id='order-customer-phone' value={customerDraft.phone} maxLength={40} onChange={(event) => setCustomerDraft((current) => ({ ...current, phone: event.target.value }))} /></div>
+                                <div className='grid gap-1'><Label htmlFor='order-pickup-at'>{t('pickupTime')}</Label><Input id='order-pickup-at' type='datetime-local' min={taipeiInputValue(new Date())} value={pickupDraft} onChange={(event) => setPickupDraft(event.target.value)} /></div>
                             </div>
-                            <DialogFooter><Button variant='outline' onClick={() => setCustomerOrder(null)}>{t('cancel')}</Button><Button onClick={saveCustomer} disabled={updateCustomerMutation.isPending}>{t('confirm')}</Button></DialogFooter>
+                            <DialogFooter><Button className='min-h-11 px-5 text-base' variant='outline' onClick={() => setCustomerOrder(null)}>{t('cancel')}</Button><Button className='min-h-11 px-5 text-base' onClick={saveCustomer} disabled={updateCustomerMutation.isPending}>{t('confirm')}</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </DialogContent>
             </Dialog>
-            {(isOrderLoading || cancelOrderMutation.isPending) && <Loading />}
+            <Dialog open={Boolean(paymentOrder)} onOpenChange={(isOpen) => { if (!isOpen) setPaymentOrder(null) }}>
+                <DialogContent className='top-4 translate-y-0 sm:max-w-md'>
+                    <DialogHeader><DialogTitle>{t('paymentMethodTitle')}</DialogTitle></DialogHeader>
+                    <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'cash' | 'bank' | 'linepay')}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value='cash'>{t('cash')}</SelectItem>
+                            <SelectItem value='bank'>{t('bank')}</SelectItem>
+                            <SelectItem value='linepay'>{t('linepay')}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <DialogFooter><Button className='min-h-11 px-5 text-base' variant='outline' onClick={() => setPaymentOrder(null)}>{t('cancel')}</Button><Button className='min-h-11 px-5 text-base' onClick={savePaymentMethod} disabled={updatePaymentMutation.isPending}>{t('save')}</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {(isOrderLoading || cancelOrderMutation.isPending || updatePaymentMutation.isPending) && <Loading />}
+            <OrderDetailDialog order={detailOrder} onClose={() => { detailClosingRef.current = true; setDetailOrder(null); window.setTimeout(() => { detailClosingRef.current = false }, 100) }} />
         </>
     )
 }

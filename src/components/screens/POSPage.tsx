@@ -87,21 +87,15 @@ const POSPage: React.FC = () => {
             if (!grouped[item.categoryName]) grouped[item.categoryName] = []
             grouped[item.categoryName].push(item)
         })
-        const smartGroups: Array<[string, Item[]]> = [
-            [t('recommended'), sellableItems.filter((item) => item.recommended === true)],
-            [t('popular'), sellableItems.filter((item) => item.popular === true)],
-            [t('newProduct'), sellableItems.filter((item) => item.new === true)],
-            [t('promotion'), sellableItems.filter((item) => getCatalogProductPromotionPrice({ productId: item._id, price: item.price.base ?? 0, promotions: activePromotions }) < (item.price.base ?? 0))],
-        ]
-        const orderedGroups = [...smartGroups.filter(([, items]) => items.length > 0), ...Object.entries(grouped).sort(([leftName, leftItems], [rightName, rightItems]) => {
+        const orderedGroups = Object.entries(grouped).sort(([leftName, leftItems], [rightName, rightItems]) => {
             const orderDifference = (leftItems[0]?.categorySortOrder ?? 0) - (rightItems[0]?.categorySortOrder ?? 0)
             if (orderDifference) return orderDifference
             const leftId = typeof leftItems[0]?.categoryId === 'string' ? leftItems[0].categoryId : leftItems[0]?.categoryId?._id ?? leftName
             const rightId = typeof rightItems[0]?.categoryId === 'string' ? rightItems[0].categoryId : rightItems[0]?.categoryId?._id ?? rightName
             return String(leftId).localeCompare(String(rightId))
-        })]
+        })
         return Object.fromEntries(orderedGroups)
-    }, [activePromotions, sellableItems, t])
+    }, [sellableItems])
 
     useEffect(() => {
         if (Object.keys(itemsByCategory).includes(selectedCategory)) return
@@ -156,6 +150,8 @@ const POSPage: React.FC = () => {
             setCurrentOrder(updatedOrder)
             setOrderBeforeEdit(null)
             setIsOrderEditing(false)
+            setIsDetail(false)
+            setOpenOrderTable(true)
             queryClient.invalidateQueries({ queryKey: ['orders'] })
             toast.success(t('updateSuccess'))
         },
@@ -191,7 +187,13 @@ const POSPage: React.FC = () => {
     }
 
     function handlePendingOrder(open: boolean) {
-        setCurrentOrder((prev) => ({ ...prev, customer: open ? { name: '', phone: '' } : null }))
+        setCurrentOrder((prev) => ({ ...prev, customer: open ? { name: '', phone: '' } : null, ...(open ? { pickupAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() } : {}) }))
+        if (!open) {
+            setIsDetail(false)
+            setIsOrderEditing(false)
+            setIsEditItem(false)
+            setOrderBeforeEdit(null)
+        }
         setSelectedItem(null)
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setIsPendingOrder(open)
@@ -208,13 +210,14 @@ const POSPage: React.FC = () => {
             }),
         }
         setCurrentOrder(orderWithLineIds)
+        setOrderBeforeEdit(orderWithLineIds)
         setCurrentOrderItem(orderWithLineIds.items[0])
         const item = items.find((item) => orderWithLineIds.items[0].id === item._id)
         if (item) setSelectedItem(item)
+        setIsEditItem(true)
         setOpenOrderTable(false)
         setIsDetail(true)
-        setIsOrderEditing(false)
-        setOrderBeforeEdit(null)
+        setIsOrderEditing(true)
         setCheckoutOpen(false)
     }
 
@@ -239,20 +242,19 @@ const POSPage: React.FC = () => {
     }
 
     function cancelOrderEdit() {
-        if (orderBeforeEdit) setCurrentOrder(orderBeforeEdit)
-        setOrderBeforeEdit(null)
+        setIsDetail(false)
         setIsOrderEditing(false)
+        setOrderBeforeEdit(null)
         setSelectedItem(null)
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setCurrentOrder(DEFAULT_ORDER)
         setIsEditItem(false)
+        setOpenOrderTable(true)
     }
 
     function startOrderEdit() {
         setOrderBeforeEdit(currentOrder)
         setIsOrderEditing(true)
-        setSelectedItem(null)
-        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
-        setIsEditItem(false)
     }
 
     function startAddOrderItem() {
@@ -266,7 +268,7 @@ const POSPage: React.FC = () => {
         if (currentOrder.type === 'dine_in' && !currentOrder.table?.trim()) { toast.error(t('tableRequired')); return }
         void updatePendingOrderMutation.mutateAsync({
             id: currentOrder._id,
-            data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, selectedPromotionIds: currentOrder.selectedPromotionIds, expectedPricing: promotionPreview, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
+            data: { items: currentOrder.items, type: currentOrder.type, table: currentOrder.table, selectedPromotionIds: currentOrder.selectedPromotionIds, expectedPricing: promotionPreview, paymentMethod: currentOrder.paymentMethod, version: currentOrder.version, pickupAt: currentOrder.pickupAt },
         })
     }
     if (isItemsLoading || isOrderNumberLoading) return <Loading />
@@ -291,6 +293,8 @@ const POSPage: React.FC = () => {
                     setOpenBtns={setOpenBtns}
                     tables={sortedTables}
                     onCheckoutPendingOrder={() => checkoutPendingOrder(currentOrder)}
+                    onCancelOrderEdit={cancelOrderEdit}
+                    onSaveOrderEdit={saveOrderEdit}
                 />
                 <div className='flex min-h-0 flex-1 gap-2'>
                     <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>
@@ -367,14 +371,14 @@ const POSPage: React.FC = () => {
                     <div className='border-b pb-2 mb-1'>
                         <LanguageSwitcher />
                     </div>
-                    <Button className='h-11 text-base' variant='outline' onClick={() => setPromotionInfoOpen(true)}>
-                        {t('promotions')}
-                    </Button>
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenOrderTable(true)}>
                         {t('orderTableTitle')}
                     </Button>
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenTableSessions(true)}>
                         {t('posTableSessions')}
+                    </Button>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => setPromotionInfoOpen(true)}>
+                        {t('promotions')}
                     </Button>
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenTemporaryAvailability(true)}>
                         {t('temporaryAvailabilityTitle')}
@@ -385,14 +389,12 @@ const POSPage: React.FC = () => {
                     <Button className='h-11 text-base' variant='outline' onClick={() => setOpenExpense(true)}>
                         {t('expenses')}
                     </Button>
-                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenStocktake(true)}>
-                        {t('inventoryStocktake')}
-                    </Button>
+                    {/* Temporarily hidden; keep the stocktake dialog and state for later. */}
                     {/* Temporarily hidden; keep the attendance state, dialog, and logic for the next phase. */}
                     {showShiftAttendanceButton && <Button className='h-11 text-base' variant='outline' onClick={() => setOpenShiftAttendance(true)}>
                         {t('attendance')}
                     </Button>}
-                    <Button className='h-11 text-base' variant='outline' onClick={() => setOpenDailyClosing(true)}>
+                    <Button className='h-11 text-base' variant='outline' onClick={() => { setOpenDailyClosing(true); void queryClient.invalidateQueries({ queryKey: ['daily-closing-summary'] }) }}>
                         {t('dailyClosing')}
                     </Button>
                     </div>

@@ -47,6 +47,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
         mutationFn: createDailyClosing,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['daily-closing-summary']}).then()
+            queryClient.invalidateQueries({queryKey: ['next-order-number']}).then()
         },
         onError: () => {
             toast.error(t('closeFailure'))
@@ -75,7 +76,7 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
         <div className='flex flex-col border px-4 pb-2 rounded border-[#ccc]'>
             <div className='flex relative'>
                 <Button
-                    className='flex absolute -top-10 -left-4 items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
+                    className='absolute -left-4 -top-11 flex h-10 items-center gap-2 bg-primary px-4 text-sm text-primary-foreground hover:bg-primary/90'
                     onClick={() => setCurrentStep(1)}>
                     {t('back')}
                     <ArrowLeft className='w-4 h-4'/>
@@ -85,6 +86,8 @@ function DailyClosingStep2({systemAmount, setCurrentStep, onClose}: Props) {
             <div className='flex justify-between gap-6 mt-4'>
                 <div className='flex justify-center items-start mt-8 flex-1'>
                     <NumPad
+                        large
+                        columns={4}
                         currentValue={focusedDenom ? cash[focusedDenom] : "0"}
                         onChange={(val) => {
                             if (focusedDenom === null) return

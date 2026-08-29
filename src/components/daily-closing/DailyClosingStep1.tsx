@@ -63,7 +63,7 @@ function DailyClosingStep1({
                     </ToggleGroupItem>
                 </ToggleGroup>
                 <Button
-                    className='flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
+                    className='h-10 px-4 text-sm flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90'
                     onClick={() => setCurrentStep(2)}>
                     {t('next')}
                     <ArrowRight className='w-4 h-4'/>

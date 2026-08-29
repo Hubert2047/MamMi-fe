@@ -8,12 +8,11 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 const MAX_NOTE_LENGTH = 40
 import NumPad from '@/components/NumPad.tsx'
 import React from 'react'
-import { updateOrderPayment, type BaseOrder, type OrderItem } from '@/api/order.ts'
-import { DEFAULT_ORDER_ITEM, PAYMENT_METHOD_ICONS, type PaymentMethod } from '@/constants'
-import { capitalize, generateUUID, getPriceByType } from '@/lib/utils.ts'
+import { type BaseOrder, type OrderItem } from '@/api/order.ts'
+import { DEFAULT_ORDER_ITEM } from '@/constants'
+import { generateUUID, getPriceByType } from '@/lib/utils.ts'
 import { toast } from 'sonner'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import Loading from './Loading'
+
 import { useI18n } from '@/lib/i18n'
 import { calculateOrderItemTotal, getUnavailableAddonIds } from '@/lib/posCalculations'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
@@ -61,7 +60,6 @@ function PosItemSection({
     currentOrderNumber,
     promotions,
 }: Props) {
-    const queryClient = useQueryClient()
     const { locale, t } = useI18n()
     const optionName = (option: { names: { vi: string; en: string; 'zh-TW': string } }) => option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']
     const catalogItems = Object.values(itemsByCategory).flat()
@@ -94,17 +92,6 @@ function PosItemSection({
         const prefix = new RegExp(`^${category.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(?:\\s*[-:|–—]\\s*|\\s+)`, 'i')
         return name.replace(prefix, '').trim() || name
     }
-    const updateOrderMutation = useMutation({
-        mutationFn: updateOrderPayment,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                predicate: (query) => query.queryKey[0] === 'sale-by-payment' || query.queryKey[0] === 'orders',
-            })
-        },
-        onError: () => {
-            toast.error(t('updateFailure'))
-        },
-    })
     const selectItem = (item: Item) => {
         let variant = ''
         if (item.variants.length > 0) {
@@ -134,21 +121,14 @@ function PosItemSection({
             return
         }
         setCurrentOrder((prev) => ({ ...prev, items: [...prev.items, currentOrderItem] }))
-        if (isDetail && isOrderEditing) {
-            setIsEditItem(true)
-            return
-        }
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setSelectedItem(null)
+        setIsEditItem(false)
     }
     const cancelAddItem = () => {
-        if (isDetail && isEditItem) {
-            const originalItem = currentOrder.items.find((item) => item.itemId === currentOrderItem.itemId)
-            if (originalItem) {
-                setCurrentOrderItem(originalItem)
-                return
-            }
-        }
+        // Hủy ở cấp món chỉ thoát khỏi màn hình cấu hình món hiện tại.
+        // Khi đang cập nhật đơn, vẫn giữ trạng thái sửa đơn để người dùng
+        // có thể chọn thêm một món khác ngay lập tức.
         setCurrentOrderItem(DEFAULT_ORDER_ITEM)
         setSelectedItem(null)
         setIsEditItem(false)
@@ -165,7 +145,9 @@ function PosItemSection({
             })
             return { ...prev, items }
         })
-        setIsEditItem(true)
+        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setSelectedItem(null)
+        setIsEditItem(false)
     }
     const deleteItem = () => {
         setCurrentOrder((prev) => {
@@ -179,16 +161,8 @@ function PosItemSection({
         setIsEditItem(false)
     }
 
-    const handleUpdateOrder = async () => {
-        await updateOrderMutation.mutateAsync({
-            id: currentOrder._id,
-            data: { paymentMethod: currentOrder.paymentMethod, version: currentOrder.version },
-        })
-        toast.success(t('updateSuccess'))
-    }
     return (
         <>
-            {updateOrderMutation.isPending && <Loading />}
             <Dialog open={promotionInfoOpen} onOpenChange={setPromotionInfoOpen}>
                 <DialogContent className='top-[8%] max-h-[88dvh] w-[min(94vw,40rem)] max-w-none translate-y-0 overflow-y-auto sm:max-w-none'>
                     <div className='space-y-4'>
@@ -388,79 +362,6 @@ function PosItemSection({
                                 }}
                             />
                         </div>
-                        {/* customer */}
-                        {isDetail && currentOrder.customer && (
-                            <>
-                                <div className='flex justify-start items-center gap-4'>
-                                    <Label className='w-22 block font-semibold text-start'>{t('customer')}: </Label>
-                                    <Input id='name' value={currentOrder.customer.name} disabled />
-                                </div>
-                                <div className='flex justify-start items-center gap-4'>
-                                    <Label className='w-22 block font-semibold text-start'>{t('phone')}: </Label>
-                                    <Input id='name' value={currentOrder.customer.phone} disabled />
-                                </div>
-                            </>
-                        )}
-                        {/* edit paymentmedthod */}
-                        {isDetail && currentOrder.status === 'paid' &&
-                            ['dine_in', 'takeaway'].includes(currentOrder.type) &&
-                            ['cash', 'linepay', 'bank'].includes(currentOrder.paymentMethod) && (
-                                <div className='flex flex-wrap items-center gap-2'>
-                                    <p className='font-semibold block w-25 text-start text-md'>{t('payment')}</p>
-                                    <div className='flex justify-start items-center gap-4'>
-                                        <ToggleGroup
-                                            size='lg'
-                                            variant='outline'
-                                            type='single'
-                                            className='w-max'
-                                            value={currentOrder.paymentMethod}
-                                            onValueChange={(value: PaymentMethod) =>
-                                                setCurrentOrder((prev) => ({ ...prev, paymentMethod: value }))
-                                            }>
-                                            {['cash', 'linepay', 'bank'].map((method) => (
-                                                <ToggleGroupItem
-                                                    key={method}
-                                                    className='flex items-center justify-center w-max'
-                                                    value={method}>
-                                                    <span>
-                                                        {
-                                                            PAYMENT_METHOD_ICONS[
-                                                                method as
-                                                                    | 'cash'
-                                                                    | 'uber'
-                                                                    | 'linepay'
-                                                                    | 'bank'
-                                                                    | 'foodpanda'
-                                                            ]
-                                                        }
-                                                    </span>
-                                                    <span className='w-max'>{capitalize(method)}</span>
-                                                </ToggleGroupItem>
-                                            ))}
-                                        </ToggleGroup>
-                                    </div>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button
-                                                className='mt-2 basis-full bg-primary text-primary-foreground hover:bg-primary/90'
-                                                size='lg'>
-                                                {t('update')}
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>{t('update')}</AlertDialogTitle>
-                                                <AlertDialogDescription>{t('confirmUpdateProduct')}</AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => void handleUpdateOrder()}>{t('confirm')}</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
-                            )}
-
                         </div>
                         {!isReadOnly && (
                             <div className='shrink-0 border-t pb-5 pt-3'>

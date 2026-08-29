@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n'
 import { FloatingButton } from '@/components/FloatingButton'
 import type { StoreTable } from '@/api/table'
 import { calculateOrderSubtotal } from '@/lib/posCalculations'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 
 type Props = {
 
@@ -30,6 +31,8 @@ type Props = {
     setOpenBtns: React.Dispatch<React.SetStateAction<boolean>>
     tables: StoreTable[]
     onCheckoutPendingOrder(): void
+    onCancelOrderEdit(): void
+    onSaveOrderEdit(): void
 }
 
 function PosHeader({
@@ -49,6 +52,8 @@ function PosHeader({
     setOpenBtns,
     tables,
     onCheckoutPendingOrder,
+    onCancelOrderEdit,
+    onSaveOrderEdit,
 }: Props) {
     const { t } = useI18n()
     const isReadOnly = isDetail && !isOrderEditing
@@ -57,7 +62,7 @@ function PosHeader({
     
 
     return (
-        <div className='mb-2 flex items-center justify-start gap-0.5 rounded border border-[#ccc] p-0.5'>
+        <div className='mb-2 flex items-center justify-start gap-1 rounded border border-[#ccc] p-1'>
             <div className='flex items-center space-x-1 '>
                 <Label htmlFor='stt' className='whitespace-nowrap'>
                     {t('orderNumber')}:
@@ -95,25 +100,25 @@ function PosHeader({
                 <ToggleGroupItem
                     value='takeaway'
                     disabled={isReadOnly}
-                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-10 px-3 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     外帶
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='dine_in'
                     disabled={isReadOnly}
-                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-10 px-3 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     內用
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='uber'
                     disabled={isReadOnly}
-                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-10 px-3 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     Uber
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='foodpanda'
                     disabled={isReadOnly}
-                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-10 px-3 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     FoodPanda
                 </ToggleGroupItem>
             </ToggleGroup>
@@ -132,16 +137,19 @@ function PosHeader({
             <div className='ml-2 flex shrink-0 justify-end'>
                 {isDetail ? (
                     isOrderEditing ? (
-                        null
+                        <div className='flex gap-1'>
+                            <AlertDialog><AlertDialogTrigger asChild><Button className='h-10 px-3 text-sm' variant='outline'>{t('cancel')}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('cancel')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDiscardOrderChanges')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction className='bg-destructive text-destructive-foreground hover:bg-destructive/90' onClick={onCancelOrderEdit}>{t('confirm')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                            <AlertDialog><AlertDialogTrigger asChild><Button className='h-10 px-3 text-sm'>{t('update')}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('update')}</AlertDialogTitle><AlertDialogDescription>{t('confirmSaveOrderChanges')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('cancel')}</AlertDialogCancel><AlertDialogAction onClick={onSaveOrderEdit}>{t('confirm')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                        </div>
                     ) : (
                         <div className='flex gap-1'>
-                            {currentOrder.status === 'pending' && <Button className='h-8 px-2 text-sm bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
-                            <Button className='h-8 px-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
+                            {currentOrder.status === 'pending' && <Button className='h-10 px-3 text-sm bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
+                            <Button className='h-10 px-3 text-sm bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
                         </div>
                     )
                 ) : isCheckout || isPendingOrder ? (
                     <Button
-                        className='h-8 w-32 text-sm'
+                        className='h-10 w-32 text-sm'
                         variant='default'
                         onClick={
                             isPendingOrder
@@ -152,8 +160,25 @@ function PosHeader({
                     </Button>
                 ) : (
                     <div className='flex justify-end gap-1'>
+                        {currentOrder.items.length > 0 && <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button className='h-10 min-w-18 px-3 text-sm' variant='destructive'>
+                                    {t('cancelOrder')}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{t('cancelOrder')}</AlertDialogTitle>
+                                    <AlertDialogDescription>{t('confirmCancelOrder')}</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction className='bg-destructive text-destructive-foreground hover:bg-destructive/90' onClick={closeDisplayOrderDetail}>{t('confirm')}</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>}
                         <Button
-                            className='h-8 min-w-16 px-2 text-sm bg-yellow-400 text-black hover:bg-yellow-500'
+                            className='h-10 min-w-18 px-3 text-sm bg-yellow-400 text-black hover:bg-yellow-500'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToOrder'))
@@ -165,7 +190,7 @@ function PosHeader({
                             {t('placeOrder')}
                         </Button>
                         <Button
-                            className='h-8 min-w-16 px-2 text-sm bg-green-600 text-white hover:bg-green-700'
+                            className='h-10 min-w-18 px-3 text-sm bg-green-600 text-white hover:bg-green-700'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToPay'))

@@ -17,7 +17,7 @@ import { useI18n } from '@/lib/i18n'
 import CashDenominationInput from '@/components/CashDenominationInput'
 import { calculateCashChange, calculateCashFromDenominations, setCashCount, type CashCounts, type CashDenomination } from '@/lib/cashDenominations'
 import { isAxiosError } from 'axios'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { calculateOrderPriceBreakdown } from '@/lib/posCalculations'
 
 type Props = {
@@ -184,7 +184,7 @@ function Checkout({
                             </ToggleGroup>
                         </div>
                     </div>
-                    <div className='payment-method h-full min-h-0 flex-1 space-y-2 overflow-y-auto rounded border border-[#ccc] p-1.5'>
+                <div className='payment-method h-full min-h-0 flex-1 space-y-2 overflow-y-auto rounded border border-[#ccc] p-1.5'>
                         <div className='flex flex-wrap items-center justify-between gap-2 border-b pb-2'>
                             <p className='text-xl'>{t('paymentMethodTitle')}</p>
                             <Button variant='outline' onClick={() => setIsBreakdownOpen(true)}>{t('detail')}</Button>
@@ -273,10 +273,9 @@ function Checkout({
             )}
             {createOrderMutation.isPending && <Loading />}
             <Dialog open={isBreakdownOpen} onOpenChange={setIsBreakdownOpen}>
-                <DialogContent className='top-1/2 flex max-h-[86svh] w-[min(94vw,72rem)] max-w-none -translate-y-1/2 flex-col gap-0 overflow-hidden p-0 sm:max-w-none'>
-                    <DialogHeader className='border-b px-6 py-5 pr-14'>
-                        <DialogTitle>{t('checkoutBreakdown')}</DialogTitle>
-                        <DialogDescription>{t('checkoutBreakdownHint')}</DialogDescription>
+                <DialogContent className='left-0 top-0 flex h-dvh min-h-0 max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 sm:max-w-none'>
+                    <DialogHeader className='items-center border-b px-6 py-5 pr-14 text-center'>
+                        <DialogTitle className='capitalize'>{t('checkoutBreakdown')}</DialogTitle>
                     </DialogHeader>
                     <div className='grid min-h-0 flex-1 gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
                         <section className='h-full min-h-0 overflow-y-auto pr-2'>
@@ -286,14 +285,15 @@ function Checkout({
                                     const productOriginal = item.basePrice * item.quantity
                                     const addonOriginal = item.addons.reduce((total, addon) => total + addon.priceExtra * addon.amount * item.quantity, 0)
                                     const itemOriginal = productOriginal + addonOriginal
-                                    const addonDiscount = allocation.addons.reduce((total, addon) => total + addon.discountAmount, 0)
+                                    const addonDiscount = item.addons.reduce((total, addon) => total + allocation.addons.filter((entry) => entry.addonId === addon.id).reduce((addonTotal, entry) => addonTotal + entry.discountAmount, 0), 0)
                                     const itemDiscount = allocation.product + addonDiscount
                                     return <div key={`${item.id}-${index}`} className='border-b py-3 last:border-b-0'>
                                         <div className='flex items-start justify-between gap-3'>
-                                            <div className='min-w-0 space-y-1'><p className='font-medium'>{item.name} x {item.quantity}</p><p className='text-sm'><span className='capitalize text-muted-foreground'>{t('productSubtotal')}:</span> {formatPrice(productOriginal)}</p>{addonOriginal > 0 && <p className='text-sm'><span className='capitalize text-muted-foreground'>{t('addonSubtotal')}:</span> {formatPrice(addonOriginal)}</p>}{allocation.product > 0 && <p className='inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive'>{t('discount')} {t('targetProduct')}: -{formatPrice(allocation.product)}</p>}{addonDiscount > 0 && <p className='inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive'>{t('discount')} {t('targetAddon')}: -{formatPrice(addonDiscount)}</p>}</div>
+                                            <div className='min-w-0 space-y-1'><p className='font-medium'>{item.name} x {item.quantity}</p><p className='text-sm'><span className='capitalize text-muted-foreground'>{t('productSubtotal')}:</span> <span className={allocation.product > 0 ? 'line-through' : ''}>{formatPrice(productOriginal)}</span>{allocation.product > 0 ? <span className='ml-2 text-destructive'>→ {formatPrice(productOriginal - allocation.product)}</span> : null}</p>{addonOriginal > 0 && <p className='text-sm'><span className='capitalize text-muted-foreground'>{t('addonSubtotal')}:</span> <span className={addonDiscount > 0 ? 'line-through' : ''}>{formatPrice(addonOriginal)}</span>{addonDiscount > 0 ? <span className='ml-2 text-destructive'>→ {formatPrice(addonOriginal - addonDiscount)}</span> : null}</p>}</div>
                                             <div className='text-right'><span className='text-xs capitalize text-muted-foreground'>{t('subtotal')}</span><p className='font-medium tabular-nums'>{formatPrice(itemOriginal - itemDiscount)}</p></div>
                                         </div>
-                                        {item.addons.length > 0 && <div className='mt-2 space-y-1 pl-3 text-sm text-muted-foreground'>{item.addons.map((addon) => { const original = addon.priceExtra * addon.amount * item.quantity; const discount = allocation.addons.filter((entry) => entry.addonId === addon.id).reduce((total, entry) => total + entry.discountAmount, 0); return <p key={addon.id}>+ {addon.name} × {item.quantity}: <span className={discount ? 'line-through' : ''}>{formatPrice(original)}</span>{discount ? <span className='ml-2 text-destructive'>→ {formatPrice(original - discount)}</span> : null}</p> })}</div>}
+                                        {item.addons.length > 0 && <div className='mt-2 space-y-1 pl-3 text-sm text-muted-foreground'>{item.addons.map((addon) => { const original = addon.priceExtra * addon.amount * item.quantity; const discount = allocation.addons.filter((entry) => entry.addonId === addon.id).reduce((total, entry) => total + entry.discountAmount, 0); return <p key={addon.id}>+ {addon.name}: <span className={discount ? 'line-through' : ''}>{formatPrice(original)}</span>{discount ? <span className='ml-2 text-destructive'>→ {formatPrice(original - discount)}</span> : null}</p> })}</div>}
+                                        {(allocation.product > 0 || addonDiscount > 0) && <div className='mt-2 flex flex-wrap gap-1'>{allocation.product > 0 && <span className='inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive'>{t('discount')} {t('targetProduct')}: -{formatPrice(allocation.product)}</span>}{addonDiscount > 0 && <span className='inline-flex rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive'>{t('discount')} {t('targetAddon')}: -{formatPrice(addonDiscount)}</span>}</div>}
                                     </div>
                                 })}
                             </div>

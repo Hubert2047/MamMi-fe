@@ -12,6 +12,7 @@ export const DEFAULT_ORDER: BaseOrder = {
   _id: '', number: 1, items: [], status: 'pending', paymentMethod: 'cash',
   selectedPromotionIds: [], appliedPromotions: [], type: 'takeaway', customer: null, checkoutPending: false,
   source: 'pos',
+  pickupAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
 }
 
 export const PAYMENT_METHODS = ['cash', 'uber', 'linepay', 'bank', 'foodpanda'] as const

@@ -29,7 +29,7 @@ function DailyClosing({ open, onClose }: Props) {
                 }}>
                 <DialogContent className='left-0 top-0 flex h-dvh min-h-0 max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-3 pb-[env(safe-area-inset-bottom)] sm:max-w-none'>
                     <DialogHeader>
-                        <DialogTitle className='text-black! font-bold! text-xl text-center'>
+                        <DialogTitle className='capitalize text-black! font-bold! text-xl text-center'>
                             {t('closingTitle')}
                         </DialogTitle>
                     </DialogHeader>

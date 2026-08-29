@@ -5,6 +5,7 @@ import React from 'react'
 import type { BaseOrder } from '@/api/order'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useI18n } from '@/lib/i18n'
+const taipeiInputValue = (date: Date) => new Date(date.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16)
 type Props = {
     isPrint: boolean
     currentOrder: BaseOrder
@@ -19,7 +20,7 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
         <div className='flex flex-col pt-2 px-4 pb-4 flex-1 gap-3'>
             <p className='text-xl'>{t('pendingOrderInfo')}</p>
             <div className='flex items-center space-x-2 pt-6'>
-                <Label htmlFor='name' className='whitespace-nowrap text-start w-24'>
+                <Label htmlFor='name' className='w-32 shrink-0 whitespace-nowrap text-start'>
                     {t('customerName')}
                 </Label>
                 <Input
@@ -35,7 +36,7 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
                 />
             </div>
             <div className='flex items-center space-x-2 '>
-                <Label htmlFor='phone' className='whitespace-nowrap text-start w-24'>
+                <Label htmlFor='phone' className='w-32 shrink-0 whitespace-nowrap text-start'>
                     {t('phone')}
                 </Label>
                 <Input
@@ -49,6 +50,10 @@ function PendingOrder({ currentOrder, isPrint, setIsPrint, setCurrentOrder, hand
                         })
                     }}
                 />
+            </div>
+            <div className='flex items-center space-x-2'>
+                <Label htmlFor='pickup-at-pending' className='w-32 shrink-0 whitespace-nowrap text-start'>{t('pickupTime')}</Label>
+                <Input id='pickup-at-pending' type='datetime-local' className='w-50' value={currentOrder.pickupAt ? taipeiInputValue(new Date(currentOrder.pickupAt)) : ''} min={taipeiInputValue(new Date())} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, pickupAt: event.target.value ? new Date(`${event.target.value}:00+08:00`).toISOString() : undefined }))} />
             </div>
             {/* print option */}
             <div className='mt-3 flex items-center gap-4 border-t pt-4 pl-2'>
