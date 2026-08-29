@@ -162,9 +162,12 @@ const messages: Record<Locale, Record<string, string>> = {
   },
 } as const;
 
-Object.assign(messages.vi, { units: "Đơn vị tính" });
-Object.assign(messages.en, { units: "Units" });
-Object.assign(messages["zh-TW"], { units: "單位" });
+Object.assign(messages.vi, { units: "Đơn vị tính", createUnit: "Thêm đơn vị", unitCode: "Mã đơn vị", unitNameVi: "Tên tiếng Việt", unitNameEn: "Tên tiếng Anh", unitNameZh: "Tên tiếng Trung", unitCategory: "Nhóm", unitCount: "Số lượng", unitWeight: "Khối lượng", unitVolume: "Thể tích", unitBase: "Đơn vị cơ sở", requiredUnit: "Vui lòng nhập mã và tên đơn vị", active: "Đang dùng", inactive: "Đã tắt", enable: "Bật", disable: "Tắt" });
+Object.assign(messages.en, { units: "Units", createUnit: "Add unit", unitCode: "Unit code", unitNameVi: "Vietnamese name", unitNameEn: "English name", unitNameZh: "Chinese name", unitCategory: "Group", unitCount: "Count", unitWeight: "Weight", unitVolume: "Volume", unitBase: "Base unit", requiredUnit: "Enter a unit code and name", active: "Active", inactive: "Inactive", enable: "Enable", disable: "Disable" });
+Object.assign(messages["zh-TW"], { units: "單位", createUnit: "新增單位", unitCode: "單位代碼", unitNameVi: "越南文名稱", unitNameEn: "英文名稱", unitNameZh: "中文名稱", unitCategory: "類別", unitCount: "數量", unitWeight: "重量", unitVolume: "體積", unitBase: "基礎單位", requiredUnit: "請輸入單位代碼與名稱", active: "啟用", inactive: "停用", enable: "啟用", disable: "停用" });
+Object.assign(messages.vi, { settingsTitle: "Cài đặt", displayLanguage: "Ngôn ngữ hiển thị", languageDescription: "", currentLanguage: "Hiện tại" });
+Object.assign(messages.en, { settingsTitle: "Settings", displayLanguage: "Display language", languageDescription: "", currentLanguage: "Current" });
+Object.assign(messages["zh-TW"], { settingsTitle: "設定", displayLanguage: "顯示語言", languageDescription: "", currentLanguage: "目前" });
 Object.assign(messages.vi, {
   noNoteSelected: "Chưa chọn ghi chú",
   printAgents: "Máy in",
@@ -359,8 +362,7 @@ const userMessages = {
   },
   en: {
     userAccounts: "Store accounts",
-    accountPageHint:
-      "Super Admin creates Admin and Employee accounts for each store.",
+    accountPageHint: "",
     accountSuperAdminHint: "Only Super Admin can manage store accounts.",
     createAccount: "Create account",
     accountList: "Account list",
@@ -2268,7 +2270,7 @@ Object.assign(messages.vi, {
   tables: "Bàn & QR",
   tablesDescription: "Tạo mã QR riêng cho từng bàn để khách quét và gọi món.",
   tableCreate: "Tạo bàn mới",
-  tableCode: "Mã bàn",
+  tableCode: "Mã",
   tableCodePlaceholder: "Ví dụ: 12",
   tableName: "Tên hiển thị",
   tableNamePlaceholder: "Ví dụ: Bàn 12",
@@ -2286,7 +2288,7 @@ Object.assign(messages.en, {
   tables: "Tables & QR",
   tablesDescription: "Create one QR code per table for guest ordering.",
   tableCreate: "Create table",
-  tableCode: "Table code",
+  tableCode: "Code",
   tableCodePlaceholder: "For example: 12",
   tableName: "Display name",
   tableNamePlaceholder: "For example: Table 12",
@@ -2304,7 +2306,7 @@ Object.assign(messages["zh-TW"], {
   tables: "桌位與 QR",
   tablesDescription: "為每張桌子建立 QR Code，供顧客掃碼點餐。",
   tableCreate: "新增桌位",
-  tableCode: "桌號",
+  tableCode: "代碼",
   tableCodePlaceholder: "例如：12",
   tableName: "顯示名稱",
   tableNamePlaceholder: "例如：12 號桌",
@@ -2370,7 +2372,7 @@ Object.assign(messages["zh-TW"], {
 });
 
 Object.assign(messages.vi, {
-  onlineQrTitle: "QR đặt hàng online",
+  onlineQrTitle: "QR",
   onlineQrDescription: "Khách quét mã này để mở trang đặt hàng online.",
   onlineQrAlt: "Mã QR đặt hàng online",
   onlineQrCopyLink: "Sao chép link online",
@@ -2378,7 +2380,7 @@ Object.assign(messages.vi, {
   onlineQrDownload: "Tải QR online",
 });
 Object.assign(messages.en, {
-  onlineQrTitle: "Online ordering QR",
+  onlineQrTitle: "QR",
   onlineQrDescription:
     "Guests can scan this code to open the online ordering page.",
   onlineQrAlt: "Online ordering QR code",
@@ -2387,7 +2389,7 @@ Object.assign(messages.en, {
   onlineQrDownload: "Download online QR",
 });
 Object.assign(messages["zh-TW"], {
-  onlineQrTitle: "線上點餐 QR",
+  onlineQrTitle: "QR",
   onlineQrDescription: "顧客掃描此 QR Code 即可開啟線上點餐頁面。",
   onlineQrAlt: "線上點餐 QR Code",
   onlineQrCopyLink: "複製線上連結",

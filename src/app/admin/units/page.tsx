@@ -1,2 +1,2 @@
-import UnitManagement from '@/components/admin/UnitManagement'
+import UnitManagement from '@/components/admin/UnitManagementStandardized'
 export default function UnitsPage() { return <UnitManagement /> }

@@ -17,6 +17,7 @@ import { getCategories, type Category } from '@/api/category'
 import { getAddons, type Addon } from '@/api/addon'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
+import { useTablePageSize } from '@/hooks/use-table-page-size'
 import { ImageUploadField } from '@/components/admin/ImageUploadField'
 import { uploadImage } from '@/lib/cloudinary'
 
@@ -68,12 +69,13 @@ export default function ProductsPage() {
   const [confirmAction, setConfirmAction] = useState<'create' | 'update' | null>(null)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const { containerRef, pageSize } = useTablePageSize()
   const [variantInputs, setVariantInputs] = useState<OptionInputs>(emptyOptionInputs)
   const [noteOptionInputs, setNoteOptionInputs] = useState<OptionInputs>(emptyOptionInputs)
   const [optionGroupInputs, setOptionGroupInputs] = useState<OptionGroupInput[]>([])
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const { data: allItems = [], isLoading } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: getCategories })
   const { data: addons = [] } = useQuery<Addon[]>({ queryKey: ['addons', locale], queryFn: () => getAddons(locale) })
@@ -83,11 +85,15 @@ export default function ProductsPage() {
   const items = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   useEffect(() => {
-    const updatePageSize = () => setPageSize(Math.max(5, Math.floor((window.innerHeight - 300) / 38)))
-    updatePageSize()
-    window.addEventListener('resize', updatePageSize)
-    return () => window.removeEventListener('resize', updatePageSize)
-  }, [])
+    setPage((current) => Math.min(current, totalPages))
+  }, [totalPages])
+
+  useEffect(() => {
+    if (!isFormOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [isFormOpen])
 
   const save = useMutation({
     mutationFn: (data: ItemInput) => editing ? updateCatalogItem({ id: editing._id, data }) : createCatalogItem(data),
@@ -117,6 +123,7 @@ export default function ProductsPage() {
     setNoteOptionInputs(emptyOptionInputs)
     setOptionGroupInputs([])
     setPendingImage(null)
+    setIsFormOpen(false)
   }
 
   function itemForm(item: Item): ItemInput {
@@ -141,6 +148,7 @@ export default function ProductsPage() {
   }
 
   function edit(item: Item) {
+    setIsFormOpen(true)
     setEditing(item)
     setForm(itemForm(item))
     setVariantInputs(optionInputsFrom(item.variants || []))
@@ -149,6 +157,7 @@ export default function ProductsPage() {
   }
 
   function copy(item: Item) {
+    setIsFormOpen(true)
     setEditing(null)
     setForm(itemForm(item))
     setVariantInputs(optionInputsFrom(item.variants || []))
@@ -181,10 +190,10 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-6 md:p-8">
-      <div className="mb-6 shrink-0"><h1 className="text-3xl font-bold tracking-tight">{t('products')}</h1></div>
-      <div className="grid min-h-0 flex-1 grid-rows-2 gap-6 xl:grid-cols-[380px_1fr] xl:grid-rows-1">
-        <Card className="min-h-0 overflow-hidden">
+    <div className="h-full overflow-hidden p-6 md:p-8">
+      <div className="mb-6 flex shrink-0 items-center justify-between gap-3"><h1 className="text-3xl font-bold tracking-tight">{t('products')}</h1><Button onClick={() => { reset(); setIsFormOpen(true) }}>{t('createProduct')}</Button></div>
+      <div>
+        {isFormOpen && <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-contain bg-black/40 p-4 md:p-8"><Card className="flex h-[calc(100svh-2rem)] max-h-[calc(100svh-2rem)] w-full max-w-5xl flex-col overflow-hidden md:h-[calc(100svh-4rem)] md:max-h-[calc(100svh-4rem)]">
           <CardHeader className="sticky top-0 z-10 shrink-0 border-b bg-card py-3"><div className="flex items-center justify-between gap-3"><CardTitle>{editing ? t('editProduct') : t('createProduct')}</CardTitle><div className="flex shrink-0 gap-2"><Button className="min-w-24" type="submit" form="product-form" size="sm" disabled={save.isPending}>{save.isPending ? t('saving') : editing ? t('update') : t('createProduct')}</Button>{editing && <Button className="min-w-20" type="button" variant="outline" size="sm" onClick={reset}>{t('cancel')}</Button>}</div></div></CardHeader>
           <CardContent className="min-h-0 overflow-y-auto">
             <form id="product-form" onSubmit={submit} className="space-y-4">
@@ -205,8 +214,8 @@ export default function ProductsPage() {
               <div className="space-y-2"><Label>{t('description')} (繁中)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description['zh-TW']} onChange={(event) => setForm({ ...form, description: { ...form.description, 'zh-TW': event.target.value } })} /></div>
             </form>
           </CardContent>
-        </Card>
-        <Card className="flex min-h-0 flex-col overflow-hidden [&>div:last-child]:flex-1 [&>div:last-child]:min-h-0 [&>div:last-child]:overflow-hidden [&>div:last-child>div]:h-full [&>div:last-child>div]:!max-h-none">
+        </Card></div>}
+        <Card ref={containerRef} className={`flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden [&>div:last-child]:flex-1 [&>div:last-child]:min-h-0 [&>div:last-child]:overflow-hidden [&>div:last-child>div]:h-full [&>div:last-child>div]:!max-h-none ${isFormOpen ? 'hidden' : ''}`}>
           <CardHeader className="shrink-0"><div className="flex flex-wrap items-center justify-between gap-2"><CardTitle>{t('productList')}</CardTitle><div className="flex flex-wrap items-center justify-end gap-1"><span className="mr-2 text-xs text-muted-foreground">{t('productTotal')}: {filteredItems.length}</span><select aria-label={t('categories')} className="h-8 max-w-40 rounded-md border bg-background px-2 text-xs" value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setPage(1) }}><option value="">{t('allCategories')}</option>{categories.map((category) => <option key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</option>)}</select><span className="ml-1 text-xs text-muted-foreground">{currentPage}/{totalPages}</span><Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setPage((current) => current - 1)}>‹</Button><Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setPage((current) => current + 1)}>›</Button></div></div></CardHeader>
           <CardContent className="min-h-0"><div className="max-h-[calc(100svh-220px)] overflow-auto"><Table><TableHeader><TableRow><TableHead className="h-8 px-2 py-1 text-xs">{t('name')}</TableHead><TableHead className="h-8 px-2 py-1 text-xs">{t('categories')}</TableHead><TableHead className="h-8 px-2 py-1 text-right text-xs">{t('actions')}</TableHead></TableRow></TableHeader><TableBody>{isLoading ? <TableRow><TableCell className="px-2 py-1 text-xs" colSpan={3}>{t('loading')}</TableCell></TableRow> : items.map((item) => <TableRow key={item._id}><TableCell className="px-2 py-1 text-xs font-medium">{item.name}</TableCell><TableCell className="px-2 py-1 text-xs">{item.categoryName || '—'}</TableCell><TableCell className="space-x-1 px-2 py-1 text-right"><Button className="min-w-20" size="sm" variant="outline" onClick={() => edit(item)}>{t('edit')}</Button><Button className="min-w-20" size="sm" variant="outline" onClick={() => copy(item)}>{t('copy')}</Button><AlertDialog><AlertDialogTrigger asChild><Button className="min-w-20" size="sm" variant="destructive">{t('delete')}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('confirmDeleteProduct')}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="min-w-20">{t('cancel')}</AlertDialogCancel><AlertDialogAction className="min-w-20" variant="destructive" onClick={() => remove.mutate(item._id)}>{t('confirm')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></TableCell></TableRow>)}</TableBody></Table></div></CardContent>
         </Card>
