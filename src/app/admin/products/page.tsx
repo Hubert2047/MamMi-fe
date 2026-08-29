@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { type Item, type ItemInput, type LocalizedOption } from '@/api/item'
+import { type Item, type ItemInput, type LocalizedOption, type OptionGroup } from '@/api/item'
 import { createCatalogItem, deleteCatalogItem, getCatalogItems, updateCatalogItem } from '@/api/catalog-item'
 import { getCategories, type Category } from '@/api/category'
 import { getAddons, type Addon } from '@/api/addon'
@@ -30,6 +30,7 @@ const emptyForm: ItemInput = {
   popular: false,
   new: false,
   variants: [],
+  optionGroups: [],
   price: { base: 0, uber: 0, foodpanda: 0 },
   categoryId: '',
   addons: [],
@@ -53,6 +54,9 @@ const optionInputsFrom = (options: LocalizedOption[]): OptionInputs => ({
   en: options.map((option) => option.names.en).join(', '),
   'zh-TW': options.map((option) => option.names['zh-TW']).join(', '),
 })
+type OptionGroupInput = { id: string; names: OptionInputs; options: OptionInputs; selection: 'single' | 'multiple'; defaultOptionId: string }
+const emptyGroup = (): OptionGroupInput => ({ id: `group-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, names: { ...emptyOptionInputs }, options: { ...emptyOptionInputs }, selection: 'single', defaultOptionId: '' })
+const groupInputsFrom = (groups: OptionGroup[] = []): OptionGroupInput[] => groups.map((group) => ({ id: group.id, names: optionInputsFrom([{ id: group.id, names: group.names }]), options: optionInputsFrom(group.options), selection: group.selection, defaultOptionId: group.options.some((option) => option.id === (group as OptionGroup & { defaultOptionId?: string }).defaultOptionId) ? (group as OptionGroup & { defaultOptionId?: string }).defaultOptionId || '' : '' }))
 
 export default function ProductsPage() {
   const queryClient = useQueryClient()
@@ -67,6 +71,7 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useState(10)
   const [variantInputs, setVariantInputs] = useState<OptionInputs>(emptyOptionInputs)
   const [noteOptionInputs, setNoteOptionInputs] = useState<OptionInputs>(emptyOptionInputs)
+  const [optionGroupInputs, setOptionGroupInputs] = useState<OptionGroupInput[]>([])
   const [pendingImage, setPendingImage] = useState<File | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const { data: allItems = [], isLoading } = useQuery({ queryKey: ['catalog-items', locale], queryFn: () => getCatalogItems(locale) })
@@ -110,6 +115,7 @@ export default function ProductsPage() {
     setConfirmAction(null)
     setVariantInputs(emptyOptionInputs)
     setNoteOptionInputs(emptyOptionInputs)
+    setOptionGroupInputs([])
     setPendingImage(null)
   }
 
@@ -127,6 +133,7 @@ export default function ProductsPage() {
       categoryId,
       addons: item.addons.map((addon) => addon._id),
       variants: item.variants || [],
+      optionGroups: item.optionGroups || [],
       noteOptions: item.noteOptions || [],
       price: { base: 0, uber: 0, foodpanda: 0 },
       components: item.components || [],
@@ -138,6 +145,7 @@ export default function ProductsPage() {
     setForm(itemForm(item))
     setVariantInputs(optionInputsFrom(item.variants || []))
     setNoteOptionInputs(optionInputsFrom(item.noteOptions || []))
+    setOptionGroupInputs(groupInputsFrom(item.optionGroups || []))
   }
 
   function copy(item: Item) {
@@ -145,6 +153,7 @@ export default function ProductsPage() {
     setForm(itemForm(item))
     setVariantInputs(optionInputsFrom(item.variants || []))
     setNoteOptionInputs(optionInputsFrom(item.noteOptions || []))
+    setOptionGroupInputs(groupInputsFrom(item.optionGroups || []))
   }
 
   function submit(event: React.FormEvent) {
@@ -161,7 +170,8 @@ export default function ProductsPage() {
       const uploadedImage = pendingImage ? await uploadImage(pendingImage) : null
       const imageUrl = uploadedImage?.url || form.imageUrl
       const imagePublicId = uploadedImage?.publicId || form.imagePublicId
-      save.mutate({ ...form, imageUrl, imagePublicId, variants: buildOptions(variantInputs, 'variant'), noteOptions: buildOptions(noteOptionInputs, 'note') })
+      const optionGroups = optionGroupInputs.map((group, index) => ({ id: group.id || `group-${index + 1}`, names: { vi: group.names.vi.trim(), en: group.names.en.trim(), 'zh-TW': group.names['zh-TW'].trim() }, selection: group.selection, required: false, defaultOptionId: group.defaultOptionId || undefined, options: buildOptions(group.options, `group-${index + 1}-option`) })).filter((group) => group.names.vi || group.names.en || group.names['zh-TW'])
+      save.mutate({ ...form, imageUrl, imagePublicId, optionGroups, variants: buildOptions(variantInputs, 'variant'), noteOptions: buildOptions(noteOptionInputs, 'note') })
       setConfirmAction(null)
     } catch (error) {
       toast.error(error instanceof Error ? `${t('imageUploadError')}: ${error.message}` : t('imageUploadError'))
@@ -188,6 +198,7 @@ export default function ProductsPage() {
               {form.type === 'combo' && <div className="space-y-2"><Label>{t('comboComponents')}</Label><div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-3 sm:grid-cols-2">{allItems.filter((item) => item._id !== editing?._id).map((item) => { const selected = (form.components || []).some((component) => component.itemId === item._id); return <label key={item._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={selected} onCheckedChange={(checked) => setForm({ ...form, components: checked ? [...(form.components || []), { itemId: item._id, quantity: 1 }] : (form.components || []).filter((component) => component.itemId !== item._id) })} /><span className="truncate">{item.name}</span></label> })}</div></div>}
               <div className="space-y-2"><Label>{t('variants')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={variantInputs.vi} onChange={(event) => setVariantInputs({ ...variantInputs, vi: event.target.value })} placeholder={`${t('variantPlaceholder')} (VI)`} /><Input value={variantInputs.en} onChange={(event) => setVariantInputs({ ...variantInputs, en: event.target.value })} placeholder={`${t('variantPlaceholder')} (EN)`} /><Input value={variantInputs['zh-TW']} onChange={(event) => setVariantInputs({ ...variantInputs, 'zh-TW': event.target.value })} placeholder={`${t('variantPlaceholder')} (繁中)`} /></div>
               <div className="space-y-2"><Label>{t('notes')} <span className="font-normal text-muted-foreground">{t('commaSeparated')}</span></Label><Input value={noteOptionInputs.vi} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, vi: event.target.value })} placeholder={`${t('notePlaceholder')} (VI)`} /><Input value={noteOptionInputs.en} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, en: event.target.value })} placeholder={`${t('notePlaceholder')} (EN)`} /><Input value={noteOptionInputs['zh-TW']} onChange={(event) => setNoteOptionInputs({ ...noteOptionInputs, 'zh-TW': event.target.value })} placeholder={`${t('notePlaceholder')} (繁中)`} /></div>
+              <div className="space-y-3 rounded-lg border p-3"><div className="flex items-center justify-between"><Label>{t('optionGroups')}</Label><Button type="button" size="sm" variant="outline" onClick={() => setOptionGroupInputs((groups) => [...groups, emptyGroup()])}>{t('addOptionGroup')}</Button></div>{optionGroupInputs.map((group, index) => <div key={group.id} className="space-y-2 rounded border p-2"><div className="flex items-center justify-between gap-2"><span className="text-sm font-medium">{t('optionGroups')} {index + 1}</span><Button type="button" size="sm" variant="destructive" onClick={() => setOptionGroupInputs((groups) => groups.filter((_, groupIndex) => groupIndex !== index))}>{t('removeOptionGroup')}</Button></div><Input value={group.names.vi} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, names: { ...entry.names, vi: event.target.value } } : entry))} placeholder={`${t('optionGroupName')} (VI)`} /><Input value={group.names.en} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, names: { ...entry.names, en: event.target.value } } : entry))} placeholder={`${t('optionGroupName')} (EN)`} /><Input value={group.names['zh-TW']} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, names: { ...entry.names, 'zh-TW': event.target.value } } : entry))} placeholder={`${t('optionGroupName')} (繁中)`} /><Input value={group.options.vi} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, options: { ...entry.options, vi: event.target.value } } : entry))} placeholder={`${t('optionGroupOptions')} (VI)`} /><Input value={group.options.en} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, options: { ...entry.options, en: event.target.value } } : entry))} placeholder={`${t('optionGroupOptions')} (EN)`} /><Input value={group.options['zh-TW']} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, options: { ...entry.options, 'zh-TW': event.target.value } } : entry))} placeholder={`${t('optionGroupOptions')} (繁中)`} /><div className="flex gap-2"><select className="h-8 rounded border px-2 text-sm" value={group.selection} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, selection: event.target.value as 'single' | 'multiple' } : entry))}><option value="single">{t('optionGroupSingle')}</option><option value="multiple">{t('optionGroupMultiple')}</option></select><select className="h-8 min-w-32 rounded border px-2 text-sm" value={group.defaultOptionId} onChange={(event) => setOptionGroupInputs((groups) => groups.map((entry, groupIndex) => groupIndex === index ? { ...entry, defaultOptionId: event.target.value } : entry))}><option value="">{t('optionGroupDefault')}</option>{buildOptions(group.options, `group-${index + 1}-option`).map((option) => <option key={option.id} value={option.id}>{option.names[locale] || option.names.vi || option.names.en || option.names['zh-TW']}</option>)}</select></div></div>)}</div>
               {form.type !== 'combo' && <div className="space-y-2"><Label>{t('addons')}</Label><div className="grid grid-cols-2 gap-2 rounded-lg border p-3">{addons.map((addon) => <label key={addon._id} className="flex min-w-0 items-center gap-2 text-sm"><Checkbox checked={form.addons.includes(addon._id)} onCheckedChange={(checked) => setForm({ ...form, addons: checked ? [...form.addons, addon._id] : form.addons.filter((id) => id !== addon._id) })} /><span className="truncate">{addon.names[locale] || addon.names.vi || addon.names.en || addon.names['zh-TW']}</span></label>)}</div></div>}
               <div className="space-y-2"><Label>{t('description')} (VI)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.vi} onChange={(event) => setForm({ ...form, description: { ...form.description, vi: event.target.value } })} /></div>
               <div className="space-y-2"><Label>{t('description')} (EN)</Label><Textarea className="min-h-12 resize-none" placeholder={t('descriptionPlaceholder')} value={form.description.en} onChange={(event) => setForm({ ...form, description: { ...form.description, en: event.target.value } })} /></div>

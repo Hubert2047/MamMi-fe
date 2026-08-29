@@ -63,6 +63,12 @@ const POSPage: React.FC = () => {
     const { data: promotions = [], isLoading: isPromotionsLoading } = usePromotions()
     const { data: nextOrderNumber, isLoading: isOrderNumberLoading } = useNextOrderNumber()
     const { data: tables = [] } = useQuery({ queryKey: ['store-tables'], queryFn: getStoreTables })
+    const sortedTables = useMemo(() => [...tables].sort((left, right) => {
+        const leftCode = Number(String(left.code).trim())
+        const rightCode = Number(String(right.code).trim())
+        if (Number.isFinite(leftCode) && Number.isFinite(rightCode)) return leftCode - rightCode
+        return String(left.code).localeCompare(String(right.code), undefined, { numeric: true, sensitivity: 'base' })
+    }), [tables])
     const queryClient = useQueryClient()
     const [currentOrderNumber, setCurrentOrderNumber] = useState<number>(nextOrderNumber ?? 1)
     useEffect(() => {
@@ -89,10 +95,18 @@ const POSPage: React.FC = () => {
         ]
         const orderedGroups = [...smartGroups.filter(([, items]) => items.length > 0), ...Object.entries(grouped).sort(([leftName, leftItems], [rightName, rightItems]) => {
             const orderDifference = (leftItems[0]?.categorySortOrder ?? 0) - (rightItems[0]?.categorySortOrder ?? 0)
-            return orderDifference || leftName.localeCompare(rightName)
+            if (orderDifference) return orderDifference
+            const leftId = typeof leftItems[0]?.categoryId === 'string' ? leftItems[0].categoryId : leftItems[0]?.categoryId?._id ?? leftName
+            const rightId = typeof rightItems[0]?.categoryId === 'string' ? rightItems[0].categoryId : rightItems[0]?.categoryId?._id ?? rightName
+            return String(leftId).localeCompare(String(rightId))
         })]
         return Object.fromEntries(orderedGroups)
     }, [activePromotions, sellableItems, t])
+
+    useEffect(() => {
+        if (Object.keys(itemsByCategory).includes(selectedCategory)) return
+        setSelectedCategory(Object.keys(itemsByCategory)[0] ?? '')
+    }, [itemsByCategory, selectedCategory])
 
     useEffect(() => {
         if (!selectedItem) return
@@ -276,7 +290,7 @@ const POSPage: React.FC = () => {
                     closeDisplayOrderDetail={closeDisplayOrderDetail}
                     openBtns={openBtns}
                     setOpenBtns={setOpenBtns}
-                    tables={tables}
+                    tables={sortedTables}
                     onCheckoutPendingOrder={() => checkoutPendingOrder(currentOrder)}
                 />
                 <div className='flex min-h-0 flex-1 gap-2'>

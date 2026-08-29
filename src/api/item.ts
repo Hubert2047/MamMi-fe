@@ -9,6 +9,7 @@ export type PriceType = {
 
 export type LocalizedText = { vi: string; en: string; 'zh-TW': string }
 export type LocalizedOption = { id: string; names: LocalizedText }
+export type OptionGroup = { id: string; names: LocalizedText; selection: 'single' | 'multiple'; required: boolean; defaultOptionId?: string; options: LocalizedOption[] }
 
 export interface Item {
     _id: string
@@ -27,6 +28,7 @@ export interface Item {
     price: PriceType
     addons: Addon[]
     variants: LocalizedOption[]
+    optionGroups: OptionGroup[]
     noteOptions: LocalizedOption[]
     permanentlyActive: boolean
     temporarilyUnavailable: boolean
@@ -44,6 +46,7 @@ export interface ItemInput {
     popular?: boolean
     new?: boolean
     variants: LocalizedOption[]
+    optionGroups: OptionGroup[]
     price: PriceType
     categoryId: string
     addons: string[]

@@ -183,6 +183,8 @@ Object.assign(messages.vi, {
   printAgentWidth: "Rộng",
   printAgentHeight: "Cao",
   printAgentGap: "Khoảng cách",
+  printAgentEditPrinter: "Sửa máy in",
+  printAgentSavePrinter: "Lưu máy in",
   printAgentCreate: "Tạo cấu hình",
   printAgentTokenTitle: "Token mới — hãy lưu lại ngay",
   printAgentTokenDescription:
@@ -228,6 +230,8 @@ Object.assign(messages.en, {
   printAgentWidth: "Width",
   printAgentHeight: "Height",
   printAgentGap: "Gap",
+  printAgentEditPrinter: "Edit printer",
+  printAgentSavePrinter: "Save printer",
   printAgentCreate: "Create configuration",
   printAgentTokenTitle: "New token — save it now",
   printAgentTokenDescription:
@@ -273,6 +277,8 @@ Object.assign(messages["zh-TW"], {
   printAgentWidth: "寬",
   printAgentHeight: "高",
   printAgentGap: "間距",
+  printAgentEditPrinter: "編輯印表機",
+  printAgentSavePrinter: "儲存印表機",
   printAgentCreate: "建立設定",
   printAgentTokenTitle: "新 Token — 請立即保存",
   printAgentTokenDescription:
@@ -2643,6 +2649,9 @@ Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
   promotionPreviewNoStores: "尚未指派分店",
   promotionPreviewLineIncludesAddons: "折抵此商品及其所有加料",
 });
+Object.assign(messages.vi, { optionGroups: 'Nhóm tùy chọn', addOptionGroup: 'Thêm nhóm', removeOptionGroup: 'Xóa nhóm', optionGroupName: 'Tên nhóm', optionGroupOptions: 'Các lựa chọn (phân cách bằng dấu phẩy)', optionGroupDefault: 'Mặc định', optionGroupSingle: 'Chọn một', optionGroupMultiple: 'Chọn nhiều' });
+Object.assign(messages.en, { optionGroups: 'Option groups', addOptionGroup: 'Add group', removeOptionGroup: 'Remove group', optionGroupName: 'Group name', optionGroupOptions: 'Options (comma separated)', optionGroupDefault: 'Default', optionGroupSingle: 'Choose one', optionGroupMultiple: 'Choose many' });
+Object.assign(messages['zh-TW'], { optionGroups: '選項群組', addOptionGroup: '新增群組', removeOptionGroup: '刪除群組', optionGroupName: '群組名稱', optionGroupOptions: '選項（以逗號分隔）', optionGroupDefault: '預設', optionGroupSingle: '單選', optionGroupMultiple: '多選' });
 
 export function useI18n() {
   const context = useContext(I18nContext);

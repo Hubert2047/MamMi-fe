@@ -57,16 +57,16 @@ function PosHeader({
     
 
     return (
-        <div className='mb-2 flex items-center justify-start gap-1 rounded border border-[#ccc] p-1'>
-            <div className='flex items-center space-x-2 '>
+        <div className='mb-2 flex items-center justify-start gap-0.5 rounded border border-[#ccc] p-0.5'>
+            <div className='flex items-center space-x-1 '>
                 <Label htmlFor='stt' className='whitespace-nowrap'>
                     {t('orderNumber')}:
                 </Label>
-                <Input id='stt' className='w-15' value={isDetail ? currentOrder.number : currentOrderNumber} disabled />
+                <Input id='stt' className='h-8 w-14 px-1 text-sm' value={isDetail ? currentOrder.number : currentOrderNumber} disabled />
             </div>
 
             <ToggleGroup
-                size='lg'
+                size='sm'
                 variant='outline'
                 type='single'
                 value={currentOrder.type}
@@ -95,53 +95,53 @@ function PosHeader({
                 <ToggleGroupItem
                     value='takeaway'
                     disabled={isReadOnly}
-                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     外帶
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='dine_in'
                     disabled={isReadOnly}
-                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     內用
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='uber'
                     disabled={isReadOnly}
-                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     Uber
                 </ToggleGroupItem>
                 <ToggleGroupItem
                     value='foodpanda'
                     disabled={isReadOnly}
-                    className='data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
+                    className='h-8 px-2 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary/90'>
                     FoodPanda
                 </ToggleGroupItem>
             </ToggleGroup>
 
-            {currentOrder.type === 'dine_in' && <div className='flex items-center gap-2'><Label htmlFor='order-table' className='whitespace-nowrap'>{t('posTable')}:</Label><select id='order-table' disabled={isReadOnly} className='h-9 w-16 rounded-md border bg-background px-2 text-sm' value={currentOrder.table || ''} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, table: event.target.value }))}><option value=''></option>{tables.filter((table) => table.active).map((table) => <option key={table._id} value={table.code}>{table.code}</option>)}</select></div>}
+            {currentOrder.type === 'dine_in' && <div className='flex items-center gap-1'><Label htmlFor='order-table' className='whitespace-nowrap text-sm'>{t('posTable')}:</Label><select id='order-table' disabled={isReadOnly} className='h-8 w-14 rounded-md border bg-background px-1 text-sm' value={currentOrder.table || ''} onChange={(event) => setCurrentOrder((prev) => ({ ...prev, table: event.target.value }))}><option value=''></option>{tables.filter((table) => table.active).sort((a, b) => { const aCode = Number(a.code); const bCode = Number(b.code); if (Number.isFinite(aCode) && Number.isFinite(bCode)) return aCode - bCode; return a.code.localeCompare(b.code, undefined, { sensitivity: 'base' }) }).map((table) => <option key={table._id} value={table.code}>{table.code}</option>)}</select></div>}
 
             <div className='flex-1'></div>
 
             <div className='ml-auto flex shrink-0 items-center space-x-1'>
-                        <Label className='whitespace-nowrap text-base font-semibold'>{t('total')}:</Label>
+                        <Label className='whitespace-nowrap text-sm font-semibold'>{t('total')}:</Label>
                 {hasPromotionDiscount ? <div className='flex min-w-30 items-baseline justify-center gap-1 leading-tight'>
                     <span className='text-xl font-extrabold tabular-nums text-primary'>{totalPrice.toLocaleString()}</span>
                     <span className='text-xs text-muted-foreground line-through'>{originalTotal.toLocaleString()}</span>
-                </div> : <Input className='h-10 w-30 !text-xl font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />}
+                </div> : <Input className='h-8 w-24 !text-lg font-extrabold tabular-nums' value={totalPrice.toLocaleString()} disabled />}
             </div>
-            <div className='ml-4 flex shrink-0 justify-end'>
+            <div className='ml-2 flex shrink-0 justify-end'>
                 {isDetail ? (
                     isOrderEditing ? (
                         null
                     ) : (
                         <div className='flex gap-1'>
-                            {currentOrder.status === 'pending' && <Button className='h-10 bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
-                            <Button className='h-10 bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
+                            {currentOrder.status === 'pending' && <Button className='h-8 px-2 text-sm bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
+                            <Button className='h-8 px-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
                         </div>
                     )
                 ) : isCheckout || isPendingOrder ? (
                     <Button
-                        className='h-10 w-36'
+                        className='h-8 w-32 text-sm'
                         variant='default'
                         onClick={
                             isPendingOrder
@@ -153,7 +153,7 @@ function PosHeader({
                 ) : (
                     <div className='flex justify-end gap-1'>
                         <Button
-                            className='h-10 min-w-20 px-3 bg-yellow-400 text-black hover:bg-yellow-500'
+                            className='h-8 min-w-16 px-2 text-sm bg-yellow-400 text-black hover:bg-yellow-500'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToOrder'))
@@ -165,7 +165,7 @@ function PosHeader({
                             {t('placeOrder')}
                         </Button>
                         <Button
-                            className='h-10 min-w-20 px-3 bg-green-600 text-white hover:bg-green-700'
+                            className='h-8 min-w-16 px-2 text-sm bg-green-600 text-white hover:bg-green-700'
                             onClick={() => {
                                 if (currentOrder.items.length === 0) {
                                     toast.error(t('noProductsToPay'))
@@ -179,7 +179,7 @@ function PosHeader({
                     </div>
                 )}
             </div>
-            {!openBtns && <div className='ml-5'><FloatingButton open={false} setOpenBtns={setOpenBtns} /></div>}
+            {!openBtns && <div className='ml-2'><FloatingButton open={false} setOpenBtns={setOpenBtns} /></div>}
         </div>
     )
 }

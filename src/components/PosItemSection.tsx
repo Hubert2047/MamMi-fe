@@ -108,6 +108,10 @@ function PosItemSection({
         if (item.variants.length > 0) {
             variant = item.variants[0]?.id || ''
         }
+        const optionSelections = (item.optionGroups || []).flatMap((group) => {
+            const defaultId = group.defaultOptionId || (group.required ? group.options[0]?.id : undefined)
+            return defaultId ? [{ groupId: group.id, optionId: defaultId }] : []
+        })
         setCurrentOrderItem((prev) => ({
             ...prev,
             id: item._id,
@@ -115,6 +119,7 @@ function PosItemSection({
             number: currentOrderNumber,
             name: item.name,
             variant,
+            optionSelections,
             basePrice: getPriceByType(currentOrder.type, item.price),
             addons: item.type === 'combo' ? [] : prev.addons,
             componentSelections: item.type === 'combo' ? (item.components || []).flatMap((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); return Array.from({ length: component.quantity }, (_, instance) => ({ componentId: `${component.itemId}-${index}-${instance}`, itemId: component.itemId, noteOptions: [], note: '', name: componentItem?.name || component.itemId })) }) : [],
@@ -288,6 +293,17 @@ function PosItemSection({
                                 </RadioGroup>
                             </div>
                         )}
+                        {(selectedItem.optionGroups || []).map((group) => {
+                            const selected = (currentOrderItem.optionSelections || []).filter((entry) => entry.groupId === group.id).map((entry) => entry.optionId)
+                            const setGroupSelection = (values: string[]) => {
+                                if (isReadOnly) return
+                                setCurrentOrderItem((prev) => ({ ...prev, optionSelections: [...(prev.optionSelections || []).filter((entry) => entry.groupId !== group.id), ...values.map((optionId) => ({ groupId: group.id, optionId }))] }))
+                            }
+                            return <div key={group.id} className='option-group flex items-center gap-4'>
+                                <Label className='block w-27 shrink-0 text-start font-semibold'>{optionName(group)}:</Label>
+                                {group.selection === 'single' ? <ToggleGroup type='single' variant='outline' spacing={0} className='w-full flex-wrap' value={selected[0] || ''} onValueChange={(value) => setGroupSelection(value ? [value] : [])}>{group.options.map((option) => <ToggleGroupItem key={option.id} value={option.id} className='h-auto min-h-8 whitespace-normal px-2 py-1 text-sm data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground'>{optionName(option)}</ToggleGroupItem>)}</ToggleGroup> : <ToggleGroup type='multiple' variant='outline' spacing={0} className='w-full flex-wrap' value={selected} onValueChange={(value) => setGroupSelection(value)}>{group.options.map((option) => <ToggleGroupItem key={option.id} value={option.id} className='h-auto min-h-8 whitespace-normal px-2 py-1 text-sm data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground'>{optionName(option)}</ToggleGroupItem>)}</ToggleGroup>}
+                            </div>
+                        })}
                         {/* note options */}
                         {selectedItem.noteOptions.length > 0 && (
                             <div className='note-options flex justify-start items-center gap-4'>

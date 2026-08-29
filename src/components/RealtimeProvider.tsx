@@ -104,6 +104,10 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
     const clientType = realtimeClientTypeForPath(pathname)
     const socket = createRealtimeSocket(token, activeStoreId, clientType)
     const refreshCatalog = () => {
+      // SuperAdmin addon create/update/delete events use catalog.changed. Keep
+      // the global addon query fresh so StoreAddonsPanel can immediately offer
+      // newly-created addons (and remove deleted ones from its selector).
+      void queryClient.invalidateQueries({ queryKey: ['addons'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['items'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['store-items'], refetchType: 'all' })
       void queryClient.invalidateQueries({ queryKey: ['store-addons'], refetchType: 'all' })

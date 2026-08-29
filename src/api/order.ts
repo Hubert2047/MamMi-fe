@@ -10,6 +10,7 @@ export interface OrderItem {
     variant: string
     addons: OrderItemAddon[]
     noteOptions: string[]
+    optionSelections?: { groupId: string; optionId: string; name?: string }[]
     note: string
     componentSelections?: { componentId: string; itemId: string; noteOptions: string[]; note: string; name?: string }[]
     printName?: string
