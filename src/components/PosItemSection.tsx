@@ -4,6 +4,8 @@ import { Label } from '@/components/ui/label.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
+
+const MAX_NOTE_LENGTH = 40
 import NumPad from '@/components/NumPad.tsx'
 import React from 'react'
 import { updateOrderPayment, type BaseOrder, type OrderItem } from '@/api/order.ts'
@@ -331,7 +333,7 @@ function PosItemSection({
                             <div className='space-y-2 rounded border p-3'>
                                 <Label className='font-semibold'>{t('comboComponents')}</Label>
                                 <div className='max-h-64 space-y-2 overflow-y-auto'>
-                                    {(currentOrderItem.componentSelections || []).map((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); if (!componentItem) return null; return <details key={component.componentId} className='rounded border px-3 py-2' open={index === 0}><summary className='cursor-pointer text-sm font-medium'>{component.name || componentItem.name}{(currentOrderItem.componentSelections || []).filter((entry) => entry.itemId === component.itemId).length > 1 ? ` ${index + 1}` : ''}<span className='ml-2 text-xs text-muted-foreground'>{component.noteOptions.length ? component.noteOptions.map((id) => optionName(componentItem.noteOptions.find((option) => option.id === id) || { names: { vi: id, en: id, 'zh-TW': id } })).join(', ') : t('noNoteSelected')}</span></summary><div className='mt-2 space-y-2'>{componentItem.noteOptions.length > 0 && <ToggleGroup type='multiple' variant='outline' className='flex-wrap gap-2' value={component.noteOptions} onValueChange={(value) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, noteOptions: value } : entry) }))}>{componentItem.noteOptions.map((option) => <ToggleGroupItem key={option.id} value={option.id} className='h-auto min-h-8 whitespace-normal px-2 py-1 text-sm'>{optionName(option)}</ToggleGroupItem>)}</ToggleGroup>}{<Input value={component.note} placeholder={t('note')} onChange={(event) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, note: event.target.value } : entry) }))} />}</div></details> })}
+                                    {(currentOrderItem.componentSelections || []).map((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); if (!componentItem) return null; return <details key={component.componentId} className='rounded border px-3 py-2' open={index === 0}><summary className='cursor-pointer text-sm font-medium'>{component.name || componentItem.name}{(currentOrderItem.componentSelections || []).filter((entry) => entry.itemId === component.itemId).length > 1 ? ` ${index + 1}` : ''}<span className='ml-2 text-xs text-muted-foreground'>{component.noteOptions.length ? component.noteOptions.map((id) => optionName(componentItem.noteOptions.find((option) => option.id === id) || { names: { vi: id, en: id, 'zh-TW': id } })).join(', ') : t('noNoteSelected')}</span></summary><div className='mt-2 space-y-2'>{componentItem.noteOptions.length > 0 && <ToggleGroup type='multiple' variant='outline' className='flex-wrap gap-2' value={component.noteOptions} onValueChange={(value) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, noteOptions: value } : entry) }))}>{componentItem.noteOptions.map((option) => <ToggleGroupItem key={option.id} value={option.id} className='h-auto min-h-8 whitespace-normal px-2 py-1 text-sm'>{optionName(option)}</ToggleGroupItem>)}</ToggleGroup>}{<Input value={component.note} maxLength={MAX_NOTE_LENGTH} placeholder={t('note')} onChange={(event) => setCurrentOrderItem((prev) => ({ ...prev, componentSelections: (prev.componentSelections || []).map((entry) => entry.componentId === component.componentId ? { ...entry, note: event.target.value } : entry) }))} />}</div></details> })}
                                 </div>
                             </div>
                         )}
@@ -380,6 +382,7 @@ function PosItemSection({
                                 id='note'
                                 disabled={isReadOnly}
                                 value={currentOrderItem.note}
+                                maxLength={MAX_NOTE_LENGTH}
                                 onChange={(e) => {
                                     setCurrentOrderItem((prev) => ({ ...prev, note: e.target.value }))
                                 }}
