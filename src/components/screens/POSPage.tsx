@@ -2,11 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { type Item } from '@/api/item'
-import { type BaseOrder, type OrderItem, updateOrderCustomer, updatePendingOrder } from '@/api/order.ts'
+import { type BaseOrder, type OrderItem, updatePendingOrder } from '@/api/order.ts'
 import ExpenseTableDialog from '@/components/expense/ExpenseTableDialog'
 import PosOrderList from '@/components/orders/PosOrderList'
 import { DEFAULT_ORDER, DEFAULT_ORDER_ITEM } from '@/constants'
@@ -59,8 +56,6 @@ const POSPage: React.FC = () => {
     const [openStocktake, setOpenStocktake] = useState(false)
     const [openTableSessions, setOpenTableSessions] = useState(false)
     const [promotionInfoOpen, setPromotionInfoOpen] = useState(false)
-    const [customerDialogOpen, setCustomerDialogOpen] = useState(false)
-    const [customerDraft, setCustomerDraft] = useState({ name: '', phone: '' })
     const showShiftAttendanceButton = process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === 'true'
     const [openTemporaryAvailability, setOpenTemporaryAvailability] = useState(false)
     const { data: items = [], isLoading: isItemsLoading } = useItems()
@@ -174,28 +169,6 @@ const POSPage: React.FC = () => {
             toast.error(code === 'ORDER_VERSION_CONFLICT' ? t('orderChangedElsewhere') : t('updateFailure'))
         },
     })
-    const updateCustomerMutation = useMutation({
-        mutationFn: updateOrderCustomer,
-        onSuccess: (updatedOrder) => {
-            setCurrentOrder(updatedOrder)
-            setCustomerDialogOpen(false)
-            queryClient.invalidateQueries({ queryKey: ['orders'] })
-            toast.success(t('updateSuccess'))
-        },
-        onError: () => toast.error(t('updateFailure')),
-    })
-
-    function openCustomerDialog() {
-        if (!currentOrder.customer) return
-        setCustomerDraft({ name: currentOrder.customer.name || '', phone: currentOrder.customer.phone || '' })
-        setCustomerDialogOpen(true)
-    }
-
-    function saveCustomer() {
-        if (!currentOrder.customer) return
-        void updateCustomerMutation.mutateAsync({ id: currentOrder._id, customer: customerDraft })
-    }
-
     function setCheckoutOpen(checkout: boolean) {
         if (checkout && !isCheckout) {
             openBtnsBeforeCheckout.current = openBtns
@@ -318,7 +291,6 @@ const POSPage: React.FC = () => {
                     setOpenBtns={setOpenBtns}
                     tables={sortedTables}
                     onCheckoutPendingOrder={() => checkoutPendingOrder(currentOrder)}
-                    onEditCustomer={openCustomerDialog}
                 />
                 <div className='flex min-h-0 flex-1 gap-2'>
                     <div className='ordered-items max-w-80 flex-1 rounded border border-[#ccc] p-2'>
@@ -457,16 +429,6 @@ const POSPage: React.FC = () => {
                     }}
                 />
             )}
-            <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
-                <DialogContent className='top-4 translate-y-0 sm:max-w-md'>
-                    <DialogHeader><DialogTitle>{t('contact')}</DialogTitle></DialogHeader>
-                    <div className='grid gap-3'>
-                        <div className='grid gap-1'><Label htmlFor='order-customer-name'>{t('customer')}</Label><Input id='order-customer-name' value={customerDraft.name} maxLength={120} onChange={(event) => setCustomerDraft((current) => ({ ...current, name: event.target.value }))} /></div>
-                        <div className='grid gap-1'><Label htmlFor='order-customer-phone'>{t('phone')}</Label><Input id='order-customer-phone' value={customerDraft.phone} maxLength={40} onChange={(event) => setCustomerDraft((current) => ({ ...current, phone: event.target.value }))} /></div>
-                    </div>
-                    <DialogFooter><Button variant='outline' onClick={() => setCustomerDialogOpen(false)}>{t('cancel')}</Button><Button onClick={saveCustomer} disabled={updateCustomerMutation.isPending}>{t('confirm')}</Button></DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

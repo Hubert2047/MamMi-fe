@@ -30,7 +30,6 @@ type Props = {
     setOpenBtns: React.Dispatch<React.SetStateAction<boolean>>
     tables: StoreTable[]
     onCheckoutPendingOrder(): void
-    onEditCustomer(): void
 }
 
 function PosHeader({
@@ -50,7 +49,6 @@ function PosHeader({
     setOpenBtns,
     tables,
     onCheckoutPendingOrder,
-    onEditCustomer,
 }: Props) {
     const { t } = useI18n()
     const isReadOnly = isDetail && !isOrderEditing
@@ -138,7 +136,6 @@ function PosHeader({
                     ) : (
                         <div className='flex gap-1'>
                             {currentOrder.status === 'pending' && <Button className='h-8 px-2 text-sm bg-green-600 text-white hover:bg-green-700' onClick={onCheckoutPendingOrder}>{t('pay')}</Button>}
-                            {currentOrder.customer && <Button className='h-8 px-2 text-sm' variant='outline' onClick={onEditCustomer}>{t('contact')}</Button>}
                             <Button className='h-8 px-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90' onClick={closeDisplayOrderDetail}>{t('createNewOrder')}</Button>
                         </div>
                     )

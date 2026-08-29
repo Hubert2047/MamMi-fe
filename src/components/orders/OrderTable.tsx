@@ -11,13 +11,14 @@ import {
     AlertDialogTrigger,
 } from '../ui/alert-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
-import { cancelOrder, type BaseOrder, type OrderRange } from '@/api/order.ts'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx'
+import { cancelOrder, type BaseOrder, type OrderRange, updateOrderCustomer } from '@/api/order.ts'
 import { useDailyClosingSummary, useOrders, queryKeys } from '@/hooks/queries'
 import Loading from '@/components/Loading.tsx'
 import { toast } from 'sonner'
 import { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input.tsx'
+import { Label } from '@/components/ui/label.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx'
 import PrintOptions from '../PrintOptions'
 import { useI18n } from '@/lib/i18n'
@@ -68,6 +69,8 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
     const [statusFilter, setStatusFilter] = useState<'all' | BaseOrder['status']>('pending')
     const [openPrintOptions, setOpenPrintOptions] = useState(false)
     const [focusOrder, setFocusOrder] = useState<BaseOrder | null>(null)
+    const [customerOrder, setCustomerOrder] = useState<BaseOrder | null>(null)
+    const [customerDraft, setCustomerDraft] = useState({ name: '', phone: '' })
     const [pageSize, setPageSize] = useState(8)
     const [currentTime] = useState(() => new Date().toISOString())
     const tableRef = useRef<HTMLDivElement>(null)
@@ -98,6 +101,26 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
             toast.error(message)
         },
     })
+    const updateCustomerMutation = useMutation({
+        mutationFn: updateOrderCustomer,
+        onSuccess: () => {
+            setCustomerOrder(null)
+            queryClient.invalidateQueries({ queryKey: ['orders'] })
+            toast.success(t('updateSuccess'))
+        },
+        onError: () => toast.error(t('updateFailure')),
+    })
+
+    const openCustomerEditor = (order: BaseOrder) => {
+        if (!order.customer) return
+        setCustomerDraft({ name: order.customer.name || '', phone: order.customer.phone || '' })
+        setCustomerOrder(order)
+    }
+
+    const saveCustomer = () => {
+        if (!customerOrder?.customer) return
+        updateCustomerMutation.mutate({ id: customerOrder._id, customer: customerDraft })
+    }
 
     const filteredOrders = orders.filter((o) => {
         const matchesStatus = statusFilter === 'all' || o.status === statusFilter
@@ -286,6 +309,7 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                                                     onClick={() => displayOrderDetail(order)}>
                                                     {t('detail')}
                                                 </Button>
+                                                {order.customer && <Button variant='outline' className='ml-1 h-10 px-3 text-base' onClick={() => openCustomerEditor(order)}>{t('contact')}</Button>}
                                                 {order.status === 'pending' && (
                                                     <Button
                                                         variant='default'
@@ -344,6 +368,16 @@ export function OrderTable({ open, displayOrderDetail, checkoutPendingOrder, onC
                     {focusOrder && openPrintOptions && (
                         <PrintOptions order={focusOrder} open={openPrintOptions} onClose={() => setOpenPrintOptions(false)} />
                     )}
+                    <Dialog open={Boolean(customerOrder)} onOpenChange={(isOpen) => { if (!isOpen) setCustomerOrder(null) }}>
+                        <DialogContent className='top-4 translate-y-0 sm:max-w-md'>
+                            <DialogHeader><DialogTitle>{t('contact')}</DialogTitle></DialogHeader>
+                            <div className='grid gap-3'>
+                                <div className='grid gap-1'><Label htmlFor='order-customer-name'>{t('customer')}</Label><Input id='order-customer-name' value={customerDraft.name} maxLength={120} onChange={(event) => setCustomerDraft((current) => ({ ...current, name: event.target.value }))} /></div>
+                                <div className='grid gap-1'><Label htmlFor='order-customer-phone'>{t('phone')}</Label><Input id='order-customer-phone' value={customerDraft.phone} maxLength={40} onChange={(event) => setCustomerDraft((current) => ({ ...current, phone: event.target.value }))} /></div>
+                            </div>
+                            <DialogFooter><Button variant='outline' onClick={() => setCustomerOrder(null)}>{t('cancel')}</Button><Button onClick={saveCustomer} disabled={updateCustomerMutation.isPending}>{t('confirm')}</Button></DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </DialogContent>
             </Dialog>
             {(isOrderLoading || cancelOrderMutation.isPending) && <Loading />}
