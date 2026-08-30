@@ -17,6 +17,7 @@ import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/hooks/auth'
 import { useStorePricingEmbedded } from '@/app/admin/store-pricing/store-pricing-context'
 import { Loader2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const emptyPrice: PriceType = { base: 0, uber: 0, foodpanda: 0 }
 const priceKeys = ['base', 'uber', 'foodpanda'] as const
@@ -33,6 +34,8 @@ export default function StoreMenuPanel() {
   const [draftPrice, setDraftPrice] = useState<PriceType>(emptyPrice)
   const [draftPermanentlyActive, setDraftPermanentlyActive] = useState(true)
   const [draftTemporarilyUnavailable, setDraftTemporarilyUnavailable] = useState(false)
+  const [draftVisibility, setDraftVisibility] = useState({ pos: true, qr: true, online: true })
+  const [draftAddonDisplayMode, setDraftAddonDisplayMode] = useState<'named' | 'merged'>('named')
   const [page, setPage] = useState(1)
   const pageSize = 4
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -60,6 +63,8 @@ export default function StoreMenuPanel() {
     setDraftPrice(item.price)
     setDraftPermanentlyActive(item.permanentlyActive)
     setDraftTemporarilyUnavailable(item.permanentlyActive && item.temporarilyUnavailable)
+    setDraftVisibility(item.visibility ?? { pos: true, qr: true, online: true })
+    setDraftAddonDisplayMode(item.addonDisplayMode === 'merged' ? 'merged' : 'named')
   }
 
   return <div className={`flex h-full min-h-0 flex-col gap-3 overflow-hidden ${embedded ? 'px-0 pb-0' : 'p-6 md:p-8'}`}>
@@ -76,26 +81,36 @@ export default function StoreMenuPanel() {
       <CardHeader className="shrink-0 px-4 py-0"><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><CardTitle>{t('productList')}</CardTitle><div className="w-36"><Select value={categoryFilter} onValueChange={(value) => { setCategoryFilter(value); setPage(1) }}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t('allCategories')}</SelectItem>{categories.map((category) => <SelectItem key={category._id} value={category._id}>{category.names[locale] || category.names.vi || category.names.en || category.names['zh-TW']}</SelectItem>)}</SelectContent></Select></div></div><div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">{t('total')}: {filteredMenu.length}</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>‹</Button><span className="text-sm text-muted-foreground">{page}/{totalPages}</span><Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>›</Button></div></div></div></CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-hidden space-y-2 px-4 pt-0 pb-0">
         {paginated.map((item) => {
-          const isEditing = editing?._id === item._id
-          const saving = isEditing && update.isPending
           return <div data-store-row="true" className="grid min-h-[70px] gap-2 rounded-lg border border-slate-300 p-2 shadow-sm md:grid-cols-[1fr_repeat(3,96px)_minmax(230px,auto)] md:items-end" key={item._id}>
             <div><div className="font-medium">{item.name}</div><div className="text-xs text-muted-foreground">{item.categoryName}</div></div>
-            {priceKeys.map((key) => <div className="space-y-1" key={key}><Label className="capitalize">{key}</Label>{isEditing ? <Input disabled={saving} className="h-7" type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /> : <div className="h-7 rounded-md border px-2 py-1 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div>}</div>)}
+            {priceKeys.map((key) => <div className="space-y-1" key={key}><Label className="capitalize">{key}</Label><div className="h-7 rounded-md border px-2 py-1 text-sm">{(item.price[key] ?? 0).toLocaleString()}</div></div>)}
             <div className="flex min-h-8 flex-wrap items-center gap-1">
-              {isEditing ? <>
-                {canChangePermanentAvailability && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftPermanentlyActive} onCheckedChange={(value) => { setDraftPermanentlyActive(value === true); if (value !== true) setDraftTemporarilyUnavailable(false) }} />{t('permanentSelling')}</label>}
-                {draftPermanentlyActive && <label className="flex shrink-0 items-center gap-2 text-sm"><Checkbox disabled={saving} checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>}
-                <Button className="shrink-0" size="sm" disabled={saving} onClick={() => update.mutate({ itemId: item._id, data: { price: draftPrice, ...(canChangePermanentAvailability ? { permanentlyActive: draftPermanentlyActive } : {}), temporarilyUnavailable: draftPermanentlyActive && draftTemporarilyUnavailable } })}>{saving ? <Loader2 className="size-4 animate-spin" aria-label={t('loading')} /> : t('save')}</Button>
-                <Button className="shrink-0" size="sm" variant="outline" disabled={saving} onClick={() => setEditing(null)}>{t('cancel')}</Button>
-              </> : <>
+              <>
                 <span className="shrink-0 text-sm">{item.permanentlyActive ? t('permanentSelling') : t('permanentHidden')}</span>
                 {item.permanentlyActive && <span className="shrink-0 text-sm">{item.temporarilyUnavailable ? t('temporaryUnavailable') : t('temporaryAvailable')}</span>}
+                <span className="shrink-0 text-xs text-muted-foreground">{[item.visibility?.pos !== false && t('storeVisibilityPos'), item.visibility?.qr !== false && t('storeVisibilityQr'), item.visibility?.online !== false && t('storeVisibilityOnline')].filter(Boolean).join(' / ')}</span>
                 <Button className="shrink-0" size="sm" variant="outline" onClick={() => startEdit(item)}>{t('edit')}</Button>
-              </>}
+              </>
             </div>
           </div>
         })}
       </CardContent>
     </Card>
+    <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>{editing?.name ? `${t('edit')}: ${editing.name}` : t('edit')}</DialogTitle></DialogHeader>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {priceKeys.map((key) => <div className="space-y-1" key={key}><Label className="capitalize">{key}</Label><Input type="number" value={draftPrice[key] ?? 0} onChange={(event) => setDraftPrice({ ...draftPrice, [key]: Number(event.target.value) })} /></div>)}
+        </div>
+        <div className="space-y-3 rounded-lg border p-3">
+          {canChangePermanentAvailability && <label className="flex items-center gap-2 text-sm"><Checkbox checked={draftPermanentlyActive} onCheckedChange={(value) => { setDraftPermanentlyActive(value === true); if (value !== true) setDraftTemporarilyUnavailable(false) }} />{t('permanentSelling')}</label>}
+          {draftPermanentlyActive && <label className="flex items-center gap-2 text-sm"><Checkbox checked={draftTemporarilyUnavailable} onCheckedChange={(value) => setDraftTemporarilyUnavailable(value === true)} />{t('temporaryUnavailable')}</label>}
+          <div className="border-t pt-3 text-sm font-medium">{t('storeVisibilityPos')} / {t('storeVisibilityQr')} / {t('storeVisibilityOnline')}</div>
+          {(['pos', 'qr', 'online'] as const).map((channel) => <label className="flex items-center gap-2 text-sm" key={channel}><Checkbox checked={draftVisibility[channel]} onCheckedChange={(value) => setDraftVisibility((current) => ({ ...current, [channel]: value === true }))} />{channel === 'pos' ? t('storeVisibilityPos') : channel === 'qr' ? t('storeVisibilityQr') : t('storeVisibilityOnline')}</label>)}
+          <label className="flex items-center justify-between gap-3 border-t pt-3 text-sm"><span>{t('storeAddonDisplayMode')}</span><select className="h-8 rounded-md border bg-background px-2" value={draftAddonDisplayMode} onChange={(event) => setDraftAddonDisplayMode(event.target.value === 'merged' ? 'merged' : 'named')}><option value="named">{t('storeAddonDisplayNamed')}</option><option value="merged">{t('storeAddonDisplayMerged')}</option></select></label>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>{t('cancel')}</Button><Button disabled={update.isPending} onClick={() => editing && update.mutate({ itemId: editing._id, data: { price: draftPrice, visibility: draftVisibility, addonDisplayMode: draftAddonDisplayMode, ...(canChangePermanentAvailability ? { permanentlyActive: draftPermanentlyActive } : {}), temporarilyUnavailable: draftPermanentlyActive && draftTemporarilyUnavailable } })}>{update.isPending ? <Loader2 className="size-4 animate-spin" /> : t('save')}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 }

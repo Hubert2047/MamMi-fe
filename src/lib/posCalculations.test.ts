@@ -3,7 +3,7 @@ import { calculateOrderPriceBreakdown, calculateOrderTotal, findFreshSelectedIte
 
 const item = (priceExtra: number) => ({
   _id: 'item-1', name: 'Item', names: { vi: 'Item', en: 'Item', 'zh-TW': 'Item' }, description: { vi: '', en: '', 'zh-TW': '' },
-  categoryName: 'Category', price: { base: 10 }, addons: [{ _id: 'addon-1', name: 'Addon', priceExtra }], variants: [], noteOptions: [],
+  categoryName: 'Category', price: { base: 10 }, addons: [{ _id: 'addon-1', name: 'Addon', priceExtra }], variants: [], optionGroups: [], noteOptions: [],
   permanentlyActive: true, temporarilyUnavailable: false,
 })
 

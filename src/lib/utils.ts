@@ -224,7 +224,7 @@ export function processQueue() {
 // ─── Receipt cho khách (có giá) ───────────────────────────────
 export function generateReceiptHTML(order: BaseOrder): string {
     const itemRows = order.items.map((item, index) => {
-        const price = item.quantity * item.basePrice
+        const price = item.quantity * (item.basePrice + (item.addonDisplayMode === 'merged' ? item.addons.reduce((sum, addon) => sum + addon.priceExtra * addon.amount, 0) : 0))
         return `
             <tr>
                 <td class="idx">${index + 1}.</td>
@@ -281,7 +281,7 @@ function buildItemDetailsHTML(item: OrderItem, showPrice: boolean): string {
         parts.push(`<div class="detail note-options">不加: ${noteOptions.join(', ')}</div>`)
     }
     const addons = item.printAddons || item.addons
-    if (addons.length > 0) {
+    if (item.addonDisplayMode !== 'merged' && addons.length > 0) {
         parts.push(`<div class="detail">加點: ${addons.map(addon => {
             const priceStr = showPrice
                 ? `<span class="addon-price">${(addon.priceExtra * addon.amount).toLocaleString()}</span>`

@@ -85,6 +85,15 @@ function PosItemSection({
     const unavailableAddonIds = selectedItem ? getUnavailableAddonIds(selectedItem, currentOrderItem.addons.map((addon) => addon.id)) : []
     const selectionUnavailable = selectedItem?.temporarilyUnavailable === true || unavailableAddonIds.length > 0
     const isReadOnly = isDetail && !isOrderEditing
+    const numericAddonValue = (addon: Item['addons'][number]) => {
+        const match = addon.name.trim().match(/^\+?\s*(\d+(?:\.\d+)?)$/)
+        return match ? Number(match[1]) : null
+    }
+    const displayedAddons = selectedItem ? (() => {
+        const numericAddons = selectedItem.addons.filter((addon) => numericAddonValue(addon) !== null).sort((left, right) => numericAddonValue(left)! - numericAddonValue(right)!)
+        let numericIndex = 0
+        return selectedItem.addons.map((addon) => numericAddonValue(addon) === null ? addon : numericAddons[numericIndex++]!)
+    })() : []
     const displayItemName = (item: Item) => {
         const name = item.name.trim()
         const category = item.categoryName.trim()
@@ -107,6 +116,7 @@ function PosItemSection({
             itemId: generateUUID(),
             number: currentOrderNumber,
             name: item.name,
+            addonDisplayMode: item.addonDisplayMode === 'merged' ? 'merged' : 'named',
             variant,
             optionSelections,
             basePrice: getPriceByType(currentOrder.type, item.price),
@@ -114,6 +124,18 @@ function PosItemSection({
             componentSelections: item.type === 'combo' ? (item.components || []).flatMap((component, index) => { const componentItem = catalogItems.find((candidate) => candidate._id === component.itemId); return Array.from({ length: component.quantity }, (_, instance) => ({ componentId: `${component.itemId}-${index}-${instance}`, itemId: component.itemId, noteOptions: [], note: '', name: componentItem?.name || component.itemId })) }) : [],
         }))
         setSelectedItem(item)
+    }
+    const setAddonAmount = (addon: Item['addons'][number], amount: number) => {
+        if (isReadOnly) return
+        setCurrentOrderItem((prev) => {
+            const existing = prev.addons.find((entry) => entry.id === addon._id)
+            if (amount <= 0) return { ...prev, addons: prev.addons.filter((entry) => entry.id !== addon._id) }
+            if (addon.temporarilyUnavailable === true && !existing) return prev
+            const maxQuantity = addon.maxQuantity ?? null
+            const nextAmount = maxQuantity === null ? amount : Math.min(amount, maxQuantity)
+            const nextAddon = existing ? { ...existing, amount: nextAmount } : { ...addon, id: addon._id, amount: nextAmount }
+            return { ...prev, addons: [...prev.addons.filter((entry) => entry.id !== addon._id), nextAddon] }
+        })
     }
     const addItem = () => {
         if (selectionUnavailable) {
@@ -313,41 +335,21 @@ function PosItemSection({
                         )}
                         {/* add-on */}
                         {selectedItem.addons.length > 0 && (
-                            <div className='add-on flex justify-start items-center mt-6 gap-4'>
-                                <Label className='block font-semibold text-start'>{t('addons')}: </Label>
-                                <ToggleGroup
-                                    size='lg'
-                                    variant='outline'
-                                    type='multiple'
-                                    spacing={2}
-                                    className='flex-wrap gap-2'
-                                    value={currentOrderItem.addons.map((a) => a.id)}
-                                    onValueChange={(values) => {
-                                        if (isReadOnly) return
-                                        setCurrentOrderItem((prev) => ({
-                                            ...prev,
-                                            addons: values.map((id) => {
-                                                const existing = prev.addons.find((a) => a.id === id)
-                                                if (existing) return existing
-                                                const addon = selectedItem.addons.find((a) => a._id === id)!
-                                                return { ...addon, amount: 1, id: addon._id }
-                                            }),
-                                        }))
-                                    }}>
-                                    {selectedItem.addons.map((addon) => (
-                                        <ToggleGroupItem
-                                            key={addon._id}
-                                            value={addon._id}
-                                            disabled={addon.temporarilyUnavailable === true && !currentOrderItem.addons.some((selectedAddon) => selectedAddon.id === addon._id)}
-                                            className='flex h-auto min-h-8 min-w-16 max-w-28 flex-col items-center justify-center rounded-lg whitespace-normal break-words border-primary/40 px-1.5 py-1 text-sm text-center leading-tight data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-primary/10'>
-                                            <span className='line-clamp-2'>{addon.name}</span>
-                                            {(() => {
-                                                const promotionPrice = getCatalogAddonPromotionPrice({ productId: selectedItem._id, addonId: addon._id, price: addon.priceExtra, promotions })
-                                                return promotionPrice < addon.priceExtra ? <span className='text-[11px] opacity-80'><span className='mr-1 line-through'>+{addon.priceExtra.toLocaleString(locale)}</span>+{promotionPrice.toLocaleString(locale)}</span> : <span className='text-[11px] opacity-80'>+{addon.priceExtra.toLocaleString(locale)}</span>
-                                            })()}
-                                        </ToggleGroupItem>
-                                    ))}
-                                </ToggleGroup>
+                            <div className='add-on mt-6 space-y-2'>
+                                <Label className='block font-semibold text-start'>{t('addons')}:</Label>
+                                <div className='flex flex-wrap gap-2'>
+                                    {displayedAddons.map((addon) => {
+                                        const selectedAddon = currentOrderItem.addons.find((entry) => entry.id === addon._id)
+                                        const maxQuantity = addon.maxQuantity === null ? null : addon.maxQuantity ?? 1
+                                        const supportsQuantity = maxQuantity === null || maxQuantity > 1
+                                        const unavailable = addon.temporarilyUnavailable === true && !selectedAddon
+                                        const promotionPrice = getCatalogAddonPromotionPrice({ productId: selectedItem._id, addonId: addon._id, price: addon.priceExtra, promotions })
+                                        const priceLabel = selectedItem.addonDisplayMode === 'merged' ? null : promotionPrice < addon.priceExtra ? <span className='text-[11px] opacity-80'><span className='mr-1 line-through'>+{addon.priceExtra.toLocaleString(locale)}</span>+{promotionPrice.toLocaleString(locale)}</span> : <span className='text-[11px] opacity-80'>+{addon.priceExtra.toLocaleString(locale)}</span>
+                                        if (!supportsQuantity) return <Button key={addon._id} type='button' variant={selectedAddon ? 'default' : 'outline'} disabled={unavailable || isReadOnly} onClick={() => setAddonAmount(addon, selectedAddon ? 0 : 1)} className='flex h-auto min-h-12 min-w-20 max-w-32 flex-col whitespace-normal break-words border-primary/40 px-2 py-1 text-center leading-tight'><span className='line-clamp-2'>{addon.name}</span>{priceLabel}</Button>
+                                        const maxReached = maxQuantity !== null && (selectedAddon?.amount || 0) >= maxQuantity
+                                        return <div key={addon._id} className='flex min-h-12 min-w-40 items-center gap-1 rounded-lg border border-primary/40 px-2 py-1'><div className='min-w-0 flex-1 text-center'><div className='line-clamp-1 text-sm'>{addon.name}</div>{priceLabel}</div><Button type='button' size='icon' variant='outline' className='size-8 shrink-0' aria-label={t('decreaseQuantity')} disabled={isReadOnly || !selectedAddon} onClick={() => setAddonAmount(addon, (selectedAddon?.amount || 0) - 1)}>−</Button><span className='w-5 text-center text-sm font-semibold tabular-nums'>{selectedAddon?.amount || 0}</span><Button type='button' size='icon' className='size-8 shrink-0' aria-label={t('increaseQuantity')} disabled={isReadOnly || unavailable || maxReached} onClick={() => setAddonAmount(addon, (selectedAddon?.amount || 0) + 1)}>+</Button></div>
+                                    })}
+                                </div>
                             </div>
                         )}
                         <div className='note flex justify-start items-center gap-4'>

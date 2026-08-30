@@ -81,6 +81,8 @@ const printerInitial: PrinterForm = {
   cutFeedHex: "",
   cutCommandHex: "",
 };
+const defaultCutFeedHex = "1B 64 03";
+const defaultCutCommandHex = "1D 56 00";
 
 export default function PrintAgentSettings() {
   const { t: translate } = useI18n();
@@ -370,9 +372,20 @@ export default function PrintAgentSettings() {
         <label className="flex items-center gap-2 text-sm font-medium">
           <Checkbox
             checked={form.cutEnabled}
-            onCheckedChange={(enabled) =>
-              setForm({ ...form, cutEnabled: enabled === true })
-            }
+            onCheckedChange={(enabled) => {
+              const cutEnabled = enabled === true;
+              setForm({
+                ...form,
+                cutEnabled,
+                ...(cutEnabled
+                  ? {
+                      cutFeedHex: form.cutFeedHex || defaultCutFeedHex,
+                      cutCommandHex:
+                        form.cutCommandHex || defaultCutCommandHex,
+                    }
+                  : {}),
+              });
+            }}
           />
           {t("printAgentCutEnabled")}
         </label>

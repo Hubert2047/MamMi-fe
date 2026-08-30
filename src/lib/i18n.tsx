@@ -2585,6 +2585,12 @@ Object.assign(messages["zh-TW"], {
   posDeviceDeleteConfirm: "裝置和尚未使用的註冊代碼將永久刪除。",
 });
 Object.assign(messages["zh-TW"], { posDevices: "POS 裝置" });
+Object.assign(messages.vi, { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "Online" });
+Object.assign(messages.en, { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "Online" });
+Object.assign(messages["zh-TW"], { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "線上" });
+Object.assign(messages.vi, { storeAddonDisplayMode: "Cách hiển thị add-on", storeAddonDisplayNamed: "Hiển thị tách", storeAddonDisplayMerged: "Gộp vào giá món" });
+Object.assign(messages.en, { storeAddonDisplayMode: "Add-on display", storeAddonDisplayNamed: "Show separately", storeAddonDisplayMerged: "Merge into item price" });
+Object.assign(messages["zh-TW"], { storeAddonDisplayMode: "加購顯示方式", storeAddonDisplayNamed: "分開顯示", storeAddonDisplayMerged: "合併至餐點價格" });
 
 Object.assign(messages.vi, {
   tableSessionRemaining: "Còn lại",
@@ -2819,6 +2825,19 @@ Object.assign(messages["zh-TW"], {
   printAgentTestFontSize: "字型大小",
   printAgentTestBold: "粗體",
   printAgentTestCopies: "列印份數",
+});
+
+Object.assign(messages.vi, {
+  addonUnlimited: "Không giới hạn",
+  addonMaxQuantity: "Tối đa / 1 món",
+});
+Object.assign(messages.en, {
+  addonUnlimited: "Unlimited",
+  addonMaxQuantity: "Maximum per item",
+});
+Object.assign(messages["zh-TW"], {
+  addonUnlimited: "不限數量",
+  addonMaxQuantity: "每份上限",
 });
 
 export function useI18n() {

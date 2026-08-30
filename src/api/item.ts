@@ -33,8 +33,12 @@ export interface Item {
     permanentlyActive: boolean
     temporarilyUnavailable: boolean
     temporarilyUnavailableUntil?: string | null
+    visibility?: { pos: boolean; qr: boolean; online: boolean }
+    addonDisplayMode?: 'named' | 'merged'
     components?: Array<{ itemId: string; quantity: number }>
 }
+
+export type AddonConfig = { addonId: string; maxQuantity: number | null }
 
 export interface ItemInput {
     type?: 'product' | 'combo'
@@ -50,6 +54,7 @@ export interface ItemInput {
     price: PriceType
     categoryId: string
     addons: string[]
+    addonConfigs: AddonConfig[]
     noteOptions: LocalizedOption[]
     components?: Array<{ itemId: string; quantity: number }>
 }
@@ -61,6 +66,7 @@ interface Addon {
   priceExtra: number
   permanentlyActive?: boolean
   temporarilyUnavailable?: boolean
+  maxQuantity?: number | null
 }
 
 export const getItems = async (available?: boolean, lang?: string): Promise<Item[]> => {

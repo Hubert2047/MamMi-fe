@@ -211,10 +211,12 @@ const POSPage: React.FC = () => {
         }
         setCurrentOrder(orderWithLineIds)
         setOrderBeforeEdit(orderWithLineIds)
-        setCurrentOrderItem(orderWithLineIds.items[0])
-        const item = items.find((item) => orderWithLineIds.items[0].id === item._id)
-        if (item) setSelectedItem(item)
-        setIsEditItem(true)
+        // Start order editing on the first category without opening the first
+        // existing line item; staff can choose which item to edit explicitly.
+        setSelectedCategory(Object.keys(itemsByCategory)[0] ?? '')
+        setCurrentOrderItem(DEFAULT_ORDER_ITEM)
+        setSelectedItem(null)
+        setIsEditItem(false)
         setOpenOrderTable(false)
         setIsDetail(true)
         setIsOrderEditing(true)
