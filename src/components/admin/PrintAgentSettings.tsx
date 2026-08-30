@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -55,6 +56,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 
 const agentInitial: PrintAgentInput = { name: "" };
+const defaultTestPrintText = "列印測試\n印表機連線正常";
 type PrinterForm = {
   name: string;
   windowsPrinterName: string;
@@ -107,6 +109,14 @@ export default function PrintAgentSettings() {
   const [activeTab, setActiveTab] = useState<"routing" | "agents">("agents");
   const [isCreateAgentOpen, setIsCreateAgentOpen] = useState(false);
   const [isCreatePrinterOpen, setIsCreatePrinterOpen] = useState(false);
+  const [testDraft, setTestDraft] = useState<{
+    agentId: string;
+    printerId: string;
+    text: string;
+    fontSize: number;
+    bold: boolean;
+    copies: number;
+  } | null>(null);
   const [createPrinterAgentId, setCreatePrinterAgentId] = useState("");
   const [createPrinterForm, setCreatePrinterForm] =
     useState<PrinterForm>(printerInitial);
@@ -246,12 +256,20 @@ export default function PrintAgentSettings() {
     },
   });
   const test = useMutation({
-    mutationFn: async (input: { agentId: string; printerId: string }) => {
-      if (!(await askConfirmation(t("printAgentConfirmTest"))))
-        throw new Error("cancelled");
+    mutationFn: async (input: {
+      agentId: string;
+      printerId: string;
+      printableText: string;
+      fontSize: number;
+      bold: boolean;
+      copies: number;
+    }) => {
       return testPrinter(input);
     },
-    onSuccess: () => toast.success(t("printAgentTestQueued")),
+    onSuccess: () => {
+      setTestDraft(null);
+      toast.success(t("printAgentTestQueued"));
+    },
     onError: (error) => {
       if (error instanceof Error && error.message !== "cancelled")
         toast.error(t("printAgentTestFailed"));
@@ -569,6 +587,106 @@ export default function PrintAgentSettings() {
             >
               {createAgent.isPending ? t("saving") : t("printAgentCreateAgent")}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(testDraft)}
+        onOpenChange={(open) => {
+          if (!open && !test.isPending) setTestDraft(null);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("printAgentTestPrint")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              id="print-agent-test-text"
+              value={testDraft?.text ?? ""}
+              onChange={(event) =>
+                setTestDraft((current) =>
+                  current ? { ...current, text: event.target.value } : current,
+                )
+              }
+              rows={5}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="print-agent-test-font-size">
+                  {t("printAgentTestFontSize")}
+                </Label>
+                <Input
+                  id="print-agent-test-font-size"
+                  type="number"
+                  min={8}
+                  max={48}
+                  value={testDraft?.fontSize ?? 40}
+                  onChange={(event) =>
+                    setTestDraft((current) =>
+                      current
+                        ? { ...current, fontSize: Number(event.target.value) }
+                        : current,
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="print-agent-test-copies">
+                  {t("printAgentTestCopies")}
+                </Label>
+                <Input
+                  id="print-agent-test-copies"
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={testDraft?.copies ?? 1}
+                  onChange={(event) =>
+                    setTestDraft((current) =>
+                      current ? { ...current, copies: Number(event.target.value) } : current,
+                    )
+                  }
+                />
+              </div>
+              <label className="flex items-center gap-2 pt-7 text-sm font-medium">
+                <Checkbox
+                  checked={testDraft?.bold ?? false}
+                  onCheckedChange={(bold) =>
+                    setTestDraft((current) =>
+                      current ? { ...current, bold: bold === true } : current,
+                    )
+                  }
+                />
+                {t("printAgentTestBold")}
+              </label>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={test.isPending}
+                onClick={() => setTestDraft(null)}
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                type="button"
+                disabled={test.isPending || !testDraft?.text.trim()}
+                onClick={() => {
+                  if (!testDraft) return;
+                  test.mutate({
+                    agentId: testDraft.agentId,
+                    printerId: testDraft.printerId,
+                    printableText: testDraft.text,
+                    fontSize: testDraft.fontSize,
+                    bold: testDraft.bold,
+                    copies: testDraft.copies,
+                  });
+                }}
+              >
+                {test.isPending ? t("saving") : t("printAgentTestPrint")}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1106,9 +1224,13 @@ export default function PrintAgentSettings() {
                                 variant="outline"
                                 disabled={!printer.active || test.isPending}
                                 onClick={() =>
-                                  test.mutate({
+                                  setTestDraft({
                                     agentId: agent._id,
                                     printerId: printer._id,
+                                    text: defaultTestPrintText,
+                                    fontSize: 40,
+                                    bold: false,
+                                    copies: 1,
                                   })
                                 }
                               >

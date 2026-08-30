@@ -84,11 +84,19 @@ export async function updatePrinter({
 export async function testPrinter({
   agentId,
   printerId,
+  printableText,
+  fontSize,
+  bold,
+  copies,
 }: {
   agentId: string;
   printerId: string;
+  printableText?: string;
+  fontSize?: number;
+  bold?: boolean;
+  copies?: number;
 }): Promise<void> {
-  await api.post(`print-agents/${agentId}/printers/${printerId}/test`);
+  await api.post(`print-agents/${agentId}/printers/${printerId}/test`, { printableText, fontSize, bold, copies });
 }
 
 export async function updatePrintRouting(

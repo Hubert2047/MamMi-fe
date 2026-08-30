@@ -2805,6 +2805,22 @@ Object.assign(messages["zh-TW"], {
   printAgentCutCommandHex: "切紙指令（hex）",
 });
 
+Object.assign(messages.vi, {
+  printAgentTestFontSize: "Cỡ chữ",
+  printAgentTestBold: "In đậm",
+  printAgentTestCopies: "Số bản in",
+});
+Object.assign(messages.en, {
+  printAgentTestFontSize: "Font size",
+  printAgentTestBold: "Bold",
+  printAgentTestCopies: "Copies",
+});
+Object.assign(messages["zh-TW"], {
+  printAgentTestFontSize: "字型大小",
+  printAgentTestBold: "粗體",
+  printAgentTestCopies: "列印份數",
+});
+
 export function useI18n() {
   const context = useContext(I18nContext);
   if (!context) throw new Error("useI18n must be used inside I18nProvider");
