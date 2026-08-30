@@ -47,9 +47,11 @@ const messages: Record<Locale, Record<string, string>> = {
     lineGroupNoNotification: "Không nhận thông báo",
     lineGroupTest: "Gửi thử",
     lineGroupTestConfirmTitle: "Gửi tin nhắn kiểm tra?",
-    lineGroupTestConfirmDescription: "MamMi sẽ gửi một tin nhắn thử vào group LINE này.",
+    lineGroupTestConfirmDescription:
+      "MamMi sẽ gửi một tin nhắn thử vào group LINE này.",
     lineGroupSaveConfirmTitle: "Lưu cấu hình LINE Group?",
-    lineGroupSaveConfirmDescription: "MamMi sẽ cập nhật cửa hàng, loại thông báo và trạng thái của group này.",
+    lineGroupSaveConfirmDescription:
+      "MamMi sẽ cập nhật cửa hàng, loại thông báo và trạng thái của group này.",
     lineGroupTestSuccess: "Đã gửi tin nhắn kiểm tra",
     lineGroupTestError: "Không thể gửi tin nhắn kiểm tra",
     confirmDeleteLineGroup: "Bạn có chắc muốn xóa nhóm LINE này không?",
@@ -96,9 +98,11 @@ const messages: Record<Locale, Record<string, string>> = {
     lineGroupNoNotification: "No notifications",
     lineGroupTest: "Send test",
     lineGroupTestConfirmTitle: "Send a test message?",
-    lineGroupTestConfirmDescription: "MamMi will send a test message to this LINE group.",
+    lineGroupTestConfirmDescription:
+      "MamMi will send a test message to this LINE group.",
     lineGroupSaveConfirmTitle: "Save LINE group configuration?",
-    lineGroupSaveConfirmDescription: "MamMi will update this group's store, notification type, and status.",
+    lineGroupSaveConfirmDescription:
+      "MamMi will update this group's store, notification type, and status.",
     lineGroupTestSuccess: "Test message sent",
     lineGroupTestError: "Unable to send test message",
     confirmDeleteLineGroup: "Are you sure you want to delete this LINE group?",
@@ -147,7 +151,8 @@ const messages: Record<Locale, Record<string, string>> = {
     lineGroupTestConfirmTitle: "要發送測試訊息嗎？",
     lineGroupTestConfirmDescription: "MamMi 將向此 LINE 群組發送測試訊息。",
     lineGroupSaveConfirmTitle: "要儲存 LINE 群組設定嗎？",
-    lineGroupSaveConfirmDescription: "MamMi 將更新此群組的分店、通知類型與狀態。",
+    lineGroupSaveConfirmDescription:
+      "MamMi 將更新此群組的分店、通知類型與狀態。",
     lineGroupTestSuccess: "測試訊息已發送",
     lineGroupTestError: "無法發送測試訊息",
     confirmDeleteLineGroup: "確定要刪除此 LINE 群組嗎？",
@@ -162,12 +167,78 @@ const messages: Record<Locale, Record<string, string>> = {
   },
 } as const;
 
-Object.assign(messages.vi, { units: "Đơn vị tính", createUnit: "Thêm đơn vị", unitCode: "Mã đơn vị", unitNameVi: "Tên tiếng Việt", unitNameEn: "Tên tiếng Anh", unitNameZh: "Tên tiếng Trung", unitCategory: "Nhóm", unitCount: "Số lượng", unitWeight: "Khối lượng", unitVolume: "Thể tích", unitBase: "Đơn vị cơ sở", requiredUnit: "Vui lòng nhập mã và tên đơn vị", active: "Đang dùng", inactive: "Đã tắt", enable: "Bật", disable: "Tắt" });
-Object.assign(messages.en, { units: "Units", createUnit: "Add unit", unitCode: "Unit code", unitNameVi: "Vietnamese name", unitNameEn: "English name", unitNameZh: "Chinese name", unitCategory: "Group", unitCount: "Count", unitWeight: "Weight", unitVolume: "Volume", unitBase: "Base unit", requiredUnit: "Enter a unit code and name", active: "Active", inactive: "Inactive", enable: "Enable", disable: "Disable" });
-Object.assign(messages["zh-TW"], { units: "單位", createUnit: "新增單位", unitCode: "單位代碼", unitNameVi: "越南文名稱", unitNameEn: "英文名稱", unitNameZh: "中文名稱", unitCategory: "類別", unitCount: "數量", unitWeight: "重量", unitVolume: "體積", unitBase: "基礎單位", requiredUnit: "請輸入單位代碼與名稱", active: "啟用", inactive: "停用", enable: "啟用", disable: "停用" });
-Object.assign(messages.vi, { settingsTitle: "Cài đặt", displayLanguage: "Ngôn ngữ hiển thị", languageDescription: "", currentLanguage: "Hiện tại" });
-Object.assign(messages.en, { settingsTitle: "Settings", displayLanguage: "Display language", languageDescription: "", currentLanguage: "Current" });
-Object.assign(messages["zh-TW"], { settingsTitle: "設定", displayLanguage: "顯示語言", languageDescription: "", currentLanguage: "目前" });
+Object.assign(messages.vi, {
+  units: "Đơn vị tính",
+  createUnit: "Thêm đơn vị",
+  unitCode: "Mã đơn vị",
+  unitNameVi: "Tên tiếng Việt",
+  unitNameEn: "Tên tiếng Anh",
+  unitNameZh: "Tên tiếng Trung",
+  unitCategory: "Nhóm",
+  unitCount: "Số lượng",
+  unitWeight: "Khối lượng",
+  unitVolume: "Thể tích",
+  unitBase: "Đơn vị cơ sở",
+  requiredUnit: "Vui lòng nhập mã và tên đơn vị",
+  active: "Đang dùng",
+  inactive: "Đã tắt",
+  enable: "Bật",
+  disable: "Tắt",
+});
+Object.assign(messages.en, {
+  units: "Units",
+  createUnit: "Add unit",
+  unitCode: "Unit code",
+  unitNameVi: "Vietnamese name",
+  unitNameEn: "English name",
+  unitNameZh: "Chinese name",
+  unitCategory: "Group",
+  unitCount: "Count",
+  unitWeight: "Weight",
+  unitVolume: "Volume",
+  unitBase: "Base unit",
+  requiredUnit: "Enter a unit code and name",
+  active: "Active",
+  inactive: "Inactive",
+  enable: "Enable",
+  disable: "Disable",
+});
+Object.assign(messages["zh-TW"], {
+  units: "單位",
+  createUnit: "新增單位",
+  unitCode: "單位代碼",
+  unitNameVi: "越南文名稱",
+  unitNameEn: "英文名稱",
+  unitNameZh: "中文名稱",
+  unitCategory: "類別",
+  unitCount: "數量",
+  unitWeight: "重量",
+  unitVolume: "體積",
+  unitBase: "基礎單位",
+  requiredUnit: "請輸入單位代碼與名稱",
+  active: "啟用",
+  inactive: "停用",
+  enable: "啟用",
+  disable: "停用",
+});
+Object.assign(messages.vi, {
+  settingsTitle: "Cài đặt",
+  displayLanguage: "Ngôn ngữ hiển thị",
+  languageDescription: "",
+  currentLanguage: "Hiện tại",
+});
+Object.assign(messages.en, {
+  settingsTitle: "Settings",
+  displayLanguage: "Display language",
+  languageDescription: "",
+  currentLanguage: "Current",
+});
+Object.assign(messages["zh-TW"], {
+  settingsTitle: "設定",
+  displayLanguage: "顯示語言",
+  languageDescription: "",
+  currentLanguage: "目前",
+});
 Object.assign(messages.vi, {
   noNoteSelected: "Chưa chọn ghi chú",
   printAgents: "Máy in",
@@ -676,7 +747,8 @@ const extraMessages = {
   vi: {
     productImage: "Ảnh sản phẩm",
     chooseImage: "Chọn ảnh",
-    imageUploadHint: "Nên dùng ảnh vuông tỉ lệ 1:1, ví dụ 800×800 px (tối đa 10 MB)",
+    imageUploadHint:
+      "Nên dùng ảnh vuông tỉ lệ 1:1, ví dụ 800×800 px (tối đa 10 MB)",
     uploadingImage: "Đang tải ảnh lên...",
     removeImage: "Xóa ảnh",
     imageUploadError: "Không thể tải ảnh lên",
@@ -715,7 +787,8 @@ const extraMessages = {
   en: {
     productImage: "Product image",
     chooseImage: "Choose image",
-    imageUploadHint: "Use a square 1:1 image, for example 800×800 px (max 10 MB)",
+    imageUploadHint:
+      "Use a square 1:1 image, for example 800×800 px (max 10 MB)",
     uploadingImage: "Uploading image...",
     removeImage: "Remove image",
     imageUploadError: "Unable to upload image",
@@ -1085,9 +1158,9 @@ const posMessages: Record<Locale, Record<string, string>> = {
     searchOrder: "Tìm theo mã đơn...",
     clear: "Xóa",
     discount: "Giảm giá",
-  paymentMethodTitle: "Phương thức thanh toán",
-  pickupTime: "Thời gian nhận món",
-  paymentShort: "Thanh toán",
+    paymentMethodTitle: "Phương thức thanh toán",
+    pickupTime: "Thời gian nhận món",
+    paymentShort: "Thanh toán",
     cashGiven: "Số tiền khách đưa",
     cashBack: "Số tiền trả lại khách",
     printOnConfirm: "In khi xác nhận",
@@ -1159,9 +1232,9 @@ const posMessages: Record<Locale, Record<string, string>> = {
     searchOrder: "Search by order number...",
     clear: "Clear",
     discount: "Discount",
-  paymentMethodTitle: "Payment method",
-  pickupTime: "Pickup time",
-  paymentShort: "Payment",
+    paymentMethodTitle: "Payment method",
+    pickupTime: "Pickup time",
+    paymentShort: "Payment",
     cashGiven: "Cash received",
     cashBack: "Change",
     printOnConfirm: "Print on confirmation",
@@ -1229,9 +1302,9 @@ const posMessages: Record<Locale, Record<string, string>> = {
     searchOrder: "依訂單編號搜尋...",
     clear: "清除",
     discount: "折扣",
-  paymentMethodTitle: "付款方式",
-  pickupTime: "取餐時間",
-  paymentShort: "付款",
+    paymentMethodTitle: "付款方式",
+    pickupTime: "取餐時間",
+    paymentShort: "付款",
     cashGiven: "客人付款",
     cashBack: "找零",
     printOnConfirm: "確認時列印",
@@ -1330,7 +1403,8 @@ Object.assign(posMessages["zh-TW"], {
 
 Object.assign(promotionMessages.vi as Record<string, string>, {
   promotionCategoryFilter: "Lọc theo danh mục",
-  promotionPreviewRulesTogether: "Các quy tắc trong promotion được xét chung; mỗi quy tắc chỉ áp dụng khi đúng đối tượng.",
+  promotionPreviewRulesTogether:
+    "Các quy tắc trong promotion được xét chung; mỗi quy tắc chỉ áp dụng khi đúng đối tượng.",
   promotions: "Khuyến mại",
   promotionMode: "Cách áp dụng",
   automatic: "Tự động",
@@ -1371,7 +1445,8 @@ Object.assign(promotionMessages.vi as Record<string, string>, {
 });
 Object.assign(promotionMessages.en as Record<string, string>, {
   promotionCategoryFilter: "Filter by category",
-  promotionPreviewRulesTogether: "Rules in this promotion are evaluated together; each rule applies only when its target is present.",
+  promotionPreviewRulesTogether:
+    "Rules in this promotion are evaluated together; each rule applies only when its target is present.",
   promotions: "Promotions",
   promotionMode: "Application",
   automatic: "Automatic",
@@ -1412,7 +1487,8 @@ Object.assign(promotionMessages.en as Record<string, string>, {
 });
 Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
   promotionCategoryFilter: "依分類篩選",
-  promotionPreviewRulesTogether: "此優惠中的規則會一併判斷；只有符合對象的規則才會套用。",
+  promotionPreviewRulesTogether:
+    "此優惠中的規則會一併判斷；只有符合對象的規則才會套用。",
   promotions: "優惠活動",
   promotionMode: "套用方式",
   automatic: "自動套用",
@@ -2678,13 +2754,56 @@ Object.assign(promotionMessages["zh-TW"] as Record<string, string>, {
   promotionPreviewNoStores: "尚未指派分店",
   promotionPreviewLineIncludesAddons: "折抵此商品及其所有加料",
 });
-Object.assign(messages.vi, { optionGroups: 'Nhóm tùy chọn', addOptionGroup: 'Thêm nhóm', removeOptionGroup: 'Xóa nhóm', optionGroupName: 'Tên nhóm', optionGroupOptions: 'Các lựa chọn (phân cách bằng dấu phẩy)', optionGroupDefault: 'Mặc định', optionGroupSingle: 'Chọn một', optionGroupMultiple: 'Chọn nhiều' });
-Object.assign(messages.en, { optionGroups: 'Option groups', addOptionGroup: 'Add group', removeOptionGroup: 'Remove group', optionGroupName: 'Group name', optionGroupOptions: 'Options (comma separated)', optionGroupDefault: 'Default', optionGroupSingle: 'Choose one', optionGroupMultiple: 'Choose many' });
-Object.assign(messages['zh-TW'], { optionGroups: '選項群組', addOptionGroup: '新增群組', removeOptionGroup: '刪除群組', optionGroupName: '群組名稱', optionGroupOptions: '選項（以逗號分隔）', optionGroupDefault: '預設', optionGroupSingle: '單選', optionGroupMultiple: '多選' });
+Object.assign(messages.vi, {
+  optionGroups: "Nhóm tùy chọn",
+  addOptionGroup: "Thêm nhóm",
+  removeOptionGroup: "Xóa nhóm",
+  optionGroupName: "Tên nhóm",
+  optionGroupOptions: "Các lựa chọn (phân cách bằng dấu phẩy)",
+  optionGroupDefault: "Mặc định",
+  optionGroupSingle: "Chọn một",
+  optionGroupMultiple: "Chọn nhiều",
+});
+Object.assign(messages.en, {
+  optionGroups: "Option groups",
+  addOptionGroup: "Add group",
+  removeOptionGroup: "Remove group",
+  optionGroupName: "Group name",
+  optionGroupOptions: "Options (comma separated)",
+  optionGroupDefault: "Default",
+  optionGroupSingle: "Choose one",
+  optionGroupMultiple: "Choose many",
+});
+Object.assign(messages["zh-TW"], {
+  optionGroups: "選項群組",
+  addOptionGroup: "新增群組",
+  removeOptionGroup: "刪除群組",
+  optionGroupName: "群組名稱",
+  optionGroupOptions: "選項（以逗號分隔）",
+  optionGroupDefault: "預設",
+  optionGroupSingle: "單選",
+  optionGroupMultiple: "多選",
+});
 
-Object.assign(messages.vi, { contact: 'Liên hệ' });
-Object.assign(messages.en, { contact: 'Contact' });
-Object.assign(messages['zh-TW'], { contact: '聯絡資料' });
+Object.assign(messages.vi, { contact: "Liên hệ" });
+Object.assign(messages.en, { contact: "Contact" });
+Object.assign(messages["zh-TW"], { contact: "聯絡資料" });
+
+Object.assign(messages.vi, {
+  printAgentCutEnabled: "Bật cắt giấy",
+  printAgentCutFeedHex: "Lệnh đẩy giấy (hex)",
+  printAgentCutCommandHex: "Lệnh cắt (hex)",
+});
+Object.assign(messages.en, {
+  printAgentCutEnabled: "Enable paper cut",
+  printAgentCutFeedHex: "Feed command (hex)",
+  printAgentCutCommandHex: "Cut command (hex)",
+});
+Object.assign(messages["zh-TW"], {
+  printAgentCutEnabled: "啟用切紙",
+  printAgentCutFeedHex: "送紙指令（hex）",
+  printAgentCutCommandHex: "切紙指令（hex）",
+});
 
 export function useI18n() {
   const context = useContext(I18nContext);
