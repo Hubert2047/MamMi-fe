@@ -96,7 +96,12 @@ export async function testPrinter({
   bold?: boolean;
   copies?: number;
 }): Promise<void> {
-  await api.post(`print-agents/${agentId}/printers/${printerId}/test`, { printableText, fontSize, bold, copies });
+  await api.post(`print-agents/${agentId}/printers/${printerId}/test`, {
+    printableText,
+    fontSize,
+    bold,
+    copies,
+  });
 }
 
 export async function updatePrintRouting(

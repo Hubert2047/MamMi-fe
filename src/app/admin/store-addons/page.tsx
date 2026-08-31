@@ -1,5 +1,5 @@
-import StoreAddonsPanel from '@/components/admin/StoreAddonsPanel'
+import StoreAddonsPanel from "@/components/admin/StoreAddonsPanel";
 
 export default function StoreAddonsPage() {
-  return <StoreAddonsPanel />
+  return <StoreAddonsPanel />;
 }

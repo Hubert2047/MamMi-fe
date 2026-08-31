@@ -1,83 +1,130 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react";
 
 /** Calculates rows from the actual list-card height, not the viewport height. */
 export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(() =>
-    typeof window === 'undefined' ? 5 : Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)),
-  )
+    typeof window === "undefined"
+      ? 5
+      : Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)),
+  );
 
   useEffect(() => {
     const updateFromViewport = () => {
-      setPageSize(Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)))
-    }
-    updateFromViewport()
-    window.addEventListener('resize', updateFromViewport)
-    let cancelled = false
-    let resizeObserver: ResizeObserver | undefined
+      setPageSize(
+        Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)),
+      );
+    };
+    updateFromViewport();
+    window.addEventListener("resize", updateFromViewport);
+    let cancelled = false;
+    let resizeObserver: ResizeObserver | undefined;
     const attach = () => {
-      if (cancelled) return
-      const element = containerRef.current ?? Array.from(document.querySelectorAll<HTMLElement>('div')).find((candidate) => candidate.className.includes('h-[calc(100svh-180px)]') || candidate.className.includes('h-[calc(100svh-80px)]'))
-      if (!element) { window.requestAnimationFrame(attach); return }
+      if (cancelled) return;
+      const element =
+        containerRef.current ??
+        Array.from(document.querySelectorAll<HTMLElement>("div")).find(
+          (candidate) =>
+            candidate.className.includes("h-[calc(100svh-180px)]") ||
+            candidate.className.includes("h-[calc(100svh-80px)]"),
+        );
+      if (!element) {
+        window.requestAnimationFrame(attach);
+        return;
+      }
       const update = () => {
         // Keep all admin tables on the same viewport-based height budget.
-        element.style.height = `${Math.max(240, window.innerHeight - 80)}px`
-        element.style.overflow = 'hidden'
-        element.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
-          image.style.width = '60px'
-          image.style.height = '60px'
-          image.style.objectFit = 'contain'
-          image.style.flexShrink = '0'
-        })
-        const headerContent = element.querySelector<HTMLElement>('[data-slot="card-header"] > div')
-        if (headerContent) headerContent.style.justifyContent = 'flex-end'
-        const listTitle = element.querySelector<HTMLElement>('[data-slot="card-header"] [data-slot="card-title"]')
-        if (listTitle) listTitle.style.display = 'none'
-        element.querySelectorAll<HTMLElement>('*').forEach((child) => {
-          if (child.dataset.slot === 'card-content') {
-            child.style.flex = '1 1 0%'
-            child.style.minHeight = '0'
-            child.style.overflow = 'visible'
-          } else if (child.className.toString().includes('overflow-auto')) child.style.overflow = 'visible'
-        })
-        const measuredRowHeight = rowHeight >= 80
-          ? rowHeight
-          : Math.max(
-            rowHeight,
-            ...Array.from(element.querySelectorAll<HTMLElement>('tbody tr')).map((row) => row.getBoundingClientRect().height),
-          )
-        const tableHeaderHeight = element.querySelector<HTMLElement>('thead')?.getBoundingClientRect().height || 32
+        element.style.height = `${Math.max(240, window.innerHeight - 80)}px`;
+        element.style.overflow = "hidden";
+        element.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
+          image.style.width = "60px";
+          image.style.height = "60px";
+          image.style.objectFit = "contain";
+          image.style.flexShrink = "0";
+        });
+        const headerContent = element.querySelector<HTMLElement>(
+          '[data-slot="card-header"] > div',
+        );
+        if (headerContent && element.dataset.tableHeaderAlign !== "left")
+          headerContent.style.justifyContent = "flex-end";
+        const listTitle = element.querySelector<HTMLElement>(
+          '[data-slot="card-header"] [data-slot="card-title"]',
+        );
+        if (listTitle) listTitle.style.display = "none";
+        element.querySelectorAll<HTMLElement>("*").forEach((child) => {
+          if (child.dataset.slot === "card-content") {
+            child.style.flex = "1 1 0%";
+            child.style.minHeight = "0";
+            child.style.overflow = "visible";
+          } else if (child.className.toString().includes("overflow-auto"))
+            child.style.overflow = "visible";
+        });
+        const measuredRowHeight =
+          rowHeight >= 80
+            ? rowHeight
+            : Math.max(
+                rowHeight,
+                ...Array.from(
+                  element.querySelectorAll<HTMLElement>("tbody tr"),
+                ).map((row) => row.getBoundingClientRect().height),
+              );
+        const tableHeaderHeight =
+          element.querySelector<HTMLElement>("thead")?.getBoundingClientRect()
+            .height || 32;
         // Measure from the card itself. CardContent can report a stale/zero
         // clientHeight while its scroll wrapper is being laid out, which
         // incorrectly limits Product to only a couple of rows.
-        const cardHeight = element.getBoundingClientRect().height
+        const cardHeight = element.getBoundingClientRect().height;
         // A card can briefly report a collapsed height while its parent is
         // mounting. Use the viewport in that case instead of producing a
         // misleading two-row page.
-        const content = element.querySelector<HTMLElement>('[data-slot="card-content"]')
-        const contentHeight = content?.clientHeight || 0
-        const contentStyle = content ? window.getComputedStyle(content) : null
-        const contentPadding = contentStyle ? (parseFloat(contentStyle.paddingTop) || 0) + (parseFloat(contentStyle.paddingBottom) || 0) : 0
-        const body = element.querySelector<HTMLElement>('tbody')
-        const bodyStyle = body ? window.getComputedStyle(body) : null
-        const rowGap = bodyStyle ? parseFloat(bodyStyle.rowGap || bodyStyle.gap || '0') || 0 : 0
-        const availableHeight = contentHeight > 0
-          ? contentHeight - contentPadding
-          : cardHeight >= 400 ? cardHeight - reservedHeight : window.innerHeight - 300
-        const nextPageSize = Math.max(5, Math.floor((availableHeight - tableHeaderHeight - 4) / (measuredRowHeight + rowGap)))
-        setPageSize(nextPageSize)
-      }
-      update(); resizeObserver = new ResizeObserver(update); if (element.parentElement) resizeObserver.observe(element.parentElement); if (element.closest('[class*="h-full"]')) resizeObserver.observe(element.closest('[class*="h-full"]') as HTMLElement); resizeObserver.observe(element)
-      const table = element.querySelector<HTMLElement>('table')
-      if (table) resizeObserver.observe(table)
-    }
-    attach()
+        const content = element.querySelector<HTMLElement>(
+          '[data-slot="card-content"]',
+        );
+        const contentHeight = content?.clientHeight || 0;
+        const contentStyle = content ? window.getComputedStyle(content) : null;
+        const contentPadding = contentStyle
+          ? (parseFloat(contentStyle.paddingTop) || 0) +
+            (parseFloat(contentStyle.paddingBottom) || 0)
+          : 0;
+        const body = element.querySelector<HTMLElement>("tbody");
+        const bodyStyle = body ? window.getComputedStyle(body) : null;
+        const rowGap = bodyStyle
+          ? parseFloat(bodyStyle.rowGap || bodyStyle.gap || "0") || 0
+          : 0;
+        const availableHeight =
+          contentHeight > 0
+            ? contentHeight - contentPadding
+            : cardHeight >= 400
+              ? cardHeight - reservedHeight
+              : window.innerHeight - 300;
+        const nextPageSize = Math.max(
+          5,
+          Math.floor(
+            (availableHeight - tableHeaderHeight - 4) /
+              (measuredRowHeight + rowGap),
+          ),
+        );
+        setPageSize(nextPageSize);
+      };
+      update();
+      resizeObserver = new ResizeObserver(update);
+      if (element.parentElement) resizeObserver.observe(element.parentElement);
+      if (element.closest('[class*="h-full"]'))
+        resizeObserver.observe(
+          element.closest('[class*="h-full"]') as HTMLElement,
+        );
+      resizeObserver.observe(element);
+      const table = element.querySelector<HTMLElement>("table");
+      if (table) resizeObserver.observe(table);
+    };
+    attach();
     return () => {
-      cancelled = true
-      resizeObserver?.disconnect()
-      window.removeEventListener('resize', updateFromViewport)
-    }
-  }, [reservedHeight, rowHeight])
+      cancelled = true;
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", updateFromViewport);
+    };
+  }, [reservedHeight, rowHeight]);
 
-  return { containerRef, pageSize }
+  return { containerRef, pageSize };
 }

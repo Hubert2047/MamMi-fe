@@ -34,8 +34,8 @@ const messages: Record<Locale, Record<string, string>> = {
     expenses: "Chi phí",
     inventory: "Kho nguyên liệu",
     revenues: "Doanh thu khác",
-    orders: "Đơn hàng",
-    dailyClosing: "Kết sổ",
+    orders: "Đơn Hàng",
+    dailyClosing: "Kết Sổ",
     lineGroups: "Nhóm LINE",
     lineGroupsRefresh: "Làm mới",
     lineGroupsEmpty: "Chưa phát hiện group LINE nào.",
@@ -1077,6 +1077,31 @@ const orderMessages: Record<Locale, Record<string, string>> = {
   },
 } as const;
 
+Object.assign(orderMessages.vi, {
+  adminOrdersTitle: "Đơn Hàng",
+  adminOrdersTotal: "Tổng số",
+  adminOrdersTime: "Thời gian",
+  adminOrdersView: "Xem",
+  adminOrdersNoData: "Chưa có đơn hàng",
+  adminOrdersLoadError: "Không thể tải danh sách đơn hàng",
+});
+Object.assign(orderMessages.en, {
+  adminOrdersTitle: "Orders",
+  adminOrdersTotal: "Total",
+  adminOrdersTime: "Time",
+  adminOrdersView: "View",
+  adminOrdersNoData: "No orders found",
+  adminOrdersLoadError: "Unable to load orders",
+});
+Object.assign(orderMessages["zh-TW"], {
+  adminOrdersTitle: "訂單",
+  adminOrdersTotal: "總數",
+  adminOrdersTime: "時間",
+  adminOrdersView: "查看",
+  adminOrdersNoData: "暫無訂單",
+  adminOrdersLoadError: "無法載入訂單",
+});
+
 const orderErrorMessages = {
   vi: {
     cancelClosedPeriod:
@@ -1120,7 +1145,7 @@ const posMessages: Record<Locale, Record<string, string>> = {
     otherRevenue: "Thu nhập khác",
     expenses: "Bảng chi phí",
     attendance: "Chấm công",
-    dailyClosing: "Kết sổ",
+    dailyClosing: "Kết Sổ",
     logout: "Đăng xuất",
     orderTableTitle: "Bảng Đơn hàng",
     orderNumberHeader: "Mã Đơn",
@@ -1628,7 +1653,7 @@ const revenueMessages = {
     deleting: "Đang xóa...",
     save: "Lưu",
     saving: "Đang lưu...",
-    addRevenueTitle: "Thêm thu nhập khác",
+    addRevenueTitle: "Thêm Thu Nhập Khác",
     editRevenueTitle: "Sửa thu nhập khác",
     requiredName: "Tên không được bỏ trống",
     requiredPrice: "Giá không được bỏ trống",
@@ -1659,7 +1684,7 @@ const revenueMessages = {
     deleting: "Deleting...",
     save: "Save",
     saving: "Saving...",
-    addRevenueTitle: "Add other revenue",
+    addRevenueTitle: "Add Other Revenue",
     editRevenueTitle: "Edit other revenue",
     requiredName: "Name is required",
     requiredPrice: "Price is required",
@@ -1705,6 +1730,7 @@ const revenueMessages = {
 
 const expenseMessages = {
   vi: {
+    addTemporaryIngredient: "Thêm nguyên liệu tạm",
     expenseTableTitle: "Bảng Chi phí",
     totalExpense: "Tổng chi",
     searchExpense: "Tìm theo tên chi phí...",
@@ -1736,6 +1762,7 @@ const expenseMessages = {
     deleteFailure: "Xóa thất bại",
   },
   en: {
+    addTemporaryIngredient: "Add temporary ingredient",
     expenseTableTitle: "Expenses",
     totalExpense: "Total expenses",
     searchExpense: "Search by expense name...",
@@ -1767,6 +1794,7 @@ const expenseMessages = {
     deleteFailure: "Failed to delete",
   },
   "zh-TW": {
+    addTemporaryIngredient: "新增暫時原料",
     expenseTableTitle: "支出明細",
     totalExpense: "支出總額",
     searchExpense: "依支出名稱搜尋...",
@@ -1841,6 +1869,7 @@ const closingMessages = {
     total: "Tổng",
     paymentCash: "Tiền mặt",
     paymentBank: "Ngân hàng",
+    paymentOther: "Khác",
     paymentLinepay: "LinePay",
     count: "Số lượng",
     actual: "Thực tế",
@@ -1868,6 +1897,7 @@ const closingMessages = {
     total: "Total",
     paymentCash: "Cash",
     paymentBank: "Bank",
+    paymentOther: "Other",
     paymentLinepay: "LinePay",
     count: "Count",
     actual: "Actual",
@@ -1895,6 +1925,7 @@ const closingMessages = {
     total: "總計",
     paymentCash: "現金",
     paymentBank: "銀行",
+    paymentOther: "其他",
     paymentLinepay: "LinePay",
     count: "數量",
     actual: "實際",
@@ -1918,7 +1949,7 @@ const closingMessages = {
 
 const closingHistoryMessages = {
   vi: {
-    closingHistoryTitle: "\u1ee4ch k\u1ebft to\u00e1n",
+    closingHistoryTitle: "K\u1ebft s\u1ed5",
     closingPeriod: "Kho\u1ea3ng th\u1eddi gian",
     closingStatus: "Tr\u1ea1ng th\u00e1i",
     closingConfirmed: "\u0110\u00e3 x\u00e1c nh\u1eadn",
@@ -1937,7 +1968,7 @@ const closingHistoryMessages = {
     noClosings: "Ch\u01b0a c\u00f3 l\u1ecbch s\u1eed k\u1ebft to\u00e1n",
   },
   en: {
-    closingHistoryTitle: "Closing history",
+    closingHistoryTitle: "Closing",
     closingPeriod: "Period",
     closingStatus: "Status",
     closingConfirmed: "Confirmed",
@@ -1956,7 +1987,7 @@ const closingHistoryMessages = {
     noClosings: "No closing history",
   },
   "zh-TW": {
-    closingHistoryTitle: "\u7d50\u7b97\u6b77\u53f2",
+    closingHistoryTitle: "\u7d50\u5e33",
     closingPeriod: "\u671f\u9593",
     closingStatus: "\u72c0\u614b",
     closingConfirmed: "\u5df2\u78ba\u8a8d",
@@ -2003,6 +2034,8 @@ const closingAdminMessages = {
     closingFilterAll: "T\u1ea5t c\u1ea3",
     closingFilterConfirmed: "\u0110\u00e3 x\u00e1c nh\u1eadn",
     closingFilterVoided: "\u0110\u00e3 h\u1ee7y",
+    closingSearch: "T\u00ecm ki\u1ebfm",
+    closingTotal: "T\u1ed5ng s\u1ed1",
     closingFilterDate: "L\u1ecdc t\u1eeb ng\u00e0y",
     closingFilterReset: "X\u00f3a b\u1ed9 l\u1ecdc",
     closingDetailsTitle: "Chi ti\u1ebft k\u1ebft to\u00e1n",
@@ -2032,6 +2065,8 @@ const closingAdminMessages = {
     closingFilterAll: "All",
     closingFilterConfirmed: "Confirmed",
     closingFilterVoided: "Voided",
+    closingSearch: "Search",
+    closingTotal: "Total",
     closingFilterDate: "From date",
     closingFilterReset: "Clear filters",
     closingDetailsTitle: "Closing details",
@@ -2060,6 +2095,8 @@ const closingAdminMessages = {
     closingFilterAll: "\u5168\u90e8",
     closingFilterConfirmed: "\u5df2\u78ba\u8a8d",
     closingFilterVoided: "\u5df2\u4f5c\u5ee2",
+    closingSearch: "\u641c\u5c0b",
+    closingTotal: "\u7e3d\u6578",
     closingFilterDate: "\u958b\u59cb\u65e5\u671f",
     closingFilterReset: "\u6e05\u9664\u7be9\u9078",
     closingDetailsTitle: "\u7d50\u7b97\u8a73\u60c5",
@@ -2585,12 +2622,36 @@ Object.assign(messages["zh-TW"], {
   posDeviceDeleteConfirm: "裝置和尚未使用的註冊代碼將永久刪除。",
 });
 Object.assign(messages["zh-TW"], { posDevices: "POS 裝置" });
-Object.assign(messages.vi, { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "Online" });
-Object.assign(messages.en, { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "Online" });
-Object.assign(messages["zh-TW"], { storeVisibilityPos: "POS", storeVisibilityQr: "QR", storeVisibilityOnline: "線上" });
-Object.assign(messages.vi, { storeAddonDisplayMode: "Cách hiển thị add-on", storeAddonDisplayNamed: "Hiển thị tách", storeAddonDisplayMerged: "Gộp vào giá món" });
-Object.assign(messages.en, { storeAddonDisplayMode: "Add-on display", storeAddonDisplayNamed: "Show separately", storeAddonDisplayMerged: "Merge into item price" });
-Object.assign(messages["zh-TW"], { storeAddonDisplayMode: "加購顯示方式", storeAddonDisplayNamed: "分開顯示", storeAddonDisplayMerged: "合併至餐點價格" });
+Object.assign(messages.vi, {
+  storeVisibilityPos: "POS",
+  storeVisibilityQr: "QR",
+  storeVisibilityOnline: "Online",
+});
+Object.assign(messages.en, {
+  storeVisibilityPos: "POS",
+  storeVisibilityQr: "QR",
+  storeVisibilityOnline: "Online",
+});
+Object.assign(messages["zh-TW"], {
+  storeVisibilityPos: "POS",
+  storeVisibilityQr: "QR",
+  storeVisibilityOnline: "線上",
+});
+Object.assign(messages.vi, {
+  storeAddonDisplayMode: "Cách hiển thị add-on",
+  storeAddonDisplayNamed: "Hiển thị tách",
+  storeAddonDisplayMerged: "Gộp vào giá món",
+});
+Object.assign(messages.en, {
+  storeAddonDisplayMode: "Add-on display",
+  storeAddonDisplayNamed: "Show separately",
+  storeAddonDisplayMerged: "Merge into item price",
+});
+Object.assign(messages["zh-TW"], {
+  storeAddonDisplayMode: "加購顯示方式",
+  storeAddonDisplayNamed: "分開顯示",
+  storeAddonDisplayMerged: "合併至餐點價格",
+});
 
 Object.assign(messages.vi, {
   tableSessionRemaining: "Còn lại",

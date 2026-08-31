@@ -1,20 +1,27 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/auth'
-import { getPosDeviceSession } from '@/api/pos-device'
-import Loading from '@/components/Loading'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/auth";
+import { getPosDeviceSession } from "@/api/pos-device";
+import Loading from "@/components/Loading";
 
 export default function HomePage() {
-  const router = useRouter()
-  const { hydrated, isAuthenticated, user } = useAuth()
-  const isAdmin = user?.role === 'Admin' || user?.role === 'SuperAdmin'
-  const isStoreAdmin = user?.role === 'Admin'
+  const router = useRouter();
+  const { hydrated, isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === "Admin" || user?.role === "SuperAdmin";
+  const isStoreAdmin = user?.role === "Admin";
   useEffect(() => {
-    if (!hydrated) return
-    if (isAuthenticated) { router.replace(isStoreAdmin ? '/admin/store-pricing' : isAdmin ? '/admin' : '/login'); return }
-    void getPosDeviceSession().then(() => router.replace('/pos')).catch(() => router.replace('/login'))
-  }, [hydrated, isAuthenticated, isAdmin, isStoreAdmin, router])
-  return <Loading />
+    if (!hydrated) return;
+    if (isAuthenticated) {
+      router.replace(
+        isStoreAdmin ? "/admin/store-pricing" : isAdmin ? "/admin" : "/login",
+      );
+      return;
+    }
+    void getPosDeviceSession()
+      .then(() => router.replace("/pos"))
+      .catch(() => router.replace("/login"));
+  }, [hydrated, isAuthenticated, isAdmin, isStoreAdmin, router]);
+  return <Loading />;
 }

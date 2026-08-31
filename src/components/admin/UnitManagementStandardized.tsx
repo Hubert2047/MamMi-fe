@@ -1,25 +1,338 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { createExpenseUnit, getExpenseUnits, updateExpenseUnit, type ExpenseUnit } from '@/api/expense'
-import { useI18n } from '@/lib/i18n'
-import { useTablePageSize } from '@/hooks/use-table-page-size'
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  createExpenseUnit,
+  getExpenseUnits,
+  updateExpenseUnit,
+  type ExpenseUnit,
+} from "@/api/expense";
+import { useI18n } from "@/lib/i18n";
+import { useTablePageSize } from "@/hooks/use-table-page-size";
 
-export default function UnitManagementStandardized() {
-  const { t } = useI18n(); const client = useQueryClient(); const { pageSize } = useTablePageSize()
-  const { data: units = [], isLoading } = useQuery({ queryKey: ['expense-units-all'], queryFn: () => getExpenseUnits(true) })
-  const [form, setForm] = useState({ code: '', vi: '', en: '', zh: '', category: 'count' as ExpenseUnit['category'], baseUnit: 'piece' }); const [page, setPage] = useState(1); const [isFormOpen, setIsFormOpen] = useState(false)
-  const totalPages = Math.max(1, Math.ceil(units.length / pageSize)); const currentPage = Math.min(page, totalPages); const visible = units.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-  useEffect(() => setPage((current) => Math.min(current, totalPages)), [totalPages])
-  const save = useMutation({ mutationFn: () => createExpenseUnit({ code: form.code.trim().toLowerCase(), names: { vi: form.vi, en: form.en, 'zh-TW': form.zh }, category: form.category, baseUnit: form.baseUnit, conversionFactor: 1, active: true }), onSuccess: () => { client.invalidateQueries({ queryKey: ['expense-units-all'] }); setForm({ code: '', vi: '', en: '', zh: '', category: 'count', baseUnit: 'piece' }); setIsFormOpen(false); toast.success(t('save')) }, onError: () => toast.error(t('saveError')) })
-  const toggle = useMutation({ mutationFn: (unit: ExpenseUnit) => updateExpenseUnit({ id: unit._id, data: { active: !unit.active } }), onSuccess: () => { client.invalidateQueries({ queryKey: ['expense-units-all'] }) }, onError: () => toast.error(t('saveError')) })
-  const close = () => { setIsFormOpen(false); setForm({ code: '', vi: '', en: '', zh: '', category: 'count', baseUnit: 'piece' }) }
-  return <div className="h-full overflow-hidden p-6 md:p-8"><div className="mb-6 flex items-center justify-between gap-3"><h1 className="text-3xl font-bold">{t('units')}</h1><Button onClick={() => setIsFormOpen(true)}>{t('createUnit')}</Button></div>{isFormOpen && <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8"><Card className="w-full max-w-5xl"><CardHeader><CardTitle>{t('createUnit')}</CardTitle></CardHeader><CardContent><form className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" onSubmit={(event) => { event.preventDefault(); if (!form.code.trim() || !form.vi.trim() || !form.en.trim()) return toast.error(t('requiredUnit')); save.mutate() }}><div className="space-y-2"><Label>{t('unitCode')}</Label><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></div><div className="space-y-2"><Label>{t('unitNameVi')}</Label><Input value={form.vi} onChange={(e) => setForm({ ...form, vi: e.target.value })} /></div><div className="space-y-2"><Label>{t('unitNameEn')}</Label><Input value={form.en} onChange={(e) => setForm({ ...form, en: e.target.value })} /></div><div className="space-y-2"><Label>{t('unitNameZh')}</Label><Input value={form.zh} onChange={(e) => setForm({ ...form, zh: e.target.value })} /></div><div className="space-y-2"><Label>{t('unitCategory')}</Label><select className="h-8 w-full rounded-lg border bg-background px-2 text-sm" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseUnit['category'] })}><option value="count">{t('unitCount')}</option><option value="weight">{t('unitWeight')}</option><option value="volume">{t('unitVolume')}</option></select></div><div className="space-y-2"><Label>{t('unitBase')}</Label><Input value={form.baseUnit} onChange={(e) => setForm({ ...form, baseUnit: e.target.value })} /></div><div className="flex gap-2 sm:col-span-2 lg:col-span-3"><Button type="submit" disabled={save.isPending}>{save.isPending ? t('saving') : t('createUnit')}</Button><Button type="button" variant="outline" onClick={close}>{t('cancel')}</Button></div></form></CardContent></Card></div>}<Card className={`flex h-[calc(100svh-80px)] min-h-0 flex-col overflow-hidden ${isFormOpen ? 'hidden' : ''}`}><CardHeader><div className="flex items-center justify-between gap-3"><CardTitle>{t('units')}</CardTitle><div className="flex items-center gap-2"><span className="text-sm text-muted-foreground">{currentPage}/{totalPages}</span><Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setPage((p) => p - 1)}>‹</Button><Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setPage((p) => p + 1)}>›</Button></div></div></CardHeader><CardContent className="min-h-0 flex-1 overflow-auto"><Table><TableHeader><TableRow><TableHead>{t('unitCode')}</TableHead><TableHead>{t('name')}</TableHead><TableHead>{t('unitCategory')}</TableHead><TableHead>{t('unitBase')}</TableHead><TableHead>{t('status')}</TableHead><TableHead className="text-right">{t('actions')}</TableHead></TableRow></TableHeader><TableBody>{isLoading ? <TableRow><TableCell colSpan={6}>{t('loading')}</TableCell></TableRow> : visible.map((unit) => <TableRow key={unit._id}><TableCell>{unit.code}</TableCell><TableCell className="font-medium">{unit.names.vi || unit.names.en || unit.names['zh-TW']}</TableCell><TableCell>{unit.category}</TableCell><TableCell>{unit.baseUnit}</TableCell><TableCell>{unit.active ? t('active') : t('inactive')}</TableCell><TableCell className="text-right"><Button size="sm" variant={unit.active ? 'outline' : 'default'} onClick={() => toggle.mutate(unit)}>{unit.active ? t('disable') : t('enable')}</Button></TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div>
+type Copy = {
+  title: string;
+  addTitle: string;
+  editTitle: string;
+  code: string;
+  vi: string;
+  en: string;
+  zh: string;
+  group: string;
+  count: string;
+  weight: string;
+  volume: string;
+  add: string;
+  update: string;
+  list: string;
+  total: string;
+  page: string;
+  previous: string;
+  next: string;
+  off: string;
+  on: string;
+  edit: string;
+  cancel: string;
+};
+const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
+  vi: {
+    title: "Đơn vị tính",
+    addTitle: "Thêm đơn vị",
+    editTitle: "Sửa đơn vị",
+    code: "Mã đơn vị, ví dụ: tray",
+    vi: "Tên tiếng Việt",
+    en: "Tên tiếng Anh",
+    zh: "Tên tiếng Trung",
+    group: "Nhóm",
+    count: "Số lượng",
+    weight: "Khối lượng",
+    volume: "Thể tích",
+    add: "Thêm đơn vị",
+    update: "Cập nhật",
+    list: "Danh sách đơn vị",
+    total: "Tổng cộng",
+    page: "Trang",
+    previous: "Trước",
+    next: "Sau",
+    off: "Tắt sử dụng",
+    on: "Bật sử dụng",
+    edit: "Sửa",
+    cancel: "Hủy",
+  },
+  en: {
+    title: "Units",
+    addTitle: "Add unit",
+    editTitle: "Edit unit",
+    code: "Unit code, e.g. tray",
+    vi: "Vietnamese name",
+    en: "English name",
+    zh: "Chinese name",
+    group: "Group",
+    count: "Count",
+    weight: "Weight",
+    volume: "Volume",
+    add: "Add unit",
+    update: "Update",
+    list: "Unit list",
+    total: "Total",
+    page: "Page",
+    previous: "Previous",
+    next: "Next",
+    off: "Disable",
+    on: "Enable",
+    edit: "Edit",
+    cancel: "Cancel",
+  },
+  "zh-TW": {
+    title: "單位",
+    addTitle: "新增單位",
+    editTitle: "編輯單位",
+    code: "單位代碼，例如 tray",
+    vi: "越南文名稱",
+    en: "英文名稱",
+    zh: "中文名稱",
+    group: "類別",
+    count: "數量",
+    weight: "重量",
+    volume: "體積",
+    add: "新增單位",
+    update: "更新",
+    list: "單位清單",
+    total: "總計",
+    page: "頁",
+    previous: "上一頁",
+    next: "下一頁",
+    off: "停用",
+    on: "啟用",
+    edit: "編輯",
+    cancel: "取消",
+  },
+};
+const empty = {
+  code: "",
+  vi: "",
+  en: "",
+  zh: "",
+  category: "count" as ExpenseUnit["category"],
+};
+
+export default function UnitManagement() {
+  const { locale } = useI18n();
+  const t = texts[locale];
+  const client = useQueryClient();
+  const { data: units = [] } = useQuery({
+    queryKey: ["expense-units-all"],
+    queryFn: () => getExpenseUnits(true),
+  });
+  const [form, setForm] = useState(empty);
+  const [editing, setEditing] = useState<ExpenseUnit | null>(null);
+  const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const { containerRef, pageSize } = useTablePageSize(73, 100);
+  const reset = () => {
+    setForm(empty);
+    setEditing(null);
+    setOpen(false);
+  };
+  const edit = (unit: ExpenseUnit) => {
+    setEditing(unit);
+    setForm({
+      code: unit.code,
+      vi: unit.names.vi,
+      en: unit.names.en,
+      zh: unit.names["zh-TW"],
+      category: unit.category,
+    });
+    setOpen(true);
+  };
+  const save = useMutation({
+    mutationFn: () =>
+      editing
+        ? updateExpenseUnit({
+            id: editing._id,
+            data: {
+              names: { vi: form.vi, en: form.en, "zh-TW": form.zh },
+              category: form.category,
+            },
+          })
+        : createExpenseUnit({
+            code: form.code.trim().toLowerCase(),
+            names: { vi: form.vi, en: form.en, "zh-TW": form.zh },
+            category: form.category,
+            active: true,
+          }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["expense-units"] });
+      void client.invalidateQueries({ queryKey: ["expense-units-all"] });
+      reset();
+    },
+  });
+  const toggle = useMutation({
+    mutationFn: (unit: ExpenseUnit) =>
+      updateExpenseUnit({ id: unit._id, data: { active: !unit.active } }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["expense-units"] });
+      void client.invalidateQueries({ queryKey: ["expense-units-all"] });
+    },
+  });
+  const totalPages = Math.max(1, Math.ceil(units.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visible = units.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-6 md:p-8">
+      <div className="flex shrink-0 items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">{t.title}</h1>
+        <Button
+          onClick={() => {
+            setForm(empty);
+            setEditing(null);
+            setOpen(true);
+          }}
+        >
+          {t.addTitle}
+        </Button>
+      </div>
+      <Card
+        ref={containerRef}
+        className="flex h-[calc(100svh-5rem)] min-h-0 flex-1 flex-col overflow-hidden"
+      >
+        <CardHeader>
+          <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-normal text-muted-foreground">
+                {t.total}: {units.length} · {currentPage}/{totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                {t.previous}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                {t.next}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="min-h-0 flex-1 space-y-2 overflow-hidden">
+          {visible.map((unit) => (
+            <div
+              key={unit._id}
+              className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-3 rounded border px-3 py-2"
+            >
+              <div>
+                <div className="font-medium">
+                  {unit.names[locale] || unit.names.vi || unit.code}{" "}
+                  <span className="text-muted-foreground">({unit.code})</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {unit.category}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => edit(unit)}>
+                  {t.edit}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={unit.active ? "outline" : "default"}
+                  onClick={() => toggle.mutate(unit)}
+                >
+                  {unit.active ? t.off : t.on}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      <Dialog open={open} onOpenChange={(value) => !value && reset()}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editing ? t.editTitle : t.addTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>{t.code}</Label>
+              <Input
+                value={form.code}
+                disabled={Boolean(editing)}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t.group}</Label>
+              <select
+                className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                value={form.category}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    category: e.target.value as ExpenseUnit["category"],
+                  })
+                }
+              >
+                <option value="count">{t.count}</option>
+                <option value="weight">{t.weight}</option>
+                <option value="volume">{t.volume}</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t.vi}</Label>
+              <Input
+                value={form.vi}
+                onChange={(e) => setForm({ ...form, vi: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t.en}</Label>
+              <Input
+                value={form.en}
+                onChange={(e) => setForm({ ...form, en: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t.zh}</Label>
+              <Input
+                value={form.zh}
+                onChange={(e) => setForm({ ...form, zh: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={reset}>
+              {t.cancel}
+            </Button>
+            <Button
+              disabled={!form.code || !form.vi || !form.en || save.isPending}
+              onClick={() => save.mutate()}
+            >
+              {save.isPending ? t.update : editing ? t.update : t.addTitle}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -44,6 +45,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "postcss": "^8.5.8",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",

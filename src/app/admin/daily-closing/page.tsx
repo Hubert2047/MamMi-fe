@@ -1,5 +1,5 @@
-import DailyClosingHistory from './DailyClosingHistory'
+import DailyClosingHistory from "./DailyClosingHistory";
 
 export default function DailyClosingPage() {
-  return <DailyClosingHistory />
+  return <DailyClosingHistory />;
 }

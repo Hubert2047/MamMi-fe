@@ -1,3 +1,5 @@
-import PosDevicesPanel from '@/components/admin/PosDevicesPanel'
+import PosDevicesPanel from "@/components/admin/PosDevicesPanel";
 
-export default function PosDevicesPage() { return <PosDevicesPanel /> }
+export default function PosDevicesPage() {
+  return <PosDevicesPanel />;
+}

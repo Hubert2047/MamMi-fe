@@ -1,3 +1,5 @@
-import TablesPanel from '@/components/admin/TablesPanel'
+import TablesPanel from "@/components/admin/TablesPanel";
 
-export default function TablesPage() { return <TablesPanel /> }
+export default function TablesPage() {
+  return <TablesPanel />;
+}

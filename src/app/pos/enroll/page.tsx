@@ -1,3 +1,5 @@
-import PosDeviceEnrollment from '@/components/screens/PosDeviceEnrollment'
+import PosDeviceEnrollment from "@/components/screens/PosDeviceEnrollment";
 
-export default function PosDeviceEnrollmentPage() { return <PosDeviceEnrollment /> }
+export default function PosDeviceEnrollmentPage() {
+  return <PosDeviceEnrollment />;
+}

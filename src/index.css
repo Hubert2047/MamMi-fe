@@ -3,14 +3,31 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+.admin-content h1::first-letter {
+  text-transform: uppercase;
+}
+
 @keyframes loading-breathe {
-  0%, 100% { transform: scale(0.96); }
-  50% { transform: scale(1.04); }
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.04);
+  }
 }
 
 @keyframes loading-dot {
-  0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-2px); }
+  0%,
+  60%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
 }
 
 /* Admin page titles use the page container padding; no extra title margin. */
@@ -60,10 +77,11 @@ main.admin-content > div > div:first-child h1 {
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -112,7 +130,6 @@ main.admin-content > div > div:first-child h1 {
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-
 /* ============================================================
    Layout & Base
    ============================================================ */
@@ -139,7 +156,8 @@ body:has(.pos-screen) {
   overscroll-behavior: none;
 }
 
-h1, h2 {
+h1,
+h2 {
   font-family: var(--heading);
   font-weight: 500;
   color: var(--text-h);
@@ -169,7 +187,8 @@ p {
   margin: 0;
 }
 
-code, .counter {
+code,
+.counter {
   font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
@@ -185,7 +204,7 @@ code {
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: "Geist Variable", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

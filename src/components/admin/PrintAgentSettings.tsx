@@ -380,8 +380,7 @@ export default function PrintAgentSettings() {
                 ...(cutEnabled
                   ? {
                       cutFeedHex: form.cutFeedHex || defaultCutFeedHex,
-                      cutCommandHex:
-                        form.cutCommandHex || defaultCutCommandHex,
+                      cutCommandHex: form.cutCommandHex || defaultCutCommandHex,
                     }
                   : {}),
               });
@@ -656,7 +655,9 @@ export default function PrintAgentSettings() {
                   value={testDraft?.copies ?? 1}
                   onChange={(event) =>
                     setTestDraft((current) =>
-                      current ? { ...current, copies: Number(event.target.value) } : current,
+                      current
+                        ? { ...current, copies: Number(event.target.value) }
+                        : current,
                     )
                   }
                 />
