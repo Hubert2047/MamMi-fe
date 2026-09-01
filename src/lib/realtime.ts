@@ -7,13 +7,18 @@ export type RealtimeClientType = "pos" | "admin" | "customer" | "order";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
+const getRealtimeApiBaseUrl = () =>
+  typeof window !== "undefined" && window.location.port === "3002"
+    ? `${window.location.protocol}//${window.location.hostname}:8080`
+    : API_BASE_URL;
+
 export const createRealtimeSocket = (
   token: string | null | undefined,
   storeId: string,
   clientType: RealtimeClientType = "pos",
   orderId?: string,
 ): Socket =>
-  io(API_BASE_URL, {
+  io(getRealtimeApiBaseUrl(), {
     autoConnect: true,
     withCredentials: true,
     transports: ["websocket", "polling"],

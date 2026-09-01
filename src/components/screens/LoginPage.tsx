@@ -86,7 +86,7 @@ export default function LoginPage() {
         redirect: false,
       });
       if (result?.error) throw new Error("Invalid credentials");
-      window.location.href = result?.url || "/";
+      window.location.href = "/";
     } catch (error: unknown) {
       const backendMessage = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
