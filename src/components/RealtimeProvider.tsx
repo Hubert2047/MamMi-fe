@@ -192,6 +192,26 @@ export default function RealtimeProvider({
         queryKey: ["daily-closing-summary"],
       });
     };
+    const refreshRevenues = () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["revenues"],
+        refetchType: "all",
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["daily-closing-summary"],
+        refetchType: "all",
+      });
+    };
+    const refreshExpenses = () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["expenses"],
+        refetchType: "all",
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["daily-closing-summary"],
+        refetchType: "all",
+      });
+    };
     const listeners: Record<string, () => void> = {
       "catalog.item.updated": refreshCatalog,
       "catalog.store-item.price.updated": refreshCatalog,
@@ -208,6 +228,12 @@ export default function RealtimeProvider({
       "order.payment.updated": refreshOrderPayment,
       "closing.created": refreshClosings,
       "closing.voided": refreshClosings,
+      "revenue.created": refreshRevenues,
+      "revenue.updated": refreshRevenues,
+      "revenue.deleted": refreshRevenues,
+      "expense.created": refreshExpenses,
+      "expense.updated": refreshExpenses,
+      "expense.deleted": refreshExpenses,
     };
     for (const event of realtimeEventsForClient(clientType))
       socket.on(event, listeners[event]);

@@ -22,9 +22,6 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
             {t("expenses")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("expenseTableTitle")}
-          </p>
         </div>
         {isFetching && !isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

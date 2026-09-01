@@ -542,6 +542,9 @@ export function OrderTable({
                         </TableCell>
                         <TableCell>
                           {t(orderTypeMessageKeys[order.type])}
+                          {order.type === "dine_in" && order.table?.trim()
+                            ? ` (${order.table.trim()})`
+                            : ""}
                         </TableCell>
                         <TableCell>
                           {order.status === "pending"

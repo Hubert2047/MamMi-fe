@@ -10,7 +10,7 @@ import {
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type IUpdateRevenue, updateRevenue } from "@/api/other-revenue.ts";
@@ -31,6 +31,10 @@ export function EditOtherRevenue({
 }: Props) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open) requestAnimationFrame(() => nameInputRef.current?.focus());
+  }, [open]);
   const editMutation = useMutation({
     mutationFn: updateRevenue,
     onSuccess: () => {
@@ -83,7 +87,13 @@ export function EditOtherRevenue({
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          nameInputRef.current?.focus();
+        }}
+        className="top-1 max-h-[calc(100dvh-1rem)] translate-y-0 overflow-y-auto sm:max-w-xl"
+      >
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-black! font-bold! text-xl">
@@ -95,23 +105,50 @@ export function EditOtherRevenue({
             <Field>
               <Label htmlFor="name-1">{t("revenueName")}</Label>
               <Input
+                ref={nameInputRef}
                 id="name-1"
                 name="name"
+                autoFocus
                 value={editData.name}
                 onChange={handleChangeRevenue}
               />
             </Field>
 
-            <Field>
-              <Label htmlFor="price-1">{t("price")}</Label>
-              <Input
-                id="price-1"
-                name="price"
-                type="number"
-                value={editData.price}
-                onChange={handleChangeRevenue}
-              />
-            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <Label htmlFor="price-1">{t("price")}</Label>
+                <Input
+                  id="price-1"
+                  name="price"
+                  type="number"
+                  value={editData.price}
+                  onChange={handleChangeRevenue}
+                />
+              </Field>
+              <Field>
+                <Label htmlFor="payment-method-1">{t("paymentMethod")}</Label>
+                <select
+                  id="payment-method-1"
+                  className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                  value={editData.paymentMethod ?? "cash"}
+                  onChange={(event) =>
+                    setEditData((current) =>
+                      current
+                        ? {
+                            ...current,
+                            paymentMethod: event.target.value as
+                              "cash" | "bank_transfer" | "other",
+                          }
+                        : current,
+                    )
+                  }
+                >
+                  <option value="cash">{t("paymentCash")}</option>
+                  <option value="bank_transfer">{t("paymentBank")}</option>
+                  <option value="other">{t("paymentOther")}</option>
+                </select>
+              </Field>
+            </div>
 
             <Field>
               <Label htmlFor="note-1">{t("note")}</Label>
@@ -122,42 +159,18 @@ export function EditOtherRevenue({
                 onChange={handleChangeRevenue}
               />
             </Field>
-            <Field>
-              <Label htmlFor="payment-method-1">{t("paymentMethod")}</Label>
-              <select
-                id="payment-method-1"
-                className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
-                value={editData.paymentMethod ?? "cash"}
-                onChange={(event) =>
-                  setEditData((current) =>
-                    current
-                      ? {
-                          ...current,
-                          paymentMethod: event.target.value as
-                            "cash" | "bank_transfer" | "other",
-                        }
-                      : current,
-                  )
-                }
-              >
-                <option value="cash">{t("paymentCash")}</option>
-                <option value="bank_transfer">{t("paymentBank")}</option>
-                <option value="other">{t("paymentOther")}</option>
-              </select>
-            </Field>
           </FieldGroup>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-4 pb-4">
             <DialogClose asChild>
-              <Button variant="outline" size="lg" className="w-20">
+              <Button className="h-10 min-w-24 px-4" variant="outline">
                 {t("cancel")}
               </Button>
             </DialogClose>
             <Button
               type="submit"
               disabled={editMutation.isPending}
-              size="lg"
-              className="w-20"
+              className="h-10 min-w-24 px-4"
             >
               {editMutation.isPending ? t("saving") : t("save")}
             </Button>

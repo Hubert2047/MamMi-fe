@@ -42,6 +42,11 @@ export interface DailyClosingSummary {
   salesByPayment: Record<PaymentMethod, SalesByPayment>;
   cashSales: number;
   otherRevenueTotal: number;
+  otherRevenueByPayment: {
+    cash: number;
+    bank_transfer: number;
+    other: number;
+  };
   expensesTotal: number;
   previousClosingAmount: number;
   systemAmount: number;

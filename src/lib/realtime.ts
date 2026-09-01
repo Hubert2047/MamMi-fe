@@ -53,6 +53,12 @@ export const realtimeEventsForClient = (
       "order.payment.updated",
       "closing.created",
       "closing.voided",
+      "revenue.created",
+      "revenue.updated",
+      "revenue.deleted",
+      "expense.created",
+      "expense.updated",
+      "expense.deleted",
     ];
   if (clientType === "customer")
     return [
@@ -92,5 +98,11 @@ export const realtimeEventsForClient = (
     "order.updated",
     "order.cancelled",
     "order.payment.updated",
+    "revenue.created",
+    "revenue.updated",
+    "revenue.deleted",
+    "expense.created",
+    "expense.updated",
+    "expense.deleted",
   ];
 };

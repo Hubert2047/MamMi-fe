@@ -18,6 +18,12 @@ describe("frontend realtime subscriptions", () => {
   it("subscribes POS to orders but not closing", () => {
     const events = realtimeEventsForClient("pos");
     expect(events).toContain("order.created");
+    expect(events).toContain("revenue.created");
+    expect(events).toContain("revenue.updated");
+    expect(events).toContain("revenue.deleted");
+    expect(events).toContain("expense.created");
+    expect(events).toContain("expense.updated");
+    expect(events).toContain("expense.deleted");
     expect(events).not.toContain("closing.created");
   });
 
@@ -26,5 +32,11 @@ describe("frontend realtime subscriptions", () => {
     expect(events).toContain("catalog.store-item.price.updated");
     expect(events).toContain("order.payment.updated");
     expect(events).toContain("closing.voided");
+    expect(events).toContain("revenue.created");
+    expect(events).toContain("revenue.updated");
+    expect(events).toContain("revenue.deleted");
+    expect(events).toContain("expense.created");
+    expect(events).toContain("expense.updated");
+    expect(events).toContain("expense.deleted");
   });
 });

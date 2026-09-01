@@ -26,6 +26,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { X } from "lucide-react";
+import { Popover as PopoverPrimitive } from "radix-ui";
 
 type Props = {
   open: boolean;
@@ -254,6 +255,22 @@ export function AddExpenseDialog({
             : inventorySearchRef.current
           )?.focus();
         }}
+        onPointerDownOutside={(event) => {
+          if (
+            event.target instanceof HTMLElement &&
+            event.target.closest("[data-expense-unit-popover]")
+          ) {
+            event.preventDefault();
+          }
+        }}
+        onFocusOutside={(event) => {
+          if (
+            event.target instanceof HTMLElement &&
+            event.target.closest("[data-expense-unit-popover]")
+          ) {
+            event.preventDefault();
+          }
+        }}
         className="top-1 max-h-[calc(100dvh-1rem)] translate-y-0 overflow-y-auto sm:max-w-3xl"
       >
         <form onSubmit={handleSubmit}>
@@ -271,7 +288,7 @@ export function AddExpenseDialog({
                 variant={entryType === "other" ? "default" : "outline"}
                 onClick={() => setEntryType("other")}
               >
-                Chi phí khác
+                {t("expenseOtherTab")}
               </Button>
               <Button
                 type="button"
@@ -282,17 +299,13 @@ export function AddExpenseDialog({
                 }
                 onClick={() => setEntryType("inventory_purchase")}
               >
-                Nhập nguyên liệu
+                {t("expenseInventoryTab")}
               </Button>
             </div>
           </div>
 
           <FieldGroup className="sm:grid sm:grid-cols-4 sm:gap-x-4 sm:gap-y-3">
-            <Field
-              className={
-                entryType === "other" ? "sm:col-span-1" : "sm:col-span-4"
-              }
-            >
+            <Field className="sm:col-span-4">
               <Label htmlFor="name-1">{t("expenseName")}</Label>
               {entryType === "inventory_purchase" ? (
                 <div className="flex items-start gap-2">
@@ -422,7 +435,7 @@ export function AddExpenseDialog({
             </Field>
 
             {entryType === "other" && (
-              <Field className="sm:col-span-1">
+              <Field className="sm:col-start-1 sm:row-start-2">
                 <Label>Nhóm chi phí</Label>
                 <select
                   className="h-8 w-full rounded-md border bg-background px-3 text-sm"
@@ -444,126 +457,165 @@ export function AddExpenseDialog({
               </Field>
             )}
 
-            <Field className="sm:col-start-2 sm:row-start-2">
-              <Label htmlFor="quantity-1">{t("expenseQuantity")}</Label>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Giảm số lượng"
-                  onClick={() => adjustQuantity(-1)}
-                >
-                  −
-                </Button>
+            {entryType === "inventory_purchase" && (
+              <>
+                <Field className="sm:col-start-1 sm:row-start-2">
+                  <Label htmlFor="quantity-1">{t("expenseQuantity")}</Label>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Giảm số lượng"
+                      onClick={() => adjustQuantity(-1)}
+                    >
+                      −
+                    </Button>
+                    <Input
+                      className="min-w-0 text-center"
+                      id="quantity-1"
+                      name="quantity"
+                      type="number"
+                      min="0.001"
+                      step="any"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Tăng số lượng"
+                      onClick={() => adjustQuantity(1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </Field>
+
+                <Field className="sm:col-start-2 sm:row-start-2">
+                  <Label htmlFor="unit-1">{t("expenseUnit")}</Label>
+                  <PopoverPrimitive.Root
+                    modal={false}
+                    open={unitPickerOpen}
+                    onOpenChange={setUnitPickerOpen}
+                  >
+                    <PopoverPrimitive.Anchor asChild>
+                      <div className="relative">
+                        <Input
+                          className="pr-9"
+                          value={unitSearch}
+                          placeholder={t("expenseUnit")}
+                          onFocus={() => setUnitPickerOpen(true)}
+                          onChange={(event) => {
+                            setUnitSearch(event.target.value);
+                            setUnitPickerOpen(true);
+                            setFormData((prev) => ({ ...prev, unit: "" }));
+                          }}
+                        />
+                        {unitSearch && (
+                          <button
+                            type="button"
+                            aria-label={
+                              locale === "en"
+                                ? "Clear unit search"
+                                : locale === "zh-TW"
+                                  ? "清除單位搜尋"
+                                  : "Xóa tìm đơn vị"
+                            }
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              setUnitSearch("");
+                              setFormData((prev) => ({ ...prev, unit: "" }));
+                              setUnitPickerOpen(true);
+                            }}
+                          >
+                            <X className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    </PopoverPrimitive.Anchor>
+                    <PopoverPrimitive.Portal>
+                      <PopoverPrimitive.Content
+                        data-expense-unit-popover
+                        side="bottom"
+                        align="start"
+                        sideOffset={4}
+                        onOpenAutoFocus={(event) => event.preventDefault()}
+                        onFocusOutside={(event) => event.preventDefault()}
+                        onWheel={(event) => event.stopPropagation()}
+                        onTouchMove={(event) => event.stopPropagation()}
+                        className="z-[100] max-h-48 w-[var(--radix-popover-trigger-width)] touch-pan-y overflow-y-scroll overscroll-contain rounded-md border bg-popover p-1 shadow-md"
+                      >
+                        {filteredUnits.length ? (
+                          filteredUnits.map((unit) => (
+                            <button
+                              className="block w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
+                              key={unit.code}
+                              type="button"
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                setUnitSearch(unitLabel(unit));
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  unit: unit.code,
+                                }));
+                                setUnitPickerOpen(false);
+                              }}
+                            >
+                              {unitLabel(unit)}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            {locale === "en"
+                              ? "No units found"
+                              : locale === "zh-TW"
+                                ? "找不到單位"
+                                : "Không tìm thấy đơn vị"}
+                          </div>
+                        )}
+                      </PopoverPrimitive.Content>
+                    </PopoverPrimitive.Portal>
+                  </PopoverPrimitive.Root>
+                </Field>
+
+                <Field className="sm:col-start-3 sm:row-start-2">
+                  <Label htmlFor="unit-price-1">{t("expenseUnitPrice")}</Label>
+                  <Input
+                    id="unit-price-1"
+                    name="unitPrice"
+                    type="number"
+                    min="0"
+                    value={formData.unitPrice}
+                    onChange={handleChange}
+                  />
+                </Field>
+              </>
+            )}
+
+            {entryType === "other" && (
+              <Field className="sm:col-start-2 sm:row-start-2">
+                <Label htmlFor="expense-amount-1">{t("expenseTotal")}</Label>
                 <Input
-                  className="min-w-0 text-center"
-                  id="quantity-1"
-                  name="quantity"
+                  id="expense-amount-1"
+                  name="unitPrice"
                   type="number"
-                  min="0.001"
-                  step="any"
-                  value={formData.quantity}
+                  min="0"
+                  value={formData.unitPrice}
                   onChange={handleChange}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Tăng số lượng"
-                  onClick={() => adjustQuantity(1)}
-                >
-                  +
-                </Button>
-              </div>
-            </Field>
+              </Field>
+            )}
 
-            <Field className="sm:col-start-1 sm:row-start-2">
-              <Label htmlFor="unit-1">{t("expenseUnit")}</Label>
-              <div className="relative">
-                <Input
-                  className="pr-9"
-                  value={unitSearch}
-                  placeholder={t("expenseUnit")}
-                  onFocus={() => setUnitPickerOpen(true)}
-                  onBlur={() =>
-                    window.setTimeout(() => setUnitPickerOpen(false), 120)
-                  }
-                  onChange={(event) => {
-                    setUnitSearch(event.target.value);
-                    setUnitPickerOpen(true);
-                    setFormData((prev) => ({ ...prev, unit: "" }));
-                  }}
-                />
-                {unitSearch && (
-                  <button
-                    type="button"
-                    aria-label={
-                      locale === "en"
-                        ? "Clear unit search"
-                        : locale === "zh-TW"
-                          ? "清除單位搜尋"
-                          : "Xóa tìm đơn vị"
-                    }
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => {
-                      setUnitSearch("");
-                      setFormData((prev) => ({ ...prev, unit: "" }));
-                      setUnitPickerOpen(true);
-                    }}
-                  >
-                    <X className="size-4" />
-                  </button>
-                )}
-                {unitPickerOpen && (
-                  <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                    {filteredUnits.length ? (
-                      filteredUnits.map((unit) => (
-                        <button
-                          className="block w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent"
-                          key={unit.code}
-                          type="button"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            setUnitSearch(unitLabel(unit));
-                            setFormData((prev) => ({
-                              ...prev,
-                              unit: unit.code,
-                            }));
-                            setUnitPickerOpen(false);
-                          }}
-                        >
-                          {unitLabel(unit)}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        {locale === "en"
-                          ? "No units found"
-                          : locale === "zh-TW"
-                            ? "找不到單位"
-                            : "Không tìm thấy đơn vị"}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Field>
-
-            <Field className="sm:col-start-3 sm:row-start-2">
-              <Label htmlFor="unit-price-1">{t("expenseUnitPrice")}</Label>
-              <Input
-                id="unit-price-1"
-                name="unitPrice"
-                type="number"
-                min="0"
-                value={formData.unitPrice}
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field className="sm:col-start-4 sm:row-start-2">
+            <Field
+              className={
+                entryType === "other"
+                  ? "sm:col-start-3 sm:row-start-2"
+                  : "sm:col-start-4 sm:row-start-2"
+              }
+            >
               <Label htmlFor="payment-method-1">{t("paymentMethod")}</Label>
               <select
                 id="payment-method-1"
@@ -584,7 +636,27 @@ export function AddExpenseDialog({
               </select>
             </Field>
 
-            <Field className="sm:col-span-4">
+            {entryType === "inventory_purchase" && (
+              <Field className="sm:col-span-1">
+                <Label htmlFor="expense-total-1">{t("expenseTotal")}</Label>
+                <Input
+                  id="expense-total-1"
+                  value={(
+                    Number(formData.quantity || 0) *
+                    Number(formData.unitPrice || 0)
+                  ).toLocaleString()}
+                  disabled
+                />
+              </Field>
+            )}
+
+            <Field
+              className={
+                entryType === "inventory_purchase"
+                  ? "sm:col-span-3"
+                  : "sm:col-span-4"
+              }
+            >
               <Label htmlFor="note-1">{t("expenseNote")}</Label>
               <Input
                 id="note-1"

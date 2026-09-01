@@ -92,7 +92,10 @@ export function EditExpenses({ editData, setEditData, open, onClose }: Props) {
       return {
         ...prev,
         [name]:
-          name === "quantity" || name === "unitPrice" ? Number(value) : value,
+          name === "quantity" || name === "unitPrice" || name === "price"
+            ? Number(value)
+            : value,
+        ...(name === "price" ? { unitPrice: Number(value) } : {}),
       };
     });
   };
@@ -118,16 +121,22 @@ export function EditExpenses({ editData, setEditData, open, onClose }: Props) {
       toast.warning(t("requiredPrice"));
       return;
     }
+    const quantity =
+      editData.type === "inventory_purchase"
+        ? Number(editData.quantity ?? 1)
+        : 1;
+    const unitPrice =
+      editData.type === "inventory_purchase"
+        ? Number(editData.unitPrice ?? editData.price)
+        : Number(editData.price);
     editMutation.mutate({
       id: editData._id!,
       data: {
         ...editData,
-        quantity: Number(editData.quantity ?? 1),
+        quantity,
         unit: editData.unit ?? "",
-        unitPrice: Number(editData.unitPrice ?? editData.price),
-        price:
-          Number(editData.quantity ?? 1) *
-          Number(editData.unitPrice ?? editData.price),
+        unitPrice,
+        price: quantity * unitPrice,
       },
     });
   };
@@ -162,73 +171,114 @@ export function EditExpenses({ editData, setEditData, open, onClose }: Props) {
               />
             </Field>
 
-            <Field>
-              <Label htmlFor="quantity-1">{t("expenseQuantity")}</Label>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Giảm số lượng"
-                  onClick={() => adjustQuantity(-1)}
-                >
-                  −
-                </Button>
+            {editData.type === "inventory_purchase" ? (
+              <>
+                <Field>
+                  <Label htmlFor="quantity-1">{t("expenseQuantity")}</Label>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Giảm số lượng"
+                      onClick={() => adjustQuantity(-1)}
+                    >
+                      −
+                    </Button>
+                    <Input
+                      className="min-w-0 text-center"
+                      id="quantity-1"
+                      name="quantity"
+                      type="number"
+                      min="0.001"
+                      step="any"
+                      value={editData.quantity ?? 1}
+                      onChange={handleChange}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Tăng số lượng"
+                      onClick={() => adjustQuantity(1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </Field>
+
+                <Field>
+                  <Label htmlFor="unit-1">{t("expenseUnit")}</Label>
+                  <Select
+                    value={editData.unit ?? ""}
+                    onValueChange={(value) =>
+                      setEditData((prev) =>
+                        prev ? { ...prev, unit: value } : prev,
+                      )
+                    }
+                  >
+                    <SelectTrigger id="unit-1" className="w-full">
+                      <SelectValue placeholder={t("expenseUnit")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {units.map((unit) => (
+                        <SelectItem key={unit.code} value={unit.code}>
+                          {unit.names[locale]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <Label htmlFor="unit-price-1">{t("expenseUnitPrice")}</Label>
+                  <Input
+                    id="unit-price-1"
+                    name="unitPrice"
+                    type="number"
+                    min="0"
+                    value={editData.unitPrice ?? editData.price}
+                    onChange={handleChange}
+                  />
+                </Field>
+              </>
+            ) : (
+              <Field>
+                <Label htmlFor="expense-amount-1">{t("expenseTotal")}</Label>
                 <Input
-                  className="min-w-0 text-center"
-                  id="quantity-1"
-                  name="quantity"
+                  id="expense-amount-1"
+                  name="price"
                   type="number"
-                  min="0.001"
-                  step="any"
-                  value={editData.quantity ?? 1}
+                  min="0"
+                  value={editData.price}
                   onChange={handleChange}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Tăng số lượng"
-                  onClick={() => adjustQuantity(1)}
-                >
-                  +
-                </Button>
-              </div>
-            </Field>
+              </Field>
+            )}
 
             <Field>
-              <Label htmlFor="unit-1">{t("expenseUnit")}</Label>
-              <Select
-                value={editData.unit ?? ""}
-                onValueChange={(value) =>
-                  setEditData((prev) =>
-                    prev ? { ...prev, unit: value } : prev,
+              <Label htmlFor="payment-method-1">{t("paymentMethod")}</Label>
+              <select
+                id="payment-method-1"
+                name="paymentMethod"
+                className="h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
+                value={editData.paymentMethod ?? "cash"}
+                onChange={(event) =>
+                  setEditData((current) =>
+                    current
+                      ? {
+                          ...current,
+                          paymentMethod: event.target.value as
+                            "cash" | "bank_transfer" | "other",
+                        }
+                      : current,
                   )
                 }
               >
-                <SelectTrigger id="unit-1" className="w-full">
-                  <SelectValue placeholder={t("expenseUnit")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit.code} value={unit.code}>
-                      {unit.names[locale]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <Label htmlFor="unit-price-1">{t("expenseUnitPrice")}</Label>
-              <Input
-                id="unit-price-1"
-                name="unitPrice"
-                type="number"
-                min="0"
-                value={editData.unitPrice ?? editData.price}
-                onChange={handleChange}
-              />
+                <option value="cash">{t("paymentCash")}</option>
+                <option value="bank_transfer">{t("paymentBank")}</option>
+                <option value="other">{t("paymentOther")}</option>
+              </select>
             </Field>
 
             <Field className="sm:col-span-3">

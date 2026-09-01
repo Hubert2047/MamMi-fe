@@ -39,6 +39,12 @@ type Props = {
   onRangeChange?: (range: RevenueRange) => void;
 };
 
+const revenuePaymentMethodMessageKeys = {
+  cash: "paymentCash",
+  bank_transfer: "paymentBank",
+  other: "paymentOther",
+} as const;
+
 export function OtherRevenueTable({
   revenues,
   showOnly = false,
@@ -275,6 +281,7 @@ export function OtherRevenueTable({
                   : "Thời gian"}
             </TableHead>
             <TableHead>{t("price")}</TableHead>
+            <TableHead>{t("paymentMethod")}</TableHead>
             <TableHead>{t("note")}</TableHead>
             {!showOnly && <TableHead>{t("actions")}</TableHead>}
           </TableRow>
@@ -283,7 +290,10 @@ export function OtherRevenueTable({
         <TableBody>
           {paginatedOrders.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-gray-400 py-8">
+              <TableCell
+                colSpan={showOnly ? 5 : 6}
+                className="py-8 text-center text-gray-400"
+              >
                 {t("noRevenueFound")}
               </TableCell>
             </TableRow>
@@ -298,6 +308,13 @@ export function OtherRevenueTable({
                   {formatDateTime(exp.createdAt)}
                 </TableCell>
                 <TableCell>{exp.price.toLocaleString()}</TableCell>
+                <TableCell>
+                  {t(
+                    revenuePaymentMethodMessageKeys[
+                      exp.paymentMethod ?? "other"
+                    ],
+                  )}
+                </TableCell>
                 <TableCell>{exp.note}</TableCell>
                 {!showOnly && (
                   <TableCell>

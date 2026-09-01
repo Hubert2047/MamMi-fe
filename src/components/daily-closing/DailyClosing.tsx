@@ -19,12 +19,25 @@ type Props = {
 function DailyClosing({ open, onClose }: Props) {
   const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(1);
-  const { data: summary, isLoading: isSummaryLoading } =
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    isFetching: isSummaryFetching,
+  } =
     useDailyClosingSummary();
-  const { data: expenses = [], isLoading: isExpenseLoading } = useExpenses();
+  const {
+    data: expenses = [],
+    isLoading: isExpenseLoading,
+    isFetching: isExpenseFetching,
+  } = useExpenses();
   const salesData =
     summary?.salesByPayment ?? ({} as Record<PaymentMethod, SalesByPayment>);
   const totalOtherRevenues = summary?.otherRevenueTotal ?? 0;
+  const otherRevenueByPayment = summary?.otherRevenueByPayment ?? {
+    cash: totalOtherRevenues,
+    bank_transfer: 0,
+    other: 0,
+  };
   const systemAmount = summary?.systemAmount ?? 0;
 
   return (
@@ -44,15 +57,12 @@ function DailyClosing({ open, onClose }: Props) {
           {currentStep === 1 && (
             <DailyClosingStep1
               expenses={expenses}
-              periodRange={
-                summary
-                  ? { from: summary.periodStart, to: summary.periodEnd }
-                  : undefined
-              }
               totalOtherRevenues={totalOtherRevenues}
+              otherRevenueByPayment={otherRevenueByPayment}
               salesData={salesData}
               isExpenseLoading={isExpenseLoading}
               isSalesLoading={isSummaryLoading}
+              isRefreshing={isSummaryFetching || isExpenseFetching}
               setCurrentStep={setCurrentStep}
             />
           )}

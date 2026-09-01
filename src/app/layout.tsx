@@ -8,7 +8,13 @@ import "@/index.css";
 export const metadata: Metadata = {
   title: "Măm Mi",
   description: "Point of sale management system",
-  icons: { icon: "/logo.png", apple: "/logo.png" },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png", media: "(prefers-color-scheme: dark)" },
+      { url: "/logo.png", type: "image/png", media: "(prefers-color-scheme: light)" },
+    ],
+    apple: "/logo.png",
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

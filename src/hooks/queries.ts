@@ -80,6 +80,7 @@ export function useExpenses(range?: ExpenseRange) {
     queryFn: () => getExpenses(range),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: "always",
   });
 }
 
@@ -105,6 +106,7 @@ export function useDailyClosingSummary() {
     queryKey: queryKeys.dailyClosingSummary,
     queryFn: getDailyClosingSummary,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: "always",
   });
 }
 

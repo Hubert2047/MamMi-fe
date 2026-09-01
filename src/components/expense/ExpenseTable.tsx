@@ -9,7 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   deleteExpense,
+  getExpenseUnits,
   type Expense,
+  type ExpenseUnit,
   type ExpenseRange,
   type IUpdateExpense,
 } from "@/api/expense";
@@ -25,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input.tsx";
 import { EditExpenses } from "@/components/expense/EditExpenses.tsx";
@@ -47,6 +49,11 @@ export function ExpenseTable({
   onRangeChange,
 }: Props) {
   const { t, locale } = useI18n();
+  const { data: units = [] } = useQuery<ExpenseUnit[]>({
+    queryKey: ["expense-units"],
+    queryFn: () => getExpenseUnits(),
+    staleTime: 5 * 60 * 1000,
+  });
   const queryClient = useQueryClient();
   const [openEdit, setOpenEdit] = useState<boolean>(false);
   const [addExpense, setAddExpense] = useState<boolean>(false);
@@ -112,6 +119,11 @@ export function ExpenseTable({
               other: "Khác",
             };
     return labels[expense.category as keyof typeof labels] || labels.other;
+  };
+  const unitLabel = (code?: string) => {
+    if (!code) return "—";
+    const unit = units.find((item) => item.code === code);
+    return unit?.names[locale] || unit?.names.vi || code;
   };
   const filteredOrders = expenses.filter((o) => {
     if (!search) return true;
@@ -343,7 +355,7 @@ export function ExpenseTable({
                 </TableCell>
                 <TableCell>{expenseTypeLabel(exp)}</TableCell>
                 <TableCell>{exp.quantity ?? 1}</TableCell>
-                <TableCell>{exp.unit || "—"}</TableCell>
+                <TableCell>{unitLabel(exp.unit)}</TableCell>
                 <TableCell>
                   {(exp.unitPrice ?? exp.price).toLocaleString()}
                 </TableCell>
