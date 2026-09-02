@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Calculates rows from the actual list-card height, not the viewport height. */
-export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
+export function useTablePageSize(
+  rowHeight = 38,
+  reservedHeight = 100,
+  headerHeightOverride?: number,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(() =>
     typeof window === "undefined"
@@ -60,7 +64,7 @@ export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
             child.style.overflow = "visible";
         });
         const measuredRowHeight =
-          rowHeight >= 80
+          rowHeight >= 50
             ? rowHeight
             : Math.max(
                 rowHeight,
@@ -68,9 +72,6 @@ export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
                   element.querySelectorAll<HTMLElement>("tbody tr"),
                 ).map((row) => row.getBoundingClientRect().height),
               );
-        const tableHeaderHeight =
-          element.querySelector<HTMLElement>("thead")?.getBoundingClientRect()
-            .height || 32;
         // Measure from the card itself. CardContent can report a stale/zero
         // clientHeight while its scroll wrapper is being laid out, which
         // incorrectly limits Product to only a couple of rows.
@@ -87,23 +88,30 @@ export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
           ? (parseFloat(contentStyle.paddingTop) || 0) +
             (parseFloat(contentStyle.paddingBottom) || 0)
           : 0;
-        const body = element.querySelector<HTMLElement>("tbody");
-        const bodyStyle = body ? window.getComputedStyle(body) : null;
-        const rowGap = bodyStyle
-          ? parseFloat(bodyStyle.rowGap || bodyStyle.gap || "0") || 0
-          : 0;
+        const cardStyle = window.getComputedStyle(element);
+        const cardPadding =
+          (parseFloat(cardStyle.paddingTop) || 0) +
+          (parseFloat(cardStyle.paddingBottom) || 0);
+        const cardGap =
+          parseFloat(cardStyle.rowGap || cardStyle.gap || "0") || 0;
+        const headerElement = element.querySelector<HTMLElement>(
+          '[data-slot="card-header"]',
+        );
+        const measuredCardContentHeight =
+          contentHeight > 0 ? contentHeight - contentPadding : 0;
+        const headerHeight =
+          headerHeightOverride ??
+          headerElement?.getBoundingClientRect().height ??
+          0;
+        const estimatedCardContentHeight =
+          cardHeight - cardPadding - cardGap - headerHeight;
         const availableHeight =
-          contentHeight > 0
-            ? contentHeight - contentPadding
-            : cardHeight >= 400
-              ? cardHeight - reservedHeight
-              : window.innerHeight - 300;
+          cardHeight >= 400
+            ? Math.max(measuredCardContentHeight, estimatedCardContentHeight)
+            : window.innerHeight - 300;
         const nextPageSize = Math.max(
           5,
-          Math.floor(
-            (availableHeight - tableHeaderHeight - 4) /
-              (measuredRowHeight + rowGap),
-          ),
+          Math.floor(availableHeight / measuredRowHeight),
         );
         setPageSize(nextPageSize);
       };
@@ -124,7 +132,7 @@ export function useTablePageSize(rowHeight = 38, reservedHeight = 100) {
       resizeObserver?.disconnect();
       window.removeEventListener("resize", updateFromViewport);
     };
-  }, [reservedHeight, rowHeight]);
+  }, [headerHeightOverride, reservedHeight, rowHeight]);
 
   return { containerRef, pageSize };
 }

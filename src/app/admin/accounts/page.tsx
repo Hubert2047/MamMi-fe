@@ -29,11 +29,18 @@ import {
   createManagedUser,
   getManagedUsers,
   updateManagedUser,
+  type ManagedUser,
   type ManagedUserRole,
 } from "@/api/user";
 import { useAuth } from "@/hooks/auth";
 import { useI18n } from "@/lib/i18n";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AccountsPage() {
   const { user } = useAuth();
@@ -46,8 +53,8 @@ export default function AccountsPage() {
   const [storeId, setStoreId] = useState("");
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState("");
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [active, setActive] = useState(true);
   const { data: stores = [] } = useQuery({
     queryKey: ["stores"],
     queryFn: getStores,
@@ -79,20 +86,32 @@ export default function AccountsPage() {
     void client.invalidateQueries({ queryKey: ["managed-users"] });
   const save = useMutation({
     mutationFn: () =>
-      createManagedUser({
-        account,
-        password,
-        role: role as "Admin" | "Employee",
-        storeId,
-      }),
+      editingUser
+        ? updateManagedUser(editingUser._id, {
+            ...(editingUser.role !== "SuperAdmin" ? { account } : {}),
+            ...(password ? { password } : {}),
+            ...(editingUser.role !== "SuperAdmin"
+              ? { role: role as "Admin" | "Employee", storeId, active }
+              : {}),
+          })
+        : createManagedUser({
+            account,
+            password,
+            role: role as "Admin" | "Employee",
+            storeId,
+          }),
     onSuccess: () => {
       refresh();
       setAccount("");
       setPassword("");
       setRole("Employee");
       setStoreId("");
+      setActive(true);
+      setEditingUser(null);
       setIsFormOpen(false);
-      toast.success(t("accountCreateSuccess"));
+      toast.success(
+        t(editingUser ? "accountEditSuccess" : "accountCreateSuccess"),
+      );
     },
     onError: (error) =>
       toast.error(
@@ -100,27 +119,6 @@ export default function AccountsPage() {
           ? error.response?.data?.message || t("accountSaveError")
           : t("accountSaveError"),
       ),
-  });
-  const toggle = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      updateManagedUser(id, { active }),
-    onSuccess: refresh,
-    onError: () => toast.error(t("accountSaveError")),
-  });
-  const changePassword = useMutation({
-    mutationFn: ({
-      id,
-      password: nextPassword,
-    }: {
-      id: string;
-      password: string;
-    }) => updateManagedUser(id, { password: nextPassword }),
-    onSuccess: () => {
-      setPasswordUserId(null);
-      setNewPassword("");
-      toast.success(t("passwordChangeSuccess"));
-    },
-    onError: () => toast.error(t("passwordChangeError")),
   });
   if (user?.role !== "SuperAdmin")
     return (
@@ -141,97 +139,146 @@ export default function AccountsPage() {
     setPassword("");
     setRole("Employee");
     setStoreId("");
+    setActive(true);
+    setEditingUser(null);
+  };
+  const openCreate = () => {
+    closeForm();
+    setIsFormOpen(true);
+  };
+  const openEdit = (managedUser: ManagedUser) => {
+    setEditingUser(managedUser);
+    setAccount(managedUser.account);
+    setPassword("");
+    setRole(managedUser.role);
+    setActive(managedUser.active);
+    const firstStore = managedUser.storeIds[0];
+    setStoreId(
+      typeof firstStore === "string" ? firstStore : firstStore?._id || "",
+    );
+    setIsFormOpen(true);
   };
   return (
     <div className="h-full overflow-hidden p-6 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-3xl font-bold capitalize">{t("userAccounts")}</h1>
-        <Button onClick={() => setIsFormOpen(true)}>
-          {t("createAccount")}
-        </Button>
+        <Button onClick={openCreate}>{t("createAccount")}</Button>
       </div>
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8">
-          <Card className="w-full max-w-5xl">
-            <CardHeader>
-              <CardTitle>{t("createAccount")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!storeId) return toast.error(t("accountStoreRequired"));
-                  save.mutate();
-                }}
-              >
-                <div className="space-y-2">
-                  <Label>{t("account")}</Label>
-                  <Input
-                    value={account}
-                    onChange={(event) => setAccount(event.target.value)}
-                    placeholder={t("accountNamePlaceholder")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("password")}</Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder={t("accountPasswordPlaceholder")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("accountRole")}</Label>
-                  <Select
-                    value={role}
-                    onValueChange={(value) => setRole(value as ManagedUserRole)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Employee">
-                        {t("employeeRole")}
+      <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {t(editingUser ? "editAccount" : "createAccount")}
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!editingUser && !storeId)
+                return toast.error(t("accountStoreRequired"));
+              if (!editingUser && !password) return;
+              save.mutate();
+            }}
+          >
+            <div className="space-y-2">
+              <Label>{t("account")}</Label>
+              <Input
+                className="h-9 w-full"
+                value={account}
+                onChange={(event) => setAccount(event.target.value)}
+                placeholder={t("accountNamePlaceholder")}
+                disabled={editingUser?.role === "SuperAdmin"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("password")}</Label>
+              <Input
+                className="h-9 w-full"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={
+                  editingUser
+                    ? t("accountPasswordOptional")
+                    : t("accountPasswordPlaceholder")
+                }
+              />
+            </div>
+            <div
+              className={`grid gap-4 ${editingUser ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+            >
+              <div className="space-y-2">
+                <Label>{t("accountRole")}</Label>
+                <Select
+                  value={role}
+                  onValueChange={(value) => setRole(value as ManagedUserRole)}
+                  disabled={editingUser?.role === "SuperAdmin"}
+                >
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Employee">
+                      {t("employeeRole")}
+                    </SelectItem>
+                    <SelectItem value="Admin">{t("adminRole")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("store")}</Label>
+                <Select
+                  value={storeId}
+                  onValueChange={setStoreId}
+                  disabled={editingUser?.role === "SuperAdmin"}
+                >
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue placeholder={t("selectStore")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((store) => (
+                      <SelectItem key={store._id} value={store._id}>
+                        {store.name}
                       </SelectItem>
-                      <SelectItem value="Admin">{t("adminRole")}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {editingUser && (
+                <div className="flex items-center gap-3 bg-muted/30 p-3">
+                  <Checkbox
+                    id="account-active"
+                    checked={active}
+                    disabled={editingUser.role === "SuperAdmin"}
+                    onCheckedChange={(checked) => setActive(checked === true)}
+                  />
+                  <Label htmlFor="account-active">
+                    {active ? t("accountActive") : t("accountInactive")}
+                  </Label>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("store")}</Label>
-                  <Select value={storeId} onValueChange={setStoreId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("selectStore")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {stores.map((store) => (
-                        <SelectItem key={store._id} value={store._id}>
-                          {store.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-2 sm:col-span-2 lg:col-span-4">
-                  <Button
-                    type="submit"
-                    disabled={
-                      save.isPending || !account || !password || !storeId
-                    }
-                  >
-                    {save.isPending ? t("saving") : t("createAccount")}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={closeForm}>
-                    {t("cancel")}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              )}
+            </div>
+            <div className="flex justify-end gap-2 border-t pt-4">
+              <Button
+                type="submit"
+                disabled={
+                  save.isPending ||
+                  !account ||
+                  (!editingUser && (!password || !storeId))
+                }
+              >
+                {save.isPending
+                  ? t("saving")
+                  : t(editingUser ? "saveChanges" : "createAccount")}
+              </Button>
+              <Button type="button" variant="outline" onClick={closeForm}>
+                {t("cancel")}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       <Card
         className={`flex h-[calc(100svh-80px)] min-h-0 flex-col overflow-hidden ${isFormOpen ? "hidden" : ""}`}
       >
@@ -315,61 +362,11 @@ export default function AccountsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => {
-                              setPasswordUserId(managedUser._id);
-                              setNewPassword("");
-                            }}
+                            onClick={() => openEdit(managedUser)}
                           >
-                            {t("changePassword")}
+                            {t("editAccount")}
                           </Button>
-                          {!isSuperAdmin && (
-                            <Checkbox
-                              checked={managedUser.active}
-                              onCheckedChange={(active) =>
-                                toggle.mutate({
-                                  id: managedUser._id,
-                                  active: active === true,
-                                })
-                              }
-                            />
-                          )}
                         </div>
-                        {passwordUserId === managedUser._id && (
-                          <div className="mt-2 flex justify-end gap-2">
-                            <Input
-                              className="max-w-xs"
-                              type="password"
-                              value={newPassword}
-                              onChange={(event) =>
-                                setNewPassword(event.target.value)
-                              }
-                              placeholder={t("accountPasswordPlaceholder")}
-                            />
-                            <Button
-                              size="sm"
-                              disabled={
-                                newPassword.length < 6 ||
-                                changePassword.isPending
-                              }
-                              onClick={() =>
-                                changePassword.mutate({
-                                  id: managedUser._id,
-                                  password: newPassword,
-                                })
-                              }
-                            >
-                              {t("savePassword")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              type="button"
-                              variant="outline"
-                              onClick={() => setPasswordUserId(null)}
-                            >
-                              {t("cancel")}
-                            </Button>
-                          </div>
-                        )}
                       </TableCell>
                     </TableRow>
                   );

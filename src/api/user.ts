@@ -24,6 +24,7 @@ export const createManagedUser = async (data: CreateManagedUserInput) =>
 export const updateManagedUser = async (
   id: string,
   data: Partial<{
+    account: string;
     password: string;
     role: ManagedUserRole;
     storeId: string;

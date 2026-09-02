@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -140,6 +142,16 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     cancel: "取消",
   },
 };
+const duplicateMessages = {
+  vi: "Mã đơn vị đã tồn tại",
+  en: "Unit code already exists",
+  "zh-TW": "單位代碼已存在",
+} as const;
+const saveErrorMessages = {
+  vi: "Không thể lưu đơn vị",
+  en: "Unable to save unit",
+  "zh-TW": "無法儲存單位",
+} as const;
 const empty = {
   code: "",
   vi: "",
@@ -160,7 +172,9 @@ export default function UnitManagement() {
   const [editing, setEditing] = useState<ExpenseUnit | null>(null);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const { containerRef, pageSize } = useTablePageSize(73, 100);
+  // Let the hook measure the actual table row height. A fixed 73px minimum
+  // made the page size too small even though the table card had free space.
+  const { containerRef, pageSize } = useTablePageSize(50, 100, 40);
   const reset = () => {
     setForm(empty);
     setEditing(null);
@@ -197,6 +211,13 @@ export default function UnitManagement() {
       void client.invalidateQueries({ queryKey: ["expense-units"] });
       void client.invalidateQueries({ queryKey: ["expense-units-all"] });
       reset();
+    },
+    onError: (error: unknown) => {
+      if (isAxiosError(error) && error.response?.status === 409) {
+        toast.error(duplicateMessages[locale]);
+        return;
+      }
+      toast.error(saveErrorMessages[locale]);
     },
   });
   const toggle = useMutation({
