@@ -82,8 +82,6 @@ const POSPage: React.FC = () => {
   const [openStocktake, setOpenStocktake] = useState(false);
   const [openTableSessions, setOpenTableSessions] = useState(false);
   const [promotionInfoOpen, setPromotionInfoOpen] = useState(false);
-  const showShiftAttendanceButton =
-    process.env.NEXT_PUBLIC_ENABLE_SHIFT_ATTENDANCE === "true";
   const [openTemporaryAvailability, setOpenTemporaryAvailability] =
     useState(false);
   const { data: items = [], isLoading: isItemsLoading } = useItems();
@@ -544,16 +542,13 @@ const POSPage: React.FC = () => {
               {t("expenses")}
             </Button>
             {/* Temporarily hidden; keep the stocktake dialog and state for later. */}
-            {/* Temporarily hidden; keep the attendance state, dialog, and logic for the next phase. */}
-            {showShiftAttendanceButton && (
-              <Button
-                className="h-11 text-base"
-                variant="outline"
-                onClick={() => setOpenShiftAttendance(true)}
-              >
-                {t("attendance")}
-              </Button>
-            )}
+            <Button
+              className="h-11 text-base"
+              variant="outline"
+              onClick={() => setOpenShiftAttendance(true)}
+            >
+              {t("attendance")}
+            </Button>
             <Button
               className="h-11 text-base"
               variant="outline"

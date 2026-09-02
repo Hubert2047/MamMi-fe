@@ -286,6 +286,7 @@ function buildHeaderHTML(order: BaseOrder): string {
   const time = new Date().toLocaleTimeString("zh-TW", {
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   });
   const typeLabel =
     (

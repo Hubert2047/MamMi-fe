@@ -17,14 +17,13 @@ type Props = {
 };
 
 function DailyClosing({ open, onClose }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentStep, setCurrentStep] = useState(1);
   const {
     data: summary,
     isLoading: isSummaryLoading,
     isFetching: isSummaryFetching,
-  } =
-    useDailyClosingSummary();
+  } = useDailyClosingSummary();
   const {
     data: expenses = [],
     isLoading: isExpenseLoading,
@@ -54,6 +53,18 @@ function DailyClosing({ open, onClose }: Props) {
               {t("closingTitle")}
             </DialogTitle>
           </DialogHeader>
+          <div className="flex shrink-0 items-center justify-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+            <span className="font-semibold">{t("closingPeriod")}:</span>
+            <span className="tabular-nums">
+              {summary
+                ? formatClosingPeriod(
+                    summary.periodStart,
+                    summary.periodEnd,
+                    locale,
+                  )
+                : "—"}
+            </span>
+          </div>
           {currentStep === 1 && (
             <DailyClosingStep1
               expenses={expenses}
@@ -69,6 +80,11 @@ function DailyClosing({ open, onClose }: Props) {
           {currentStep === 2 && (
             <DailyClosingStep2
               systemAmount={systemAmount}
+              previousClosingAmount={summary?.previousClosingAmount ?? 0}
+              previousClosingCash={summary?.previousClosingCash ?? {}}
+              cashSales={summary?.cashSales ?? 0}
+              cashOtherRevenue={summary?.otherRevenueByPayment.cash ?? 0}
+              expensesTotal={summary?.expensesTotal ?? 0}
               setCurrentStep={setCurrentStep}
               onClose={onClose}
             />
@@ -77,6 +93,19 @@ function DailyClosing({ open, onClose }: Props) {
       </Dialog>
     </>
   );
+}
+
+function formatClosingPeriod(start: string, end: string, locale: string) {
+  const formatter = new Intl.DateTimeFormat(
+    locale === "zh-TW" ? "zh-TW" : locale,
+    {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Asia/Taipei",
+      hourCycle: "h23",
+    },
+  );
+  return `${formatter.format(new Date(start))} → ${formatter.format(new Date(end))}`;
 }
 
 export default DailyClosing;

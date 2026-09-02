@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,7 @@ import {
 } from "@/api/inventory";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+import { useTablePageSize } from "@/hooks/use-table-page-size";
 
 type Tab = "items" | "receipts";
 const labels = {
@@ -51,7 +52,8 @@ const labels = {
     addRule: "Thêm quy cách",
     save: "Lưu",
     add: "Thêm nguyên liệu",
-    edit: "Sửa nguyên liệu",
+    edit: "Sửa",
+    actions: "Thao Tác",
     cancel: "Hủy",
     choose: "Chọn nguyên liệu",
     quantity: "Số lượng",
@@ -72,7 +74,8 @@ const labels = {
     addRule: "Add unit",
     save: "Save",
     add: "Add ingredient",
-    edit: "Edit ingredient",
+    edit: "Edit",
+    actions: "Actions",
     cancel: "Cancel",
     choose: "Choose ingredient",
     quantity: "Quantity",
@@ -93,7 +96,8 @@ const labels = {
     addRule: "新增規格",
     save: "儲存",
     add: "新增原料",
-    edit: "編輯原料",
+    edit: "編輯",
+    actions: "操作",
     cancel: "取消",
     choose: "選擇原料",
     quantity: "數量",
@@ -155,13 +159,14 @@ export default function InventoryPanel({
 }: {
   initialTab?: Tab;
 }) {
-  const { locale } = useI18n();
+  const { locale, t: translate } = useI18n();
   const t = labels[locale];
   const pendingText = pendingLabels[locale];
   const approveText = approveLabels[locale];
   const paymentText = paymentLabels[locale];
   const errors = errorLabels[locale];
   const client = useQueryClient();
+  const { pageSize } = useTablePageSize();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
@@ -178,6 +183,7 @@ export default function InventoryPanel({
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "bank_transfer" | "other"
   >("cash");
+  const [page, setPage] = useState(1);
   const { data: units = [] } = useQuery<ExpenseUnit[]>({
     queryKey: ["expense-units"],
     queryFn: () => getExpenseUnits(),
@@ -195,6 +201,15 @@ export default function InventoryPanel({
     queryFn: getInventoryReceipts,
   });
   const selected = items.find((item) => item._id === selectedId);
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleItems = items.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
   const stockByItemId = new Map(
     stock.map((item) => [item._id, item.currentQuantity]),
   );
@@ -334,52 +349,73 @@ export default function InventoryPanel({
         ))}
       </div>
       {tab === "items" && (
-        <Card className="min-h-0">
-          <CardHeader>
+        <Card className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden">
+          <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-3">
             <CardTitle>{t.items}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-[calc(100svh-220px)] overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.name}</TableHead>
-                    <TableHead>{t.stockUnit}</TableHead>
-                    <TableHead>{t.safety}</TableHead>
-                    <TableHead>{t.current}</TableHead>
-                    <TableHead className="text-right">{t.edit}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item._id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{unitLabel(item.stockUnitCode)}</TableCell>
-                      <TableCell>{item.minimumStock}</TableCell>
-                      <TableCell>
-                        {stockByItemId.get(item._id) ?? 0}
-                        {item.inventoryStatus === "pending" && (
-                          <span className="ml-2 text-xs text-amber-600">
-                            ({pendingText})
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.inventoryStatus !== "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openEdit(item)}
-                          >
-                            {t.edit}
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {currentPage}/{totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setPage((current) => current - 1)}
+                aria-label={translate("previous")}
+              >
+                ‹
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage((current) => current + 1)}
+                aria-label={translate("next")}
+              >
+                ›
+              </Button>
             </div>
+          </CardHeader>
+          <CardContent className="min-h-0 flex-1 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.name}</TableHead>
+                  <TableHead>{t.stockUnit}</TableHead>
+                  <TableHead>{t.safety}</TableHead>
+                  <TableHead>{t.current}</TableHead>
+                  <TableHead className="text-right">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleItems.map((item) => (
+                  <TableRow key={item._id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>{unitLabel(item.stockUnitCode)}</TableCell>
+                    <TableCell>{item.minimumStock}</TableCell>
+                    <TableCell>
+                      {stockByItemId.get(item._id) ?? 0}
+                      {item.inventoryStatus === "pending" && (
+                        <span className="ml-2 text-xs text-amber-600">
+                          ({pendingText})
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.inventoryStatus !== "pending" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEdit(item)}
+                        >
+                          {t.edit}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}

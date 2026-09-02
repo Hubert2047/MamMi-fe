@@ -83,6 +83,7 @@ export function ExpenseTable({
       month: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      hourCycle: "h23",
     }).format(new Date(value || currentTime));
   const expenseTypeLabel = (expense: Expense) => {
     if (expense.type === "inventory_purchase")

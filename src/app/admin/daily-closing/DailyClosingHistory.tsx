@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   getDailyClosings,
   voidDailyClosing,
@@ -68,6 +68,7 @@ function formatDate(value?: string) {
     : new Intl.DateTimeFormat(undefined, {
         dateStyle: "short",
         timeStyle: "short",
+        hourCycle: "h23",
       }).format(date);
 }
 
@@ -320,29 +321,31 @@ export default function DailyClosingHistory() {
                         {formatAmount(getDifference(closing))}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("closingDetailsTitle")}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setSelectedDetail(closing);
-                          }}
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        {canVoid && (
+                        <div className="flex justify-end gap-2">
                           <Button
-                            variant="destructive"
+                            variant="outline"
                             size="sm"
+                            aria-label={t("detail")}
                             onClick={(event) => {
                               event.stopPropagation();
-                              openVoid(closing);
+                              setSelectedDetail(closing);
                             }}
                           >
-                            {t("voidClosing")}
+                            {t("detail")}
                           </Button>
-                        )}
+                          {canVoid && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openVoid(closing);
+                              }}
+                            >
+                              {t("voidClosing")}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

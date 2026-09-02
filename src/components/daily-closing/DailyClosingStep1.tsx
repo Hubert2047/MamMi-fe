@@ -73,6 +73,7 @@ function DailyClosingStep1({
       month: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      hourCycle: "h23",
     }).format(new Date(value));
 
   function getPaymentMethodValue(type: PaymentMethod) {
@@ -82,6 +83,10 @@ function DailyClosingStep1({
   }
 
   const totalIncome = calculateIncomeTotal(salesData, totalOtherRevenues);
+  const totalExpenses = expenses.reduce(
+    (total, expense) => total + expense.price,
+    0,
+  );
   return (
     <>
       <div className="flex justify-between">
@@ -97,13 +102,13 @@ function DailyClosingStep1({
           }}
         >
           <ToggleGroupItem
-            className="w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground"
+            className="h-10 w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground"
             value="income"
           >
             {t("income")}
           </ToggleGroupItem>
           <ToggleGroupItem
-            className="w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground"
+            className="h-10 w-20 rounded-lg border-primary/40 data-[state=on]:!border-primary data-[state=on]:!bg-primary data-[state=on]:!text-primary-foreground"
             value="expense"
           >
             {t("expense")}
@@ -218,7 +223,9 @@ function DailyClosingStep1({
           {!isExpenseLoading &&
             expensePaymentMethods.map(({ method, messageKey }) => {
               const methodExpenses = expenses.filter(
-                (expense) => expense.paymentMethod === method,
+                (expense) =>
+                  expense.paymentMethod === method ||
+                  (method === "cash" && !expense.paymentMethod),
               );
               const methodTotal = methodExpenses.reduce(
                 (total, expense) => total + expense.price,
@@ -302,6 +309,15 @@ function DailyClosingStep1({
                 </div>
               );
             })}
+          <div className="flex items-center justify-start gap-4 border-t pt-3">
+            <Label className="w-28 font-bold">{t("totalExpense")}</Label>
+            <Input
+              id="expense-total"
+              value={totalExpenses.toLocaleString()}
+              className="w-40 text-center font-bold"
+              disabled
+            />
+          </div>
         </div>
       )}
       {isSalesLoading && <Loading />}

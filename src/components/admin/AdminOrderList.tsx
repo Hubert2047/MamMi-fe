@@ -83,6 +83,7 @@ export default function AdminOrderList() {
       ? new Intl.DateTimeFormat(locale, {
           dateStyle: "short",
           timeStyle: "short",
+          hourCycle: "h23",
         }).format(new Date(value))
       : "-";
 

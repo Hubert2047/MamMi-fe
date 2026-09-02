@@ -78,6 +78,7 @@ export default function OrderDetailDialog({ order, onClose }: Props) {
               {t("pickupTime")}:{" "}
               {new Date(order.pickupAt).toLocaleString(locale, {
                 timeZone: "Asia/Taipei",
+                hour12: false,
               })}
             </p>
           )}

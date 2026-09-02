@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { isAxiosError } from "axios";
 import QRCode from "qrcode";
 import {
   Copy,
@@ -115,7 +116,12 @@ export default function TablesPanel() {
       setIsCreateOpen(false);
       toast.success(t("tableCreateSuccess"));
     },
-    onError: () => toast.error(t("tableCreateFailure")),
+    onError: (error) =>
+      toast.error(
+        isAxiosError(error) && error.response?.status === 409
+          ? t("tableCodeDuplicate")
+          : t("tableCreateFailure"),
+      ),
   });
   const update = useMutation({
     mutationFn: ({
@@ -173,7 +179,14 @@ export default function TablesPanel() {
       toast.error(t("tableCopyFailure"));
     }
   };
+  const openCreate = () => {
+    setEditingTable(null);
+    setCode("");
+    setName("");
+    setIsCreateOpen(true);
+  };
   const openEdit = (table: StoreTable) => {
+    if (!table.active) return;
     setEditingTable(table);
     setCode(table.code);
     setName(table.name);
@@ -183,11 +196,19 @@ export default function TablesPanel() {
     <div className="h-full overflow-hidden p-6 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">{t("tables")}</h1>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          {t("tableCreate")}
-        </Button>
+        <Button onClick={openCreate}>{t("tableCreate")}</Button>
       </div>
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={(open) => {
+          setIsCreateOpen(open);
+          if (!open) {
+            setCode("");
+            setName("");
+            setEditingTable(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("tableCreate")}</DialogTitle>
@@ -221,7 +242,12 @@ export default function TablesPanel() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsCreateOpen(false)}
+                onClick={() => {
+                  setIsCreateOpen(false);
+                  setCode("");
+                  setName("");
+                  setEditingTable(null);
+                }}
               >
                 {t("cancel")}
               </Button>
@@ -233,7 +259,11 @@ export default function TablesPanel() {
         open={isEditOpen}
         onOpenChange={(open) => {
           setIsEditOpen(open);
-          if (!open) setEditingTable(null);
+          if (!open) {
+            setEditingTable(null);
+            setCode("");
+            setName("");
+          }
         }}
       >
         <DialogContent>
@@ -275,7 +305,12 @@ export default function TablesPanel() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsEditOpen(false)}
+                onClick={() => {
+                  setIsEditOpen(false);
+                  setEditingTable(null);
+                  setCode("");
+                  setName("");
+                }}
               >
                 {t("cancel")}
               </Button>
@@ -441,14 +476,16 @@ export default function TablesPanel() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEdit(row.table)}
-                            >
-                              <Pencil className="size-4" />
-                              {t("tableEdit")}
-                            </Button>
+                            {row.table.active && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEdit(row.table)}
+                              >
+                                <Pencil className="size-4" />
+                                {t("tableEdit")}
+                              </Button>
+                            )}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button size="sm" variant="outline">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -21,12 +21,22 @@ import {
 } from "@/api/expense";
 import { useI18n } from "@/lib/i18n";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Copy = {
   title: string;
   addTitle: string;
   editTitle: string;
   code: string;
+  codeHeader: string;
+  nameHeader: string;
   vi: string;
   en: string;
   zh: string;
@@ -44,14 +54,17 @@ type Copy = {
   off: string;
   on: string;
   edit: string;
+  actions: string;
   cancel: string;
 };
 const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
   vi: {
-    title: "Đơn vị tính",
+    title: "Đơn Vị",
     addTitle: "Thêm đơn vị",
     editTitle: "Sửa đơn vị",
     code: "Mã đơn vị, ví dụ: tray",
+    codeHeader: "Mã đơn vị",
+    nameHeader: "Tên",
     vi: "Tên tiếng Việt",
     en: "Tên tiếng Anh",
     zh: "Tên tiếng Trung",
@@ -69,6 +82,7 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     off: "Tắt sử dụng",
     on: "Bật sử dụng",
     edit: "Sửa",
+    actions: "Thao Tác",
     cancel: "Hủy",
   },
   en: {
@@ -76,6 +90,8 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     addTitle: "Add unit",
     editTitle: "Edit unit",
     code: "Unit code, e.g. tray",
+    codeHeader: "Unit code",
+    nameHeader: "Name",
     vi: "Vietnamese name",
     en: "English name",
     zh: "Chinese name",
@@ -93,6 +109,7 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     off: "Disable",
     on: "Enable",
     edit: "Edit",
+    actions: "Actions",
     cancel: "Cancel",
   },
   "zh-TW": {
@@ -100,6 +117,8 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     addTitle: "新增單位",
     editTitle: "編輯單位",
     code: "單位代碼，例如 tray",
+    codeHeader: "單位代碼",
+    nameHeader: "名稱",
     vi: "越南文名稱",
     en: "英文名稱",
     zh: "中文名稱",
@@ -117,6 +136,7 @@ const texts: Record<"vi" | "en" | "zh-TW", Copy> = {
     off: "停用",
     on: "啟用",
     edit: "編輯",
+    actions: "操作",
     cancel: "取消",
   },
 };
@@ -193,6 +213,9 @@ export default function UnitManagement() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-6 md:p-8">
       <div className="flex shrink-0 items-center justify-between gap-3">
@@ -236,35 +259,48 @@ export default function UnitManagement() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="min-h-0 flex-1 space-y-2 overflow-hidden">
-          {visible.map((unit) => (
-            <div
-              key={unit._id}
-              className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-3 rounded border px-3 py-2"
-            >
-              <div>
-                <div className="font-medium">
-                  {unit.names[locale] || unit.names.vi || unit.code}{" "}
-                  <span className="text-muted-foreground">({unit.code})</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {unit.category}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => edit(unit)}>
-                  {t.edit}
-                </Button>
-                <Button
-                  size="sm"
-                  variant={unit.active ? "outline" : "default"}
-                  onClick={() => toggle.mutate(unit)}
-                >
-                  {unit.active ? t.off : t.on}
-                </Button>
-              </div>
-            </div>
-          ))}
+        <CardContent className="min-h-0 flex-1 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t.nameHeader}</TableHead>
+                <TableHead>{t.codeHeader}</TableHead>
+                <TableHead>{t.group}</TableHead>
+                <TableHead>{t.on}</TableHead>
+                <TableHead className="text-right">{t.actions}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visible.map((unit) => (
+                <TableRow key={unit._id}>
+                  <TableCell className="font-medium">
+                    {unit.names[locale] || unit.names.vi || unit.code}
+                  </TableCell>
+                  <TableCell className="font-mono">{unit.code}</TableCell>
+                  <TableCell>{unit.category}</TableCell>
+                  <TableCell>{unit.active ? t.on : t.off}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => edit(unit)}
+                      >
+                        {t.edit}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={unit.active ? "outline" : "default"}
+                        onClick={() => toggle.mutate(unit)}
+                      >
+                        {unit.active ? t.off : t.on}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={(value) => !value && reset()}>

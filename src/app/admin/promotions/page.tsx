@@ -44,6 +44,10 @@ import { getStores } from "@/api/store";
 import { useI18n } from "@/lib/i18n";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { uploadImage } from "@/lib/cloudinary";
+import {
+  formatTaipeiDateTimeInput,
+  parseTaipeiDateTimeInput,
+} from "@/lib/promotionDate";
 
 const emptyRule = (): PromotionRule => ({
   target: "order",
@@ -61,13 +65,12 @@ const initial = (): PromotionInput => ({
   rules: [emptyRule()],
   storeIds: [],
 });
-const dateInput = (value?: string | null) =>
-  value ? new Date(value).toISOString().slice(0, 16) : "";
 const formatDateTime = (value: string | null | undefined, locale: string) =>
   value
     ? new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : locale, {
         dateStyle: "short",
         timeStyle: "short",
+        hourCycle: "h23",
       }).format(new Date(value))
     : "—";
 const responseMessage = (error: unknown) =>
@@ -391,12 +394,12 @@ export default function PromotionsPage() {
                       <Input
                         type="datetime-local"
                         required={!editing}
-                        value={dateInput(form.startsAt)}
+                        value={formatTaipeiDateTimeInput(form.startsAt)}
                         onChange={(event) =>
                           setForm({
                             ...form,
                             startsAt: event.target.value
-                              ? new Date(event.target.value).toISOString()
+                              ? parseTaipeiDateTimeInput(event.target.value)
                               : undefined,
                           })
                         }
@@ -407,12 +410,12 @@ export default function PromotionsPage() {
                       <Input
                         type="datetime-local"
                         required={!editing}
-                        value={dateInput(form.endsAt)}
+                        value={formatTaipeiDateTimeInput(form.endsAt)}
                         onChange={(event) =>
                           setForm({
                             ...form,
                             endsAt: event.target.value
-                              ? new Date(event.target.value).toISOString()
+                              ? parseTaipeiDateTimeInput(event.target.value)
                               : undefined,
                           })
                         }

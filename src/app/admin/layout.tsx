@@ -15,6 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const adminOnlyRoutes = [
     "/admin/store-pricing",
     "/admin/employees",
+    "/admin/attendance",
     "/admin/expenses",
     "/admin/inventory",
     "/admin/inventory-receipts",

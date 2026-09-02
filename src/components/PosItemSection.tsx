@@ -118,6 +118,7 @@ function PosItemSection({
       ? new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : locale, {
           dateStyle: "short",
           timeStyle: "short",
+          hourCycle: "h23",
         }).format(new Date(value))
       : "—";
   const selectedItemPrice = calculateOrderItemTotal(currentOrderItem);

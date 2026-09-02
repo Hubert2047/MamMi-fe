@@ -49,6 +49,7 @@ export interface DailyClosingSummary {
   };
   expensesTotal: number;
   previousClosingAmount: number;
+  previousClosingCash: CashData;
   systemAmount: number;
 }
 

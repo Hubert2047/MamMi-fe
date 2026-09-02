@@ -41,9 +41,9 @@ const commonLinks = [
   { href: "/admin/products", icon: Package, key: "products" },
   { href: "/admin/addons", icon: WalletCards, key: "addons" },
   { href: "/admin/promotions", icon: Percent, key: "promotions" },
-  { href: "/admin/accounts", icon: Users, key: "userAccounts" },
   { href: "/admin/units", icon: Package, key: "units" },
   { href: "/admin/line-groups", icon: MessageCircle, key: "lineGroups" },
+  { href: "/admin/accounts", icon: Users, key: "userAccounts" },
 ] as const;
 
 const storeLinks = [
@@ -54,6 +54,7 @@ const storeLinks = [
   { href: "/admin/daily-closing", icon: CalendarCheck, key: "dailyClosing" },
   { href: "/admin/inventory", icon: Package, key: "inventory" },
   { href: "/admin/employees", icon: Users, key: "employees" },
+  { href: "/admin/attendance", icon: CalendarCheck, key: "attendancePage" },
   { href: "/admin/print-agents", icon: Printer, key: "printAgents" },
   { href: "/admin/tables", icon: QrCode, key: "tables" },
   { href: "/admin/pos-devices", icon: MonitorSmartphone, key: "posDevices" },

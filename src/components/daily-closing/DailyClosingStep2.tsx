@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { Label } from "@/components/ui/label.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,14 @@ import { useI18n } from "@/lib/i18n";
 import Loading from "../Loading";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog.tsx";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,11 +41,25 @@ import {
 
 type Props = {
   systemAmount: number;
+  previousClosingAmount: number;
+  previousClosingCash: Record<string, number | string>;
+  cashSales: number;
+  cashOtherRevenue: number;
+  expensesTotal: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   onClose: () => void;
 };
 
-function DailyClosingStep2({ systemAmount, setCurrentStep, onClose }: Props) {
+function DailyClosingStep2({
+  systemAmount,
+  previousClosingAmount,
+  previousClosingCash,
+  cashSales,
+  cashOtherRevenue,
+  expensesTotal,
+  setCurrentStep,
+  onClose,
+}: Props) {
   const queryClient = useQueryClient();
   const { t } = useI18n();
   const [cash, setCash] = useState<CashData>({
@@ -85,18 +107,18 @@ function DailyClosingStep2({ systemAmount, setCurrentStep, onClose }: Props) {
   }
 
   return (
-    <div className="flex flex-col border px-4 pb-2 rounded border-[#ccc]">
-      <div className="flex relative">
+    <div className="flex min-h-0 flex-col gap-2">
+      <div className="grid min-h-10 shrink-0 grid-cols-3 items-center gap-2">
         <Button
-          className="absolute -left-4 -top-11 flex h-10 items-center gap-2 bg-primary px-4 text-sm text-primary-foreground hover:bg-primary/90"
+          className="h-10 justify-self-start bg-primary px-4 text-sm text-primary-foreground hover:bg-primary/90"
           onClick={() => setCurrentStep(1)}
         >
           {t("back")}
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <p className="text-center flex-1 font-bold text-xl">{t("counting")}</p>
+        <p className="text-center font-bold text-xl">{t("counting")}</p>
       </div>
-      <div className="flex justify-between gap-6 mt-4">
+      <div className="flex min-h-0 flex-1 justify-between gap-6 rounded border border-[#ccc] px-4 pb-2 pt-4">
         <div className="flex justify-center items-start mt-8 flex-1">
           <NumPad
             large
@@ -152,7 +174,58 @@ function DailyClosingStep2({ systemAmount, setCurrentStep, onClose }: Props) {
             />
           </div>
           <div className="variant flex justify-start items-center gap-4 pl-2">
-            <Label className="block w-30 font-semibold">{t("system")}</Label>
+            <div className="flex w-30 items-center gap-1">
+              <Label className="font-semibold">{t("system")}</Label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={t("systemAmountCalculationTitle")}
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="top-4 max-w-sm translate-y-0">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {t("systemAmountCalculationTitle")}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {t("systemAmountCalculationDescription")}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2 text-sm">
+                    <PreviousClosingRow
+                      amount={previousClosingAmount}
+                      cash={previousClosingCash}
+                      t={t}
+                    />
+                    <CalculationRow
+                      label={t("closingCashSales")}
+                      value={cashSales}
+                      operator="+"
+                    />
+                    <CalculationRow
+                      label={t("closingOtherRevenue")}
+                      value={cashOtherRevenue}
+                      operator="+"
+                    />
+                    <CalculationRow
+                      label={t("closingCashExpenses")}
+                      value={expensesTotal}
+                      operator="−"
+                    />
+                    <div className="flex justify-between border-t pt-2 font-bold">
+                      <span>{t("system")}</span>
+                      <span>{systemAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             <Input
               id="amount"
               value={systemAmount.toLocaleString()}
@@ -218,6 +291,86 @@ function DailyClosingStep2({ systemAmount, setCurrentStep, onClose }: Props) {
         </div>
       </div>
       {createDailyClosingMutation.isPending && <Loading />}
+    </div>
+  );
+}
+
+function CalculationRow({
+  label,
+  value,
+  operator,
+}: {
+  label: string;
+  value: number;
+  operator?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span>
+        {operator ? `${operator} ` : ""}
+        {label}
+      </span>
+      <span className="tabular-nums">{value.toLocaleString()}</span>
+    </div>
+  );
+}
+
+function PreviousClosingRow({
+  amount,
+  cash,
+  t,
+}: {
+  amount: number;
+  cash: Record<string, number | string>;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-1">
+        <span>{t("closingPreviousAmount")}</span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              aria-label={t("closingPreviousCashTitle")}
+            >
+              <Info className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="top-4 max-w-sm translate-y-0">
+            <DialogHeader>
+              <DialogTitle>{t("closingPreviousCashTitle")}</DialogTitle>
+            </DialogHeader>
+            {Object.keys(cash).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t("closingPreviousCashEmpty")}
+              </p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                {Object.entries(cash)
+                  .sort(([first], [second]) => Number(second) - Number(first))
+                  .map(([denomination, quantity]) => (
+                    <div
+                      key={denomination}
+                      className="flex justify-between border-b pb-1 last:border-0"
+                    >
+                      <span>
+                        {t("closingDenomination")}: {denomination}
+                      </span>
+                      <span>
+                        {t("closingQuantity")}: {quantity}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+      <span className="tabular-nums">{amount.toLocaleString()}</span>
     </div>
   );
 }

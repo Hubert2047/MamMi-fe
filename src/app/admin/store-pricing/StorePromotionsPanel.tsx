@@ -22,6 +22,7 @@ const formatDateTime = (value: string | null | undefined, locale: string) =>
     ? new Intl.DateTimeFormat(locale === "zh-TW" ? "zh-TW" : locale, {
         dateStyle: "short",
         timeStyle: "short",
+        hourCycle: "h23",
       }).format(new Date(value))
     : "—";
 

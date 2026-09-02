@@ -10,8 +10,16 @@ export const metadata: Metadata = {
   description: "Point of sale management system",
   icons: {
     icon: [
-      { url: "/favicon.png", type: "image/png", media: "(prefers-color-scheme: dark)" },
-      { url: "/logo.png", type: "image/png", media: "(prefers-color-scheme: light)" },
+      {
+        url: "/favicon.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/logo.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+      },
     ],
     apple: "/logo.png",
   },
