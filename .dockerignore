@@ -1,5 +1,8 @@
 node_modules
 .next
+.next-dev
+*.tsbuildinfo
+coverage
 .env
 .git
 npm-debug.log*

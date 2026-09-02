@@ -145,7 +145,7 @@ export default function AccountsPage() {
   return (
     <div className="h-full overflow-hidden p-6 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">{t("userAccounts")}</h1>
+        <h1 className="text-3xl font-bold capitalize">{t("userAccounts")}</h1>
         <Button onClick={() => setIsFormOpen(true)}>
           {t("createAccount")}
         </Button>

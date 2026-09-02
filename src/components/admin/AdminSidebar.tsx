@@ -73,7 +73,7 @@ export default function AdminSidebar() {
   }
   const linkClass = (href: string) =>
     cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm capitalize text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
       pathname === href || pathname.startsWith(`${href}/`)
         ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
         : "",
@@ -136,7 +136,7 @@ export default function AdminSidebar() {
         {isSuperAdmin ? (
           <>
             <section>
-              <div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-foreground">
+              <div className="mb-1 px-3 text-xs font-bold capitalize tracking-wide text-foreground">
                 {t("overview")}
               </div>
               <Link
@@ -148,7 +148,7 @@ export default function AdminSidebar() {
               </Link>
             </section>
             <section>
-              <div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-foreground">
+              <div className="mb-1 px-3 text-xs font-bold capitalize tracking-wide text-foreground">
                 {t("commonConfig")}
               </div>
               {commonLinks.map(({ href, icon: Icon, key }) => (
@@ -159,7 +159,7 @@ export default function AdminSidebar() {
               ))}
             </section>
             <section>
-              <div className="px-3 text-xs font-bold uppercase tracking-wide text-foreground">
+              <div className="px-3 text-xs font-bold capitalize tracking-wide text-foreground">
                 {t("currentStoreGroup")} · {activeStore?.name || t("store")}
               </div>
               {storeLinks.map(({ href, icon: Icon, key }) => (
