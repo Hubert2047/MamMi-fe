@@ -2491,6 +2491,16 @@ Object.assign(messages.vi, {
     "Mã QR cũ sẽ không còn dùng được. Bạn có muốn tạo mã mới không?",
   tableQrRegenerateSuccess: "Đã tạo lại mã QR",
   tableQrRegenerateFailure: "Không thể tạo lại mã QR",
+  tableActiveTab: "Đang hoạt động",
+  tableInactiveTab: "Đã tắt",
+  tableEdit: "Sửa bàn",
+  tableUpdateSuccess: "Đã cập nhật bàn",
+  tableUpdateFailure: "Không thể cập nhật bàn",
+  tableDeactivate: "Tắt bàn",
+  tableDeactivateConfirm:
+    "Bàn sẽ không còn xuất hiện trong POS và QR cũ sẽ không còn hoạt động. Bạn có muốn tiếp tục không?",
+  tableActivate: "Kích hoạt bàn",
+  tableActivateConfirm: "Bạn có muốn kích hoạt lại bàn này không?",
 });
 Object.assign(messages.en, {
   tableQrRegenerate: "Regenerate QR",
@@ -2498,12 +2508,32 @@ Object.assign(messages.en, {
     "The old QR code will stop working. Do you want to create a new one?",
   tableQrRegenerateSuccess: "QR code regenerated",
   tableQrRegenerateFailure: "Unable to regenerate QR code",
+  tableActiveTab: "Active",
+  tableInactiveTab: "Inactive",
+  tableEdit: "Edit table",
+  tableUpdateSuccess: "Table updated",
+  tableUpdateFailure: "Unable to update table",
+  tableDeactivate: "Deactivate table",
+  tableDeactivateConfirm:
+    "This table will disappear from the POS and its old QR code will stop working. Continue?",
+  tableActivate: "Activate table",
+  tableActivateConfirm: "Do you want to activate this table again?",
 });
 Object.assign(messages["zh-TW"], {
   tableQrRegenerate: "重新產生 QR",
   tableQrRegenerateConfirm: "舊的 QR Code 將無法使用。確定要產生新的嗎？",
   tableQrRegenerateSuccess: "已重新產生 QR Code",
   tableQrRegenerateFailure: "無法重新產生 QR Code",
+  tableActiveTab: "啟用中",
+  tableInactiveTab: "已停用",
+  tableEdit: "編輯桌位",
+  tableUpdateSuccess: "已更新桌位",
+  tableUpdateFailure: "無法更新桌位",
+  tableDeactivate: "停用桌位",
+  tableDeactivateConfirm:
+    "此桌位將不再顯示於 POS，舊的 QR Code 也將無法使用。確定要繼續嗎？",
+  tableActivate: "啟用桌位",
+  tableActivateConfirm: "確定要再次啟用此桌位嗎？",
 });
 Object.assign(messages.vi, {
   tableQrRegenerateAll: "Tạo lại toàn bộ QR",

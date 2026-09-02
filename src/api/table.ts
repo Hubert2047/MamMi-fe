@@ -23,6 +23,10 @@ export const createStoreTable = async (data: {
   code: string;
   name?: string;
 }): Promise<StoreTable> => (await api.post("tables", data)).data.data;
+export const updateStoreTable = async (
+  id: string,
+  data: { code?: string; name?: string; active?: boolean },
+): Promise<StoreTable> => (await api.patch(`tables/${id}`, data)).data.data;
 export const regenerateStoreTableQr = async (id: string): Promise<StoreTable> =>
   (await api.post(`tables/${id}/regenerate-qr`)).data.data;
 export const regenerateAllStoreTableQr = async (): Promise<{ count: number }> =>
