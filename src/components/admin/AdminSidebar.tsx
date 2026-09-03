@@ -21,6 +21,7 @@ import {
   QrCode,
   MonitorSmartphone,
   MessageCircle,
+  Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ const storeLinks = [
   { href: "/admin/expenses", icon: ReceiptText, key: "expenses" },
   { href: "/admin/daily-closing", icon: CalendarCheck, key: "dailyClosing" },
   { href: "/admin/inventory", icon: Package, key: "inventory" },
+  { href: "/admin/suppliers", icon: Truck, key: "suppliers" },
   { href: "/admin/employees", icon: Users, key: "employees" },
   { href: "/admin/attendance", icon: CalendarCheck, key: "attendancePage" },
   { href: "/admin/print-agents", icon: Printer, key: "printAgents" },

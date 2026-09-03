@@ -31,13 +31,13 @@ import { Popover as PopoverPrimitive } from "radix-ui";
 type Props = {
   open: boolean;
   onClose: () => void;
-  initialEntryType?: "other" | "inventory_purchase";
+  mode?: "expense" | "inventory_purchase";
 };
 
 export function AddExpenseDialog({
   open,
   onClose,
-  initialEntryType = "other",
+  mode = "expense",
 }: Props) {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
@@ -51,7 +51,7 @@ export function AddExpenseDialog({
     queryFn: getInventoryItems,
   });
   const [entryType, setEntryType] = useState<"other" | "inventory_purchase">(
-    initialEntryType,
+    mode === "inventory_purchase" ? "inventory_purchase" : "other",
   );
   const [inventorySearch, setInventorySearch] = useState("");
   const [inventoryPickerOpen, setInventoryPickerOpen] = useState(false);
@@ -66,6 +66,10 @@ export function AddExpenseDialog({
   });
   const nameInputRef = useRef<HTMLInputElement>(null);
   const inventorySearchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEntryType(mode === "inventory_purchase" ? "inventory_purchase" : "other");
+  }, [mode, open]);
 
   useEffect(() => {
     if (open) {
@@ -276,32 +280,10 @@ export function AddExpenseDialog({
         <form onSubmit={handleSubmit}>
           <div className="mb-3 flex flex-wrap items-center justify-start gap-3">
             <DialogHeader className="shrink-0 self-center">
-              <DialogTitle className="text-black! font-bold! text-xl">
-                {t("expenseAddTitle")}
+            <DialogTitle className="text-black! font-bold! text-xl">
+                {mode === "inventory_purchase" ? t("posInventoryPurchase") : t("expenseAddTitle")}
               </DialogTitle>
             </DialogHeader>
-            <div className="flex shrink-0 items-center gap-2 self-center">
-              <Button
-                type="button"
-                size="default"
-                className="h-8 px-3"
-                variant={entryType === "other" ? "default" : "outline"}
-                onClick={() => setEntryType("other")}
-              >
-                {t("expenseOtherTab")}
-              </Button>
-              <Button
-                type="button"
-                size="default"
-                className="h-8 px-3"
-                variant={
-                  entryType === "inventory_purchase" ? "default" : "outline"
-                }
-                onClick={() => setEntryType("inventory_purchase")}
-              >
-                {t("expenseInventoryTab")}
-              </Button>
-            </div>
           </div>
 
           <FieldGroup className="sm:grid sm:grid-cols-4 sm:gap-x-4 sm:gap-y-3">
@@ -677,9 +659,9 @@ export function AddExpenseDialog({
             <Button
               className="h-10 min-w-24 px-4"
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={entryType === "inventory_purchase" ? receiptMutation.isPending : createMutation.isPending}
             >
-              {createMutation.isPending ? t("saving") : t("save")}
+              {(entryType === "inventory_purchase" ? receiptMutation.isPending : createMutation.isPending) ? t("saving") : t("save")}
             </Button>
           </DialogFooter>
         </form>

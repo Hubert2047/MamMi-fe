@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { generateUUID } from "@/lib/utils";
 import PosStocktakeDialog from "@/components/inventory/PosStocktakeDialog";
+import InventoryPurchaseDialog from "@/components/inventory/InventoryPurchaseDialog";
 import PosTableSessions from "@/components/PosTableSessions";
 import {
   calculatePromotionPreview,
@@ -64,6 +65,7 @@ const POSPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [openOrderTable, setOpenOrderTable] = useState<boolean>(false);
   const [openExpense, setOpenExpense] = useState<boolean>(false);
+  const [openInventoryPurchase, setOpenInventoryPurchase] = useState(false);
   const [isEditItem, setIsEditItem] = useState<boolean>(false);
   const [isCheckout, setIsCheckout] = useState<boolean>(false);
   const [isDetail, setIsDetail] = useState<boolean>(false);
@@ -549,6 +551,13 @@ const POSPage: React.FC = () => {
             >
               {t("expenses")}
             </Button>
+            <Button
+              className="h-11 text-base"
+              variant="outline"
+              onClick={() => setOpenInventoryPurchase(true)}
+            >
+              {t("posInventoryPurchase")}
+            </Button>
             {/* Temporarily hidden; keep the stocktake dialog and state for later. */}
             <Button
               className="h-11 text-base"
@@ -580,6 +589,10 @@ const POSPage: React.FC = () => {
           }}
         />
       )}
+      <InventoryPurchaseDialog
+        open={openInventoryPurchase}
+        onClose={() => setOpenInventoryPurchase(false)}
+      />
       <PosStocktakeDialog
         open={openStocktake}
         onClose={() => setOpenStocktake(false)}

@@ -1,14 +1,11 @@
 import api from "./axios";
 
-export type LineNotificationType = "daily_closing";
 export type LineGroup = {
   _id: string;
   lineGroupId: string;
-  storeId?: string | null;
+  storeId?: string | { _id?: string } | null;
   name: string;
-  status: "pending" | "active" | "disabled";
-  enabled: boolean;
-  notificationTypes: LineNotificationType[];
+  usageStatus: "available" | "assigned";
 };
 
 export async function getLineGroups(): Promise<LineGroup[]> {
@@ -21,7 +18,7 @@ export async function updateLineGroup({
 }: {
   id: string;
   data: Partial<
-    Pick<LineGroup, "name" | "storeId" | "enabled" | "notificationTypes">
+    Pick<LineGroup, "name" | "storeId">
   >;
 }): Promise<LineGroup> {
   return (await api.patch(`line-groups/${id}`, data)).data.data;

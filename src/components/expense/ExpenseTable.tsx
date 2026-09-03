@@ -57,9 +57,6 @@ export function ExpenseTable({
   const queryClient = useQueryClient();
   const [openEdit, setOpenEdit] = useState<boolean>(false);
   const [addExpense, setAddExpense] = useState<boolean>(false);
-  const [addExpenseType, setAddExpenseType] = useState<
-    "other" | "inventory_purchase"
-  >("other");
   const [editData, setEditData] = useState<IUpdateExpense | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
@@ -240,7 +237,6 @@ export function ExpenseTable({
             <Button
               className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => {
-                setAddExpenseType("other");
                 setAddExpense(true);
               }}
             >
@@ -426,7 +422,6 @@ export function ExpenseTable({
       )}
       {addExpense && (
         <AddExpenseDialog
-          initialEntryType={addExpenseType}
           open={addExpense}
           onClose={() => setAddExpense(false)}
         />

@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, Search } from "lucide-react";
+import { Eye, Search, Settings2 } from "lucide-react";
 import {
   getDailyClosings,
+  getDailyClosingLineGroup,
+  updateDailyClosingLineGroup,
   voidDailyClosing,
   type IDailyClosing,
 } from "@/api/daily-closing";
@@ -16,8 +18,10 @@ import { useTablePageSize } from "@/hooks/use-table-page-size";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -37,6 +41,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -97,11 +102,18 @@ export default function DailyClosingHistory() {
     useState<IDailyClosing | null>(null);
   const [selectedVoid, setSelectedVoid] = useState<IDailyClosing | null>(null);
   const [reason, setReason] = useState("");
+  const [lineGroupConfigOpen, setLineGroupConfigOpen] = useState(false);
+  const [lineGroupEnabled, setLineGroupEnabled] = useState(false);
+  const [lineGroupId, setLineGroupId] = useState("");
   const isAdmin = user?.role === "Admin" || user?.role === "SuperAdmin";
   const employees = useQuery({
     queryKey: ["employees"],
     queryFn: getEmployees,
     enabled: isAdmin,
+  });
+  const lineGroupConfig = useQuery({
+    queryKey: ["daily-closing-line-group"],
+    queryFn: getDailyClosingLineGroup,
   });
   const history = useQuery({
     queryKey: [
@@ -137,6 +149,29 @@ export default function DailyClosingHistory() {
     },
     onError: () => toast.error(t("voidFailure")),
   });
+  const lineGroupMutation = useMutation({
+    mutationFn: updateDailyClosingLineGroup,
+    onSuccess: (data) => {
+      queryClient.setQueryData(["daily-closing-line-group"], data);
+      setLineGroupConfigOpen(false);
+      toast.success(t("closingLineGroupSaved"));
+    },
+    onError: (error: any) =>
+      toast.error(
+        error?.response?.data?.code === "LINE_GROUP_IN_USE"
+          ? t("lineGroupInUse")
+          : error?.response?.data?.code === "DAILY_CLOSING_LINE_GROUP_REQUIRED"
+            ? t("closingLineGroupRequired")
+            : t("closingLineGroupSaveError"),
+      ),
+  });
+
+  function openLineGroupConfig() {
+    const config = lineGroupConfig.data;
+    setLineGroupEnabled(config?.enabled ?? false);
+    setLineGroupId(config?.lineGroupId ?? "");
+    setLineGroupConfigOpen(true);
+  }
 
   function openVoid(closing: IDailyClosing) {
     setSelectedDetail(null);
@@ -154,9 +189,15 @@ export default function DailyClosingHistory() {
   return (
     <div className="h-full overflow-hidden p-6 md:p-8">
       <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("dailyClosing")}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("dailyClosing")}
+          </h1>
+          <Button variant="outline" size="sm" onClick={openLineGroupConfig}>
+            <Settings2 className="size-4" />
+            {t("closingLineGroupConfig")}
+          </Button>
+        </div>
       </div>
 
       <Card
@@ -395,6 +436,48 @@ export default function DailyClosingHistory() {
           )}
         </CardContent>
       </Card>
+      <Dialog open={lineGroupConfigOpen} onOpenChange={setLineGroupConfigOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("closingLineGroupConfig")}</DialogTitle>
+            <DialogDescription>{t("closingLineGroupConfigDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={lineGroupEnabled}
+                onCheckedChange={(checked) => setLineGroupEnabled(checked === true)}
+              />
+              {t("closingLineGroupEnabled")}
+            </label>
+            {lineGroupEnabled && (
+              <div className="space-y-2">
+                <Label>{t("closingLineGroupSelect")}</Label>
+                <Select value={lineGroupId || "none"} onValueChange={(value) => setLineGroupId(value === "none" ? "" : value)}>
+                  <SelectTrigger><SelectValue placeholder={t("closingLineGroupSelect")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t("closingLineGroupNone")}</SelectItem>
+                    {(lineGroupConfig.data?.groups ?? []).map((group) => (
+                      <SelectItem key={group._id} value={group._id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLineGroupConfigOpen(false)}>{t("cancel")}</Button>
+            <Button
+              disabled={lineGroupMutation.isPending || (lineGroupEnabled && !lineGroupId)}
+              onClick={() => lineGroupMutation.mutate({ enabled: lineGroupEnabled && Boolean(lineGroupId), lineGroupId: lineGroupEnabled ? lineGroupId || null : null })}
+            >
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={Boolean(selectedDetail)}
         onOpenChange={(open) => {

@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     "/admin/attendance",
     "/admin/expenses",
     "/admin/inventory",
+    "/admin/suppliers",
     "/admin/inventory-receipts",
     "/admin/stocktakes",
     "/admin/revenues",

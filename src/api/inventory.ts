@@ -15,6 +15,8 @@ export interface InventoryItem {
   active: boolean;
   note?: string;
   inventoryStatus: "pending" | "active";
+  supplierIds?: string[];
+  defaultSupplierId?: string | null;
 }
 export interface InventoryReceiptLine {
   inventoryItemId:
@@ -54,6 +56,8 @@ export const createInventoryItem = async (
     "_id" | "active" | "currentQuantity" | "inventoryStatus"
   > & {
     inventoryStatus?: InventoryItem["inventoryStatus"];
+    supplierIds?: string[];
+    defaultSupplierId?: string | null;
   },
 ): Promise<InventoryItem> =>
   (await api.post("inventory/items", data)).data.data;

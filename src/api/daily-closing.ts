@@ -59,6 +59,19 @@ export interface DailyClosingSummary {
   systemAmount: number;
 }
 
+export type DailyClosingLineGroup = {
+  _id: string;
+  lineGroupId: string;
+  name: string;
+  usageStatus: "available" | "assigned";
+};
+
+export type DailyClosingLineGroupConfig = {
+  enabled: boolean;
+  lineGroupId: string | null;
+  groups: DailyClosingLineGroup[];
+};
+
 export type DailyClosingHistoryParams = {
   from?: string;
   to?: string;
@@ -84,6 +97,15 @@ export const getDailyClosingSummary =
     const res = await api.get("daily-closing/summary");
     return res.data.data;
   };
+
+export const getDailyClosingLineGroup = async (): Promise<DailyClosingLineGroupConfig> =>
+  (await api.get("daily-closing/line-group")).data.data;
+
+export const updateDailyClosingLineGroup = async (data: {
+  enabled: boolean;
+  lineGroupId: string | null;
+}): Promise<DailyClosingLineGroupConfig> =>
+  (await api.patch("daily-closing/line-group", data)).data.data;
 
 export const getDailyClosings = async (
   params: DailyClosingHistoryParams = {},

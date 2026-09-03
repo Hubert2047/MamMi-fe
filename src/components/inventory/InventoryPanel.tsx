@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -33,6 +35,7 @@ import {
   type InventoryItem,
   type InventoryPurchaseUnit,
 } from "@/api/inventory";
+import { getSuppliers, type Supplier } from "@/api/supplier";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
@@ -60,6 +63,10 @@ const labels = {
     price: "Đơn giá",
     current: "Tồn hiện tại",
     invalid: "Quy cách không hợp lệ",
+    supplier: "Nhà cung ứng",
+    defaultSupplier: "Nhà cung ứng mặc định",
+    noSupplier: "Không chọn nhà cung ứng",
+    searchSupplier: "Tìm nhà cung ứng",
   },
   en: {
     title: "Inventory",
@@ -82,6 +89,10 @@ const labels = {
     price: "Unit price",
     current: "Current stock",
     invalid: "Invalid purchase unit",
+    supplier: "Supplier",
+    defaultSupplier: "Default supplier",
+    noSupplier: "No supplier selected",
+    searchSupplier: "Search suppliers",
   },
   "zh-TW": {
     title: "原料庫存",
@@ -104,6 +115,10 @@ const labels = {
     price: "單價",
     current: "目前庫存",
     invalid: "進貨規格無效",
+    supplier: "供應商",
+    defaultSupplier: "預設供應商",
+    noSupplier: "不選擇供應商",
+    searchSupplier: "搜尋供應商",
   },
 } as const;
 
@@ -176,6 +191,9 @@ export default function InventoryPanel({
   const [ruleUnit, setRuleUnit] = useState("");
   const [factor, setFactor] = useState("1");
   const [safetyStock, setSafetyStock] = useState("0");
+  const [supplierIds, setSupplierIds] = useState<string[]>([]);
+  const [defaultSupplierId, setDefaultSupplierId] = useState("");
+  const [supplierSearch, setSupplierSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [receiptUnit, setReceiptUnit] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -192,6 +210,13 @@ export default function InventoryPanel({
     queryKey: ["inventory-items"],
     queryFn: getInventoryItems,
   });
+  const { data: suppliers = [] } = useQuery<Supplier[]>({
+    queryKey: ["suppliers-for-inventory"],
+    queryFn: getSuppliers,
+  });
+  const filteredSuppliers = suppliers.filter((supplier) =>
+    supplier.name.toLocaleLowerCase().includes(supplierSearch.trim().toLocaleLowerCase()),
+  );
   const { data: stock = [] } = useQuery({
     queryKey: ["inventory-stock"],
     queryFn: getInventoryStock,
@@ -238,6 +263,9 @@ export default function InventoryPanel({
     setRuleUnit("");
     setFactor("1");
     setSafetyStock("0");
+    setSupplierIds([]);
+    setDefaultSupplierId("");
+    setSupplierSearch("");
     setIsFormOpen(false);
   };
   const openCreate = () => {
@@ -252,6 +280,8 @@ export default function InventoryPanel({
       item.purchaseUnits.filter((rule) => rule.unitCode !== item.stockUnitCode),
     );
     setSafetyStock(String(item.minimumStock));
+    setSupplierIds(item.supplierIds ?? []);
+    setDefaultSupplierId(item.defaultSupplierId ?? item.supplierIds?.[0] ?? "");
     setIsFormOpen(true);
   };
   const currentName = editing?.name ?? name;
@@ -321,6 +351,8 @@ export default function InventoryPanel({
       ),
       note: editing?.note,
       active: editing?.active ?? true,
+      supplierIds,
+      defaultSupplierId: defaultSupplierId || null,
     };
     if (editing) update.mutate({ id: editing._id, data });
     else create.mutate(data);
@@ -332,22 +364,16 @@ export default function InventoryPanel({
         <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
         {tab === "items" && <Button onClick={openCreate}>{t.add}</Button>}
       </div>
-      <div className="flex shrink-0 gap-2 border-b pb-2">
-        {(
-          [
-            ["items", t.items],
-            ["receipts", t.receipts],
-          ] as const
-        ).map(([id, label]) => (
-          <Button
-            key={id}
-            variant={tab === id ? "default" : "outline"}
-            onClick={() => setTab(id)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as Tab)}
+        className="shrink-0"
+      >
+        <TabsList>
+          <TabsTrigger value="items">{t.items}</TabsTrigger>
+          <TabsTrigger value="receipts">{t.receipts}</TabsTrigger>
+        </TabsList>
+      </Tabs>
       {tab === "items" && (
         <Card className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden">
           <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-3">
@@ -711,6 +737,50 @@ export default function InventoryPanel({
                 </Button>
               </div>
             </div>
+            <div className="space-y-2 rounded-lg border p-3">
+              <Label>{t.supplier}</Label>
+              <Input
+                value={supplierSearch}
+                onChange={(e) => setSupplierSearch(e.target.value)}
+                placeholder={t.searchSupplier}
+                disabled={suppliers.length === 0}
+              />
+              <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-input p-2">
+                {filteredSuppliers.map((supplier) => {
+                  const checked = supplierIds.includes(supplier._id);
+                  return (
+                    <label key={supplier._id} className="flex min-h-9 cursor-pointer items-center gap-2 rounded px-1 text-sm hover:bg-muted/50">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => {
+                          const next = value === true
+                            ? [...supplierIds, supplier._id]
+                            : supplierIds.filter((id) => id !== supplier._id);
+                          setSupplierIds(next);
+                          if (!defaultSupplierId && next.length) setDefaultSupplierId(next[0]);
+                          else if (defaultSupplierId && !next.includes(defaultSupplierId)) setDefaultSupplierId(next[0] ?? "");
+                        }}
+                      />
+                      <span>{supplier.name}</span>
+                    </label>
+                  );
+                })}
+                {!suppliers.length && <p className="px-1 py-1 text-sm text-muted-foreground">{t.noSupplier}</p>}
+                {suppliers.length > 0 && !filteredSuppliers.length && <p className="px-1 py-1 text-sm text-muted-foreground">{t.noSupplier}</p>}
+              </div>
+              <Label>{t.defaultSupplier}</Label>
+              <select
+                className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                value={defaultSupplierId}
+                onChange={(e) => setDefaultSupplierId(e.target.value)}
+                disabled={supplierIds.length === 0}
+              >
+                <option value="">{t.noSupplier}</option>
+                {suppliers.filter((supplier) => supplierIds.includes(supplier._id)).map((supplier) => (
+                  <option key={supplier._id} value={supplier._id}>{supplier.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={resetForm}>
@@ -721,7 +791,8 @@ export default function InventoryPanel({
                 !currentName.trim() ||
                 !currentStockUnit ||
                 create.isPending ||
-                update.isPending
+                update.isPending ||
+                (supplierIds.length > 0 && !defaultSupplierId)
               }
               onClick={save}
             >
