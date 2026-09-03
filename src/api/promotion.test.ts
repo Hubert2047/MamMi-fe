@@ -86,6 +86,11 @@ describe("POS promotion preview", () => {
       ],
     });
     expect(result.appliedPromotions[0]?.targets).toEqual(["order"]);
+    expect(result.appliedPromotions[0]?.names).toEqual({
+      vi: "Promotion",
+      en: "Promotion",
+      "zh-TW": "Promotion",
+    });
     expect(
       result.appliedPromotions[0]?.allocations[0]?.productDiscountAmount,
     ).toBe(50);

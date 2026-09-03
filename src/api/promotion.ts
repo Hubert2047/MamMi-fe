@@ -411,6 +411,7 @@ export const calculatePromotionPreview = ({
         promotionId: promotion._id,
         promotionVersion: promotion.version,
         name: promotion.name,
+        names: promotion.names,
         mode: promotion.mode,
         targets: [...new Set(promotion.rules.map((rule) => rule.target))],
         discountAmount,

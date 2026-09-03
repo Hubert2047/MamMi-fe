@@ -48,6 +48,14 @@ export default function OrderDetailDialog({ order, onClose }: Props) {
     promotion.allocations.find(
       (allocation) => String(allocation.itemId) === String(item.id),
     );
+  const isOrderOnlyPromotion = (
+    promotion: NonNullable<BaseOrder["appliedPromotions"]>[number],
+  ) =>
+    Boolean(promotion.targets?.length) &&
+    promotion.targets!.every((target) => target === "order");
+  const promotionName = (
+    promotion: NonNullable<BaseOrder["appliedPromotions"]>[number],
+  ) => promotion.names?.[locale] || promotion.name;
   const subtotal = order.items.reduce((sum, item) => sum + itemGross(item), 0);
   const totalDiscount = (order.appliedPromotions || []).reduce(
     (sum, promotion) => sum + promotion.discountAmount,
@@ -90,6 +98,7 @@ export default function OrderDetailDialog({ order, onClose }: Props) {
                 const gross = itemGross(item);
                 const discount = (order.appliedPromotions || []).reduce(
                   (sum, promotion) => {
+                    if (isOrderOnlyPromotion(promotion)) return sum;
                     const allocation = allocationFor(promotion, item);
                     return (
                       sum +
@@ -219,7 +228,7 @@ export default function OrderDetailDialog({ order, onClose }: Props) {
                         open
                       >
                         <summary className="cursor-pointer font-medium">
-                          {promotion.name}
+                          {promotionName(promotion)}
                           <span className="float-right text-primary">
                             -{money(promotion.discountAmount)}
                           </span>
@@ -231,7 +240,7 @@ export default function OrderDetailDialog({ order, onClose }: Props) {
                               ? `${t("target")}: ${promotion.targets.map((target) => t(targetKey(target))).join(", ")}`
                               : ""}
                           </div>
-                          {order.items.map((item) => {
+                          {!isOrderOnlyPromotion(promotion) && order.items.map((item) => {
                             const allocation = allocationFor(promotion, item);
                             if (!allocation) return null;
                             const amount =

@@ -43,6 +43,8 @@ export interface AppliedPromotion {
   promotionId: string;
   promotionVersion: number;
   name: string;
+  /** Absent only on historical orders created before this snapshot was added. */
+  names?: { vi: string; en: string; "zh-TW": string };
   mode: "automatic" | "manual";
   targets?: ("order" | "product" | "addon" | "line")[];
   discountAmount: number;
