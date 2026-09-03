@@ -11,17 +11,24 @@ export default function HomePage() {
   const { hydrated, isAuthenticated, user } = useAuth();
   const isAdmin = user?.role === "Admin" || user?.role === "SuperAdmin";
   const isStoreAdmin = user?.role === "Admin";
+  const isSuperAdmin = user?.role === "SuperAdmin";
   useEffect(() => {
     if (!hydrated) return;
     if (isAuthenticated) {
       router.replace(
-        isStoreAdmin ? "/admin/store-pricing" : isAdmin ? "/admin" : "/login",
+        isSuperAdmin
+          ? "/admin/overview"
+          : isStoreAdmin
+            ? "/admin/store-pricing"
+            : isAdmin
+              ? "/admin"
+              : "/login",
       );
       return;
     }
     void getPosDeviceSession()
       .then(() => router.replace("/pos"))
       .catch(() => router.replace("/login"));
-  }, [hydrated, isAuthenticated, isAdmin, isStoreAdmin, router]);
+  }, [hydrated, isAuthenticated, isAdmin, isStoreAdmin, isSuperAdmin, router]);
   return <Loading />;
 }
