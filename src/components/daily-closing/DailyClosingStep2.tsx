@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowLeft, Info } from "lucide-react";
 import { Label } from "@/components/ui/label.tsx";
@@ -83,8 +84,12 @@ function DailyClosingStep2({
         .then();
       queryClient.invalidateQueries({ queryKey: ["next-order-number"] }).then();
     },
-    onError: () => {
-      toast.error(t("closeFailure"));
+    onError: (error) => {
+      toast.error(
+        isAxiosError(error) && error.response?.data?.code === "CLOSING_ALREADY_CREATED"
+          ? t("closingAlreadyCreated")
+          : t("closeFailure"),
+      );
     },
   });
   const actualTotal = calculateActualCash(cash);

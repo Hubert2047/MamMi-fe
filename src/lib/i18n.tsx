@@ -2232,12 +2232,14 @@ const dailyClosingMessages = {
   vi: {
     closingReasonRequired:
       "Có chênh lệch nên phải điền nguyên nhân mới kết toán được",
+    closingAlreadyCreated: "Kỳ kết toán đã được thiết bị khác xác nhận. Vui lòng tải lại.",
   },
   en: {
     closingReasonRequired:
       "A reason is required for the difference before closing the day",
+    closingAlreadyCreated: "This closing period was confirmed by another device. Please reload.",
   },
-  "zh-TW": { closingReasonRequired: "有差異時必須填寫原因才能結算" },
+  "zh-TW": { closingReasonRequired: "有差異時必須填寫原因才能結算", closingAlreadyCreated: "此結算期間已由其他裝置確認，請重新載入。" },
 } as const;
 
 type MessageKey = string;
