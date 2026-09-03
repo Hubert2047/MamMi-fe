@@ -935,7 +935,7 @@ function PosItemSection({
                               size="lg"
                               disabled={selectionUnavailable}
                             >
-                              Sửa
+                              {t("edit")}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -962,7 +962,7 @@ function PosItemSection({
                               variant="destructive"
                               size="lg"
                             >
-                              Xóa
+                              {t("delete")}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -991,7 +991,7 @@ function PosItemSection({
                         disabled={selectionUnavailable}
                         onClick={addItem}
                       >
-                        Xác nhận
+                        {t("confirm")}
                       </Button>
                     )}
                     <Button
@@ -1000,7 +1000,7 @@ function PosItemSection({
                       size="lg"
                       onClick={cancelAddItem}
                     >
-                      Hủy
+                      {t("cancel")}
                     </Button>
                   </div>
                 </div>

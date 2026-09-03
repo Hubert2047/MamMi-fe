@@ -298,8 +298,8 @@ function buildHeaderHTML(order: BaseOrder): string {
       } as Record<string, string>
     )[order.type] ?? "";
   return `
-        <span>#${String(order.number).padStart(3, "0")}</span>
-        <span>${typeLabel}</span>
+        <span>#${String(order.number ?? "").padStart(3, "0")}</span>
+        <span>${typeLabel || ""}</span>
         <span>${time}</span>
     `;
 }
@@ -313,24 +313,24 @@ function buildItemDetailsHTML(item: OrderItem, showPrice: boolean): string {
   const noteOptions = item.printNoteOptions || item.noteOptions;
   if (noteOptions.length > 0) {
     parts.push(
-      `<div class="detail note-options">不加: ${noteOptions.join(", ")}</div>`,
+      `<div class="detail note-options">不加：${noteOptions.filter(Boolean).join("、")}</div>`,
     );
   }
   const addons = item.printAddons || item.addons;
   if (item.addonDisplayMode !== "merged" && addons.length > 0) {
     parts.push(
-      `<div class="detail">加點: ${addons
+      `<div class="detail">加點：${addons
         .map((addon) => {
           const priceStr = showPrice
             ? `<span class="addon-price">${(addon.priceExtra * addon.amount).toLocaleString()}</span>`
             : "";
-          return `${addon.printName || addon.name}${addon.amount > 1 ? ` x${addon.amount}` : ""}${priceStr}`;
+          return `${addon.printName || addon.name || "未命名加點"}${addon.amount > 1 ? ` x${addon.amount}` : ""}${priceStr}`;
         })
         .join(", ")}</div>`,
     );
   }
   if (item.note) {
-    parts.push(`<div class="detail">備註: ${item.note}</div>`);
+    parts.push(`<div class="detail">備註：${item.note}</div>`);
   }
 
   return parts.join("");

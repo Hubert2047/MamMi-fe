@@ -33,7 +33,7 @@ export default function StorePromotionsPanel() {
   const [previewing, setPreviewing] = useState<Promotion | null>(null);
   const { data: promotions = [], isLoading } = useQuery({
     queryKey: ["promotions", locale],
-    queryFn: getPromotions,
+    queryFn: () => getPromotions(locale),
   });
   const { data: items = [] } = useQuery({
     queryKey: ["promotion-items", locale],

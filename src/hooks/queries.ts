@@ -48,9 +48,10 @@ export function useItems(available?: boolean) {
 }
 
 export function usePromotions() {
+  const { locale } = useI18n();
   return useQuery<Promotion[], Error>({
-    queryKey: queryKeys.promotions,
-    queryFn: () => getPromotions(),
+    queryKey: [...queryKeys.promotions, locale],
+    queryFn: () => getPromotions(locale),
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -165,7 +165,7 @@ export default function AccountsPage() {
         <Button onClick={openCreate}>{t("createAccount")}</Button>
       </div>
       <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="top-4 max-h-[calc(100dvh-2rem)] translate-y-0 overflow-y-auto sm:top-8 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {t(editingUser ? "editAccount" : "createAccount")}

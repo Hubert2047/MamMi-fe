@@ -97,7 +97,7 @@ export default function PromotionsPage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { data: promotions = [] } = useQuery({
     queryKey: ["promotions"],
-    queryFn: getPromotions,
+    queryFn: () => getPromotions(locale),
   });
   const { data: items = [] } = useQuery({
     queryKey: ["promotion-items", locale],

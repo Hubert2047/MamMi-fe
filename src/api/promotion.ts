@@ -31,8 +31,9 @@ export type PromotionInput = Omit<
   Promotion,
   "_id" | "name" | "version" | "enabled" | "assigned" | "assignedStoreIds"
 > & { storeIds?: string[] };
-export const getPromotions = async (): Promise<Promotion[]> =>
-  (await api.get("promotions")).data.data;
+export const getPromotions = async (lang?: string): Promise<Promotion[]> =>
+  (await api.get("promotions", { params: lang ? { lang } : undefined })).data
+    .data;
 export const createPromotion = async (
   data: PromotionInput,
 ): Promise<Promotion> => (await api.post("promotions", data)).data.data;

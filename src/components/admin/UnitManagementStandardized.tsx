@@ -325,7 +325,7 @@ export default function UnitManagement() {
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={(value) => !value && reset()}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="top-4 max-h-[calc(100dvh-2rem)] translate-y-0 overflow-y-auto sm:top-8 sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? t.editTitle : t.addTitle}</DialogTitle>
           </DialogHeader>

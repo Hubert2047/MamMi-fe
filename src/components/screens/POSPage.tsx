@@ -31,6 +31,12 @@ import ShiftAttendance from "@/components/ShiftAttendance.tsx";
 import TemporaryAvailabilityTable from "@/components/TemporaryAvailabilityTable";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   calculateOrderTotal,
   findFreshSelectedItem,
   syncOrderItemsWithCatalog,
@@ -83,10 +89,12 @@ const POSPage: React.FC = () => {
   const [openShiftAttendance, setOpenShiftAttendance] = useState(false);
   const [openStocktake, setOpenStocktake] = useState(false);
   const [openTableSessions, setOpenTableSessions] = useState(false);
+  const [openAdvanced, setOpenAdvanced] = useState(false);
   const [promotionInfoOpen, setPromotionInfoOpen] = useState(false);
   const [openTemporaryAvailability, setOpenTemporaryAvailability] =
     useState(false);
   const { data: items = [], isLoading: isItemsLoading } = useItems(true);
+  const { data: allItems = [] } = useItems();
   const { data: storeAddons = [] } = useStoreAddons();
   const { data: promotions = [], isLoading: isPromotionsLoading } =
     usePromotions();
@@ -506,8 +514,14 @@ const POSPage: React.FC = () => {
                 </Select>
               </div>
             )}
-            <div className="border-b pb-2 mb-1">
-              <LanguageSwitcher />
+            <div className="mb-1 border-b pb-2">
+              <Button
+                className="h-11 w-full text-base"
+                variant="outline"
+                onClick={() => setOpenAdvanced(true)}
+              >
+                {t("advanced")}
+              </Button>
             </div>
             <Button
               className="h-11 text-base"
@@ -537,32 +551,53 @@ const POSPage: React.FC = () => {
             >
               {t("temporaryAvailabilityTitle")}
             </Button>
+            {/* Temporarily hidden; keep the stocktake dialog and state for later. */}
+          </div>
+        </div>
+      )}
+      <Dialog open={openAdvanced} onOpenChange={setOpenAdvanced}>
+        <DialogContent className="top-4 max-w-lg translate-y-0 p-8">
+          <DialogHeader>
+            <DialogTitle>{t("advanced")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
             <Button
               className="h-11 text-base"
               variant="outline"
-              onClick={() => setOpenOtherRevenue(true)}
+              onClick={() => {
+                setOpenAdvanced(false);
+                setOpenOtherRevenue(true);
+              }}
             >
               {t("otherRevenue")}
             </Button>
             <Button
               className="h-11 text-base"
               variant="outline"
-              onClick={() => setOpenExpense(true)}
+              onClick={() => {
+                setOpenAdvanced(false);
+                setOpenExpense(true);
+              }}
             >
               {t("expenses")}
             </Button>
             <Button
               className="h-11 text-base"
               variant="outline"
-              onClick={() => setOpenInventoryPurchase(true)}
+              onClick={() => {
+                setOpenAdvanced(false);
+                setOpenInventoryPurchase(true);
+              }}
             >
               {t("posInventoryPurchase")}
             </Button>
-            {/* Temporarily hidden; keep the stocktake dialog and state for later. */}
             <Button
               className="h-11 text-base"
               variant="outline"
-              onClick={() => setOpenShiftAttendance(true)}
+              onClick={() => {
+                setOpenAdvanced(false);
+                setOpenShiftAttendance(true);
+              }}
             >
               {t("attendance")}
             </Button>
@@ -570,6 +605,7 @@ const POSPage: React.FC = () => {
               className="h-11 text-base"
               variant="outline"
               onClick={() => {
+                setOpenAdvanced(false);
                 setOpenDailyClosing(true);
                 void queryClient.invalidateQueries({
                   queryKey: ["daily-closing-summary"],
@@ -578,9 +614,12 @@ const POSPage: React.FC = () => {
             >
               {t("dailyClosing")}
             </Button>
+            <div className="flex min-h-11 items-center justify-center rounded-md border px-3">
+              <LanguageSwitcher />
+            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
       {openExpense && (
         <ExpenseTableDialog
           open={openExpense}
@@ -613,7 +652,7 @@ const POSPage: React.FC = () => {
       )}
       {openTemporaryAvailability && (
         <TemporaryAvailabilityTable
-          items={items}
+          items={allItems}
           addons={storeAddons}
           open={openTemporaryAvailability}
           onClose={() => setOpenTemporaryAvailability(false)}

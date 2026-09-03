@@ -36,6 +36,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
+import { X } from "lucide-react";
 const initial: AddonInput = {
   names: { vi: "", en: "", "zh-TW": "" },
   priceExtra: 0,
@@ -147,11 +148,21 @@ export default function AddonsPage() {
       <Card
         className={
           isFormOpen
-            ? "fixed inset-4 z-50 m-0 max-h-[calc(100svh-2rem)] overflow-y-auto bg-card shadow-xl md:inset-8 md:max-h-[calc(100svh-4rem)]"
+            ? "fixed left-1/2 top-4 z-50 m-0 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 max-h-[calc(100svh-2rem)] overflow-y-auto bg-card shadow-xl md:top-8 md:max-h-[calc(100svh-4rem)]"
             : "hidden"
         }
       >
-        <CardHeader>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute right-4 top-4 z-10"
+          aria-label={t("close")}
+          onClick={closeForm}
+        >
+          <X />
+        </Button>
+        <CardHeader className="pr-12">
           <CardTitle>{editing ? t("editAddon") : t("createAddon")}</CardTitle>
         </CardHeader>
         <CardContent>
@@ -173,12 +184,21 @@ export default function AddonsPage() {
                 />
               </div>
             ))}
-            <div className="flex gap-2">
-              <Button type="submit" disabled={save.isPending}>
-                {t("save")}
-              </Button>
-              <Button type="button" variant="outline" onClick={closeForm}>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-w-24"
+                onClick={closeForm}
+              >
                 {t("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                className="min-w-24"
+                disabled={save.isPending}
+              >
+                {t("save")}
               </Button>
             </div>
           </form>

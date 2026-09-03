@@ -240,7 +240,7 @@ function DailyClosingStep2({
             ))}
         </div>
         <div className="flex gap-2 flex-1 flex-col">
-          <div className="variant rounded border p-2">
+          <div className="variant relative z-10 rounded border p-2">
             <Label className="font-semibold">{t("closingEmployeeId")}</Label>
             <div className="mt-1 flex items-center gap-2">
               <Input
@@ -274,16 +274,16 @@ function DailyClosingStep2({
               ) : null}
             </div>
           </div>
-          <div className="variant flex justify-start items-center gap-4 pl-2">
+          <div className="variant relative z-0 flex justify-start items-center gap-4 pl-2">
             <Label className="block w-30 font-semibold">{t("actual")}</Label>
             <Input
-              id="amount"
+              id="actual-amount"
               value={actualTotal.toLocaleString()}
               disabled
               className="w-20 text-center"
             />
           </div>
-          <div className="variant flex justify-start items-center gap-4 pl-2">
+          <div className="variant relative z-0 flex justify-start items-center gap-4 pl-2">
             <div className="flex w-30 items-center gap-1">
               <Label className="font-semibold">{t("system")}</Label>
               <Dialog>
@@ -337,29 +337,29 @@ function DailyClosingStep2({
               </Dialog>
             </div>
             <Input
-              id="amount"
+              id="system-amount"
               value={systemAmount.toLocaleString()}
               disabled
               className="w-20 text-center"
             />
           </div>
-          <div className="variant flex justify-start items-center gap-4 pl-2">
+          <div className="variant relative z-0 flex justify-start items-center gap-4 pl-2">
             <Label
               className={`block w-30 font-semibold ${diff !== 0 ? "text-red-600" : ""}`}
             >
               {t("difference")}
             </Label>
             <Input
-              id="amount"
+              id="cash-difference"
               value={diff.toLocaleString()}
               disabled
               className={`w-20 text-center ${diff !== 0 ? "border-red-500 text-red-600" : ""}`}
             />
           </div>
-          <div className="variant flex justify-start items-center gap-4 pl-2">
+          <div className="variant relative z-0 flex justify-start items-center gap-4 pl-2">
             <Label className="block w-40 font-semibold">{t("reason")}</Label>
             <Textarea
-              id="amount"
+              id="closing-reason"
               value={reason}
               aria-invalid={diff !== 0 && !reason.trim()}
               className="w-full min-h-20"

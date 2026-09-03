@@ -23,6 +23,7 @@ export const updateStoreItem = async ({
     temporarilyUnavailable: boolean;
     visibility: StoreItemVisibility;
     addonDisplayMode: "named" | "merged";
+    kitchenPrintEnabled: boolean;
   }>;
 }) => (await api.put(`store-items/${itemId}`, data)).data.data;
 export const updateTemporaryStoreItemAvailability = async ({

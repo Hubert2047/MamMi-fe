@@ -42,6 +42,7 @@ export interface Item {
   temporarilyUnavailableUntil?: string | null;
   visibility?: { pos: boolean; qr: boolean; online: boolean };
   addonDisplayMode?: "named" | "merged";
+  kitchenPrintEnabled?: boolean;
   components?: Array<{ itemId: string; quantity: number }>;
 }
 

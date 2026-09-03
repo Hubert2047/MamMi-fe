@@ -84,7 +84,7 @@ function ShiftAttendance({ open, onClose }: Props) {
     return () => window.clearInterval(timer);
   }, [lockedUntil]);
   const updateNumberId = (value: string) => {
-    setNumberId(value);
+    setNumberId(value.replace(/\D/g, "").slice(0, 4));
     setVerifiedNumberId(null);
   };
   const verifyEmployee = async () => {
@@ -180,13 +180,16 @@ function ShiftAttendance({ open, onClose }: Props) {
             <Input
               value={numberId}
               className="mt-0 h-10 min-w-0 flex-1 text-lg"
+              inputMode="numeric"
+              pattern="[0-9]{4}"
+              maxLength={4}
               onChange={(e) => updateNumberId(e.target.value)}
             />
             {!verifiedEmployee && !lockedUntil && (
               <Button
                 className="h-10 shrink-0 px-4"
                 onClick={verifyEmployee}
-                disabled={!numberId || !employees.length || isVerifying}
+                disabled={!numberId || isVerifying}
               >
                 {isVerifying ? (
                   <span className="flex items-center gap-2">

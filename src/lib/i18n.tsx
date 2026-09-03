@@ -14,6 +14,7 @@ export type Locale = (typeof locales)[number];
 
 const messages: Record<Locale, Record<string, string>> = {
   vi: {
+    advanced: "Nâng Cao",
     language: "Ngôn ngữ",
     login: "Đăng nhập",
     account: "Tài khoản",
@@ -87,6 +88,7 @@ const messages: Record<Locale, Record<string, string>> = {
     selling: "Đang bán",
   },
   en: {
+    advanced: "Advanced",
     language: "Language",
     login: "Sign in",
     account: "Account",
@@ -160,6 +162,7 @@ const messages: Record<Locale, Record<string, string>> = {
     selling: "Active",
   },
   "zh-TW": {
+    advanced: "進階",
     language: "語言",
     login: "登入",
     account: "帳號",
@@ -1161,7 +1164,7 @@ const availabilityMessages = {
     discountUnavailable: "Khuyến mãi vừa được tắt và đã được bỏ khỏi đơn.",
     temporaryAvailable: "Đang bán",
     temporaryAvailability: "Tắt tạm thời món",
-    temporaryAvailabilityTitle: "Tắt tạm thời món",
+    temporaryAvailabilityTitle: "Tạm Ngưng Món",
     temporaryAvailabilitySearch: "Tìm tên món...",
     temporaryAvailabilityCategory: "Lọc theo danh mục",
     temporaryAvailabilityAllCategories: "Tất cả danh mục",
@@ -1179,7 +1182,7 @@ const availabilityMessages = {
       "This discount was just disabled and has been removed from the order.",
     temporaryAvailable: "Temporarily available",
     temporaryAvailability: "Pause items",
-    temporaryAvailabilityTitle: "Pause items",
+    temporaryAvailabilityTitle: "Pause Items",
     temporaryAvailabilitySearch: "Search item name...",
     temporaryAvailabilityCategory: "Filter by category",
     temporaryAvailabilityAllCategories: "All categories",
@@ -1386,12 +1389,12 @@ const posMessages: Record<Locale, Record<string, string>> = {
     order: "Đơn hàng",
     placeOrder: "Đặt hàng",
     pay: "Thanh toán",
-    otherRevenue: "Thu nhập khác",
-    expenses: "Bảng chi phí",
+    otherRevenue: "Thu Nhập Khác",
+    expenses: "Bảng Chi Phí",
     attendance: "Chấm Công",
     dailyClosing: "Kết Sổ",
     logout: "Đăng xuất",
-    orderTableTitle: "Bảng Đơn hàng",
+    orderTableTitle: "Bảng Đơn Hàng",
     orderNumberHeader: "Mã Đơn",
     totalItems: "Tổng SP",
     totalAmount: "Tổng tiền",
@@ -1460,12 +1463,12 @@ const posMessages: Record<Locale, Record<string, string>> = {
     order: "Order",
     placeOrder: "Place order",
     pay: "Pay",
-    otherRevenue: "Other revenue",
+    otherRevenue: "Other Revenue",
     expenses: "Expenses",
     attendance: "Attendance",
-    dailyClosing: "Daily closing",
+    dailyClosing: "Daily Closing",
     logout: "Log out",
-    orderTableTitle: "Order table",
+    orderTableTitle: "Order Table",
     orderNumberHeader: "Order no.",
     totalItems: "Total items",
     totalAmount: "Total amount",
@@ -1674,7 +1677,7 @@ Object.assign(promotionMessages.vi as Record<string, string>, {
   promotionCategoryFilter: "Lọc theo danh mục",
   promotionPreviewRulesTogether:
     "Các quy tắc trong promotion được xét chung; mỗi quy tắc chỉ áp dụng khi đúng đối tượng.",
-  promotions: "Khuyến mại",
+  promotions: "Khuyến Mại",
   promotionMode: "Cách áp dụng",
   automatic: "Tự động",
   manual: "Nhân viên chọn",
@@ -1977,7 +1980,7 @@ const expenseMessages = {
     addTemporaryIngredient: "Thêm nguyên liệu",
     expenseOtherTab: "Chi phí khác",
     expenseInventoryTab: "Nguyên liệu",
-    posInventoryPurchase: "Nhập hàng",
+    posInventoryPurchase: "Nhập Hàng",
     expenseTableTitle: "Bảng Chi phí",
     totalExpense: "Tổng chi",
     searchExpense: "Tìm theo tên chi phí...",
@@ -2013,7 +2016,7 @@ const expenseMessages = {
     addTemporaryIngredient: "Add ingredient",
     expenseOtherTab: "Other expense",
     expenseInventoryTab: "Ingredients",
-    posInventoryPurchase: "Receive stock",
+    posInventoryPurchase: "Receive Stock",
     expenseTableTitle: "Expenses",
     totalExpense: "Total expenses",
     searchExpense: "Search by expense name...",
@@ -3038,16 +3041,19 @@ Object.assign(messages.vi, {
   storeAddonDisplayMode: "Cách hiển thị add-on",
   storeAddonDisplayNamed: "Hiển thị tách",
   storeAddonDisplayMerged: "Gộp vào giá món",
+  storeKitchenPrintEnabled: "In món này ra bếp",
 });
 Object.assign(messages.en, {
   storeAddonDisplayMode: "Add-on display",
   storeAddonDisplayNamed: "Show separately",
   storeAddonDisplayMerged: "Merge into item price",
+  storeKitchenPrintEnabled: "Print this item in the kitchen",
 });
 Object.assign(messages["zh-TW"], {
   storeAddonDisplayMode: "加購顯示方式",
   storeAddonDisplayNamed: "分開顯示",
   storeAddonDisplayMerged: "合併至餐點價格",
+  storeKitchenPrintEnabled: "將此餐點列印至廚房",
 });
 
 Object.assign(messages.vi, {

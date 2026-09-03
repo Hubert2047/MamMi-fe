@@ -59,6 +59,8 @@ export default function StoreMenuPanel() {
   const [draftAddonDisplayMode, setDraftAddonDisplayMode] = useState<
     "named" | "merged"
   >("named");
+  const [draftKitchenPrintEnabled, setDraftKitchenPrintEnabled] =
+    useState(true);
   const [page, setPage] = useState(1);
   const { containerRef, pageSize } = useTablePageSize(70, 100);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -127,6 +129,7 @@ export default function StoreMenuPanel() {
     setDraftAddonDisplayMode(
       item.addonDisplayMode === "merged" ? "merged" : "named",
     );
+    setDraftKitchenPrintEnabled(item.kitchenPrintEnabled !== false);
   };
 
   return (
@@ -423,6 +426,15 @@ export default function StoreMenuPanel() {
                 <option value="merged">{t("storeAddonDisplayMerged")}</option>
               </select>
             </label>
+            <label className="flex items-center gap-2 border-t pt-3 text-sm">
+              <Checkbox
+                checked={draftKitchenPrintEnabled}
+                onCheckedChange={(value) =>
+                  setDraftKitchenPrintEnabled(value === true)
+                }
+              />
+              {t("storeKitchenPrintEnabled")}
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>
@@ -438,6 +450,7 @@ export default function StoreMenuPanel() {
                     price: normalizePriceMap(draftPrice),
                     visibility: draftVisibility,
                     addonDisplayMode: draftAddonDisplayMode,
+                    kitchenPrintEnabled: draftKitchenPrintEnabled,
                     ...(canChangePermanentAvailability
                       ? { permanentlyActive: draftPermanentlyActive }
                       : {}),
