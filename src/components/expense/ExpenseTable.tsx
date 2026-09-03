@@ -83,40 +83,16 @@ export function ExpenseTable({
       hourCycle: "h23",
     }).format(new Date(value || currentTime));
   const expenseTypeLabel = (expense: Expense) => {
-    if (expense.type === "inventory_purchase")
-      return locale === "en"
-        ? "Ingredient"
-        : locale === "zh-TW"
-          ? "原料"
-          : "Nguyên liệu";
-    const labels =
-      locale === "en"
-        ? {
-            utilities: "Utilities",
-            rent: "Rent",
-            transport: "Transport",
-            maintenance: "Maintenance",
-            salary: "Salary",
-            other: "Other",
-          }
-        : locale === "zh-TW"
-          ? {
-              utilities: "水電",
-              rent: "租金",
-              transport: "運輸",
-              maintenance: "維修",
-              salary: "薪資",
-              other: "其他",
-            }
-          : {
-              utilities: "Điện nước",
-              rent: "Thuê mặt bằng",
-              transport: "Vận chuyển",
-              maintenance: "Sửa chữa",
-              salary: "Nhân sự",
-              other: "Khác",
-            };
-    return labels[expense.category as keyof typeof labels] || labels.other;
+    if (expense.type === "inventory_purchase") return t("expenseCategoryIngredient");
+    const categoryKeys = {
+      utilities: "expenseCategoryUtilities",
+      rent: "expenseCategoryRent",
+      transport: "expenseCategoryTransport",
+      maintenance: "expenseCategoryMaintenance",
+      salary: "expenseCategorySalary",
+      other: "expenseCategoryOther",
+    } as const;
+    return t(categoryKeys[expense.category as keyof typeof categoryKeys] ?? "expenseCategoryOther");
   };
   const unitLabel = (code?: string) => {
     if (!code) return "—";
@@ -322,7 +298,7 @@ export function ExpenseTable({
                   ? "時間"
                   : "Thời gian"}
             </TableHead>
-            <TableHead>Loại</TableHead>
+            <TableHead>{t("expenseType")}</TableHead>
             <TableHead>{t("expenseQuantity")}</TableHead>
             <TableHead>{t("expenseUnit")}</TableHead>
             <TableHead>{t("expenseUnitPrice")}</TableHead>

@@ -418,7 +418,7 @@ export function AddExpenseDialog({
 
             {entryType === "other" && (
               <Field className="sm:col-start-1 sm:row-start-2">
-                <Label>Nhóm chi phí</Label>
+                <Label>{t("expenseCategory")}</Label>
                 <select
                   className="h-8 w-full rounded-md border bg-background px-3 text-sm"
                   value={formData.category}
@@ -429,12 +429,12 @@ export function AddExpenseDialog({
                     }))
                   }
                 >
-                  <option value="other">Khác</option>
-                  <option value="utilities">Điện nước</option>
-                  <option value="rent">Thuê mặt bằng</option>
-                  <option value="transport">Vận chuyển</option>
-                  <option value="maintenance">Sửa chữa</option>
-                  <option value="salary">Nhân sự</option>
+                  <option value="other">{t("expenseCategoryOther")}</option>
+                  <option value="utilities">{t("expenseCategoryUtilities")}</option>
+                  <option value="rent">{t("expenseCategoryRent")}</option>
+                  <option value="transport">{t("expenseCategoryTransport")}</option>
+                  <option value="maintenance">{t("expenseCategoryMaintenance")}</option>
+                  <option value="salary">{t("expenseCategorySalary")}</option>
                 </select>
               </Field>
             )}
