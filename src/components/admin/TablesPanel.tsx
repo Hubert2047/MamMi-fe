@@ -62,7 +62,14 @@ const qrUrlFor = (table: StoreTable) => `${orderWebBaseUrl}/q/${table.qrToken}`;
 export default function TablesPanel() {
   const { t } = useI18n();
   const client = useQueryClient();
-  const { containerRef, pageSize } = useTablePageSize();
+  const { containerRef, pageSize } = useTablePageSize(
+    38,
+    100,
+    undefined,
+    false,
+    1,
+    true,
+  );
   const { data: tables = [], isLoading } = useQuery({
     queryKey: ["store-tables"],
     queryFn: getStoreTables,
@@ -193,7 +200,7 @@ export default function TablesPanel() {
     setIsEditOpen(true);
   };
   return (
-    <div className="h-full overflow-hidden p-6 md:p-8">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden p-6 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">{t("tables")}</h1>
         <Button onClick={openCreate}>{t("tableCreate")}</Button>
@@ -319,13 +326,14 @@ export default function TablesPanel() {
         </DialogContent>
       </Dialog>
       <Tabs
+        className="min-h-0 flex-1"
         value={activeTab}
         onValueChange={(value) => {
           setActiveTab(value as "active" | "inactive");
           setPage(1);
         }}
       >
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 shrink-0">
           <TabsTrigger value="active">
             {t("tableActiveTab")} (
             {tables.filter((table) => table.active).length})
@@ -335,7 +343,10 @@ export default function TablesPanel() {
             {tables.filter((table) => !table.active).length})
           </TabsTrigger>
         </TabsList>
-        <Card className="flex h-[calc(100svh-80px)] min-h-0 flex-col overflow-hidden">
+        <Card
+          ref={containerRef}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle>{t("tables")}</CardTitle>
@@ -362,8 +373,8 @@ export default function TablesPanel() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="min-h-0 flex-1 overflow-auto">
-            <Table>
+          <CardContent className="min-h-0 flex-1 !overflow-auto">
+            <Table className="min-w-max">
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("tableName")}</TableHead>
@@ -394,8 +405,8 @@ export default function TablesPanel() {
                             />
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                        <TableCell className="whitespace-nowrap text-right">
+                          <div className="flex flex-nowrap justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"
@@ -433,8 +444,8 @@ export default function TablesPanel() {
                             />
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
+                        <TableCell className="whitespace-nowrap text-right">
+                          <div className="flex flex-nowrap justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"

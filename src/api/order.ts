@@ -85,6 +85,7 @@ export interface BaseOrder {
 export interface IOrder extends BaseOrder {
   _id: string;
   totalPrice: number;
+  cashReceived?: number;
   createdAt: Date;
   paidAt?: Date;
 }

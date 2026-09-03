@@ -121,6 +121,8 @@ function Checkout({
           ? t("itemNotAvailable")
           : code === "ADDON_NOT_AVAILABLE"
             ? t("addonNotAvailable")
+            : code === "INSUFFICIENT_CASH"
+              ? t("insufficientCash")
             : code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED"
               ? t("promotionPriceChanged")
               : t("createOrderFailure"),
@@ -151,6 +153,9 @@ function Checkout({
       checkoutPending: isCheckoutPendingOrder,
       printOnConfirm: isPrint,
       expectedPricing: effectivePromotionPreview,
+      ...(status === "paid" && currentOrder.paymentMethod === "cash"
+        ? { cashReceived: cash }
+        : {}),
     };
     const nextOrder = await createOrderMutation.mutateAsync(newOrder);
     handleOpenCheckout(false);

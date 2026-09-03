@@ -5,18 +5,21 @@ export function useTablePageSize(
   rowHeight = 38,
   reservedHeight = 100,
   headerHeightOverride?: number,
+  forceViewportHeight = true,
+  minimumPageSize = 5,
+  accountForTableHeader = false,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(() =>
     typeof window === "undefined"
       ? 5
-      : Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)),
+      : Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
   );
 
   useEffect(() => {
     const updateFromViewport = () => {
       setPageSize(
-        Math.max(5, Math.floor((window.innerHeight - 300) / rowHeight)),
+        Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
       );
     };
     updateFromViewport();
@@ -38,7 +41,8 @@ export function useTablePageSize(
       }
       const update = () => {
         // Keep all admin tables on the same viewport-based height budget.
-        element.style.height = `${Math.max(240, window.innerHeight - 80)}px`;
+        if (forceViewportHeight)
+          element.style.height = `${Math.max(240, window.innerHeight - 80)}px`;
         element.style.overflow = "hidden";
         element.querySelectorAll<HTMLImageElement>("img").forEach((image) => {
           image.style.width = "60px";
@@ -105,12 +109,20 @@ export function useTablePageSize(
           0;
         const estimatedCardContentHeight =
           cardHeight - cardPadding - cardGap - headerHeight;
-        const availableHeight =
+        const rawAvailableHeight =
           cardHeight >= 400
             ? Math.max(measuredCardContentHeight, estimatedCardContentHeight)
             : window.innerHeight - 300;
+        const tableHeader = element.querySelector<HTMLElement>("thead");
+        const tableHeaderHeight = accountForTableHeader
+          ? (tableHeader?.getBoundingClientRect().height ?? 0)
+          : 0;
+        const availableHeight = Math.max(
+          0,
+          rawAvailableHeight - tableHeaderHeight,
+        );
         const nextPageSize = Math.max(
-          5,
+          minimumPageSize,
           Math.floor(availableHeight / measuredRowHeight),
         );
         setPageSize(nextPageSize);
@@ -132,7 +144,14 @@ export function useTablePageSize(
       resizeObserver?.disconnect();
       window.removeEventListener("resize", updateFromViewport);
     };
-  }, [headerHeightOverride, reservedHeight, rowHeight]);
+  }, [
+    accountForTableHeader,
+    forceViewportHeight,
+    headerHeightOverride,
+    minimumPageSize,
+    reservedHeight,
+    rowHeight,
+  ]);
 
   return { containerRef, pageSize };
 }
