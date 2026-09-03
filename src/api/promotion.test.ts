@@ -112,4 +112,77 @@ describe("POS promotion preview", () => {
     ]);
     expect(result.total).toBe(180);
   });
+
+  it("applies every item reward before an order reward from a mixed promotion", () => {
+    const result = calculatePromotionPreview({
+      items: [
+        {
+          id: "tea",
+          itemId: "line-1",
+          basePrice: 100,
+          quantity: 1,
+          addons: [{ id: "boba", amount: 1, priceExtra: 100 }],
+        },
+      ] as OrderItem[],
+      promotions: [
+        promotion({
+          _id: "mixed",
+          priority: 2,
+          rules: [
+            {
+              target: "product",
+              productIds: ["tea"],
+              reward: { type: "value", amount: 10 },
+            },
+            { target: "order", reward: { type: "percent", amount: 10 } },
+          ],
+        }),
+        promotion({
+          _id: "addon",
+          priority: 1,
+          rules: [
+            {
+              target: "addon",
+              addonIds: ["boba"],
+              reward: { type: "value", amount: 50 },
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(result.total).toBe(126);
+    expect(result.appliedPromotions.map((entry) => [entry.promotionId, entry.discountAmount])).toEqual([
+      ["mixed", 24],
+      ["addon", 50],
+    ]);
+  });
+
+  it("rounds the final total half-up and allocates integer discounts back to lines", () => {
+    const tenPercent = promotion({
+      _id: "ten-percent",
+      rules: [{ target: "product", reward: { type: "percent", amount: 10 } }],
+    });
+    const single = calculatePromotionPreview({
+      items: [
+        { id: "tea", itemId: "tea", name: "Tea", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
+      ] as OrderItem[],
+      promotions: [tenPercent],
+    });
+    const split = calculatePromotionPreview({
+      items: [
+        { id: "tea", itemId: "tea", name: "Tea", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
+        { id: "coffee", itemId: "coffee", name: "Coffee", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
+      ] as OrderItem[],
+      promotions: [tenPercent],
+    });
+
+    expect(single.total).toBe(86);
+    expect(single.appliedPromotions[0]?.discountAmount).toBe(9);
+    expect(
+      split.appliedPromotions[0]?.allocations.map(
+        (allocation) => allocation.productDiscountAmount,
+      ),
+    ).toEqual([10, 9]);
+  });
 });

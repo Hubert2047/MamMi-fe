@@ -22,6 +22,7 @@ import {
 } from "@/api/store-addon";
 import { useI18n } from "@/lib/i18n";
 import { useStorePricingEmbedded } from "@/app/admin/store-pricing/store-pricing-context";
+import { isNonNegativeTwd } from "@/lib/money";
 import {
   Dialog,
   DialogContent,
@@ -162,6 +163,8 @@ export default function StoreAddonsPanel() {
                       <Input
                         className="h-7 w-24"
                         type="number"
+                        min="0"
+                        step="1"
                         value={draftPrice}
                         onChange={(event) =>
                           setDraftPrice(Number(event.target.value))
@@ -170,6 +173,7 @@ export default function StoreAddonsPanel() {
                       <Button
                         size="sm"
                         className="h-7"
+                        disabled={!isNonNegativeTwd(draftPrice)}
                         onClick={() =>
                           update.mutate({
                             addonId: addon._id,
@@ -242,7 +246,9 @@ export default function StoreAddonsPanel() {
             <div className="space-y-2">
               <Label>{t("extraPrice")}</Label>
               <Input
-                type="number"
+              type="number"
+                min="0"
+                step="1"
                 value={priceExtra}
                 onChange={(event) => setPriceExtra(Number(event.target.value))}
               />
@@ -253,7 +259,7 @@ export default function StoreAddonsPanel() {
               {t("cancel")}
             </Button>
             <Button
-              disabled={!addonId || add.isPending}
+              disabled={!addonId || !isNonNegativeTwd(priceExtra) || add.isPending}
               onClick={() =>
                 add.mutate({ addonId, priceExtra, permanentlyActive: true })
               }

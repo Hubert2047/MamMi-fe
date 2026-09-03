@@ -48,6 +48,7 @@ import {
   formatTaipeiDateTimeInput,
   parseTaipeiDateTimeInput,
 } from "@/lib/promotionDate";
+import { isNonNegativeTwd, isValidPromotionAmount } from "@/lib/money";
 
 const emptyRule = (): PromotionRule => ({
   target: "order",
@@ -179,6 +180,15 @@ export default function PromotionsPage() {
     setFormOpen(true);
   };
   const savePromotion = async () => {
+    if (
+      (form.minSubtotal !== undefined && !isNonNegativeTwd(form.minSubtotal)) ||
+      form.rules.some((rule) =>
+        !isValidPromotionAmount(rule.reward.type, rule.reward.amount),
+      )
+    ) {
+      toast.error(t("promotionSaveError"));
+      return;
+    }
     setIsUploadingImage(true);
     try {
       const uploadedImage = pendingImage
@@ -359,6 +369,7 @@ export default function PromotionsPage() {
                         className="h-10"
                         type="number"
                         min="0"
+                        step="1"
                         placeholder="0"
                         value={form.priority}
                         onChange={(event) =>
@@ -426,6 +437,7 @@ export default function PromotionsPage() {
                       <Input
                         type="number"
                         min="0"
+                        step="1"
                         placeholder="0"
                         value={form.minSubtotal ?? ""}
                         onChange={(event) =>
@@ -579,6 +591,8 @@ export default function PromotionsPage() {
                               <Input
                                 type="number"
                                 min="0"
+                                max={rule.reward.type === "percent" ? "100" : undefined}
+                                step={rule.reward.type === "percent" ? "0.01" : "1"}
                                 value={rule.reward.amount}
                                 onChange={(event) =>
                                   setRule(index, {

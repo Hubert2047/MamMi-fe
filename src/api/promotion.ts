@@ -79,6 +79,78 @@ const promotionDiscount = (subtotal: number, reward: PromotionRule["reward"]) =>
     ),
   );
 
+const roundTwd = (amount: number) => Math.floor(amount + 0.5 + Number.EPSILON);
+
+const finalizePromotionPreview = (
+  grossSubtotal: number,
+  exactTotal: number,
+  appliedPromotions: AppliedPromotion[],
+) => {
+  const total = roundTwd(exactTotal);
+  const targetDiscount = roundTwd(grossSubtotal) - total;
+  const entries: { amount: number; index: number; set(amount: number): void }[] = [];
+
+  appliedPromotions.forEach((promotion) =>
+    promotion.allocations.forEach((allocation) => {
+      if (allocation.productDiscountAmount > 0)
+        entries.push({
+          amount: allocation.productDiscountAmount,
+          index: entries.length,
+          set: (amount) => {
+            allocation.productDiscountAmount = amount;
+          },
+        });
+      allocation.addonDiscounts.forEach((addonDiscount) => {
+        if (addonDiscount.discountAmount > 0)
+          entries.push({
+            amount: addonDiscount.discountAmount,
+            index: entries.length,
+            set: (amount) => {
+              addonDiscount.discountAmount = amount;
+            },
+          });
+      });
+    }),
+  );
+
+  const roundedEntries = entries.map((entry) => ({
+    ...entry,
+    amount: Math.floor(entry.amount + Number.EPSILON),
+    fraction: entry.amount - Math.floor(entry.amount + Number.EPSILON),
+  }));
+  let remainingUnits =
+    targetDiscount - roundedEntries.reduce((sum, entry) => sum + entry.amount, 0);
+  const byLargestFraction = [...roundedEntries].sort(
+    (a, b) => b.fraction - a.fraction || a.index - b.index,
+  );
+  for (
+    let index = 0;
+    remainingUnits > 0 && byLargestFraction.length;
+    index += 1, remainingUnits -= 1
+  )
+    byLargestFraction[index % byLargestFraction.length]!.amount += 1;
+  roundedEntries.forEach((entry) => entry.set(entry.amount));
+
+  return {
+    total,
+    appliedPromotions: appliedPromotions
+      .map((promotion) => ({
+        ...promotion,
+        discountAmount: promotion.allocations.reduce(
+          (sum, allocation) =>
+            sum +
+            allocation.productDiscountAmount +
+            allocation.addonDiscounts.reduce(
+              (addonSum, addon) => addonSum + addon.discountAmount,
+              0,
+            ),
+          0,
+        ),
+      }))
+      .filter((promotion) => promotion.discountAmount > 0),
+  };
+};
+
 /** Fast POS-only preview. The backend recalculates and validates this snapshot before accepting an order. */
 export const calculatePromotionPreview = ({
   items,
@@ -191,22 +263,24 @@ export const calculatePromotionPreview = ({
   const remainingAddon = items.map((item) =>
     item.addons.map((addon) => addon.amount * addon.priceExtra * item.quantity),
   );
-  const appliedPromotions: AppliedPromotion[] = [];
-  for (const promotion of [
-    ...accepted.filter((entry) =>
-      entry.rules.some((rule) => rule.target !== "order"),
-    ),
-    ...accepted.filter((entry) =>
-      entry.rules.every((rule) => rule.target === "order"),
-    ),
-  ]) {
-    const allocations = items.map((item) => ({
-      itemId: item.id,
-      productDiscountAmount: 0,
-      addonDiscounts: [] as { addonId: string; discountAmount: number }[],
-    }));
-    for (const rule of promotion.rules) {
-      if (rule.target === "order") continue;
+  const allocationsByPromotion = new Map(
+    accepted.map((promotion) => [
+      promotion._id,
+      items.map((item) => ({
+        itemId: item.id,
+        productDiscountAmount: 0,
+        addonDiscounts: [] as { addonId: string; discountAmount: number }[],
+      })),
+    ]),
+  );
+
+  // Always consume product/add-on/line rewards before any whole-order reward.
+  for (const target of ["product", "addon", "line"] as const) {
+    for (const promotion of accepted) {
+      const allocations = allocationsByPromotion.get(promotion._id)!;
+      for (const rule of promotion.rules.filter(
+        (candidate) => candidate.target === target,
+      )) {
       items.forEach((item, itemIndex) => {
         if (rule.productIds?.length && !rule.productIds.includes(item.id))
           return;
@@ -278,7 +352,13 @@ export const calculatePromotionPreview = ({
           });
       });
     }
-    if (promotion.rules.some((rule) => rule.target === "order")) {
+      }
+    }
+
+  for (const promotion of accepted) {
+    const allocations = allocationsByPromotion.get(promotion._id)!;
+    const rule = promotion.rules.find((candidate) => candidate.target === "order");
+    if (rule) {
       const subtotal =
         remainingProduct.reduce((sum, amount) => sum + amount, 0) +
         remainingAddon.reduce(
@@ -286,9 +366,6 @@ export const calculatePromotionPreview = ({
             sum + addons.reduce((addonSum, amount) => addonSum + amount, 0),
           0,
         );
-      const rule = promotion.rules.find(
-        (candidate) => candidate.target === "order",
-      )!;
       let remainingDiscount = promotionDiscount(subtotal, rule.reward);
       items.forEach((item, itemIndex) => {
         const productDiscount = Math.min(
@@ -313,6 +390,11 @@ export const calculatePromotionPreview = ({
         });
       });
     }
+  }
+
+  const appliedPromotions: AppliedPromotion[] = [];
+  for (const promotion of accepted) {
+    const allocations = allocationsByPromotion.get(promotion._id)!;
     const discountAmount = allocations.reduce(
       (sum, allocation) =>
         sum +
@@ -334,16 +416,14 @@ export const calculatePromotionPreview = ({
         allocations,
       });
   }
-  return {
-    total:
-      remainingProduct.reduce((sum, amount) => sum + amount, 0) +
-      remainingAddon.reduce(
-        (sum, addons) =>
-          sum + addons.reduce((addonSum, amount) => addonSum + amount, 0),
-        0,
-      ),
-    appliedPromotions,
-  };
+  const total =
+    remainingProduct.reduce((sum, amount) => sum + amount, 0) +
+    remainingAddon.reduce(
+      (sum, addons) =>
+        sum + addons.reduce((addonSum, amount) => addonSum + amount, 0),
+      0,
+    );
+  return finalizePromotionPreview(grossSubtotal, total, appliedPromotions);
 };
 
 const isAvailableForCatalog = (

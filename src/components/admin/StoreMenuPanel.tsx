@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
 import { useStorePricingEmbedded } from "@/app/admin/store-pricing/store-pricing-context";
 import { Loader2 } from "lucide-react";
+import { isValidPriceMap } from "@/lib/money";
 import {
   Dialog,
   DialogContent,
@@ -300,6 +301,8 @@ export default function StoreMenuPanel() {
                 <Input
                   className="h-8"
                   type="number"
+                  min="0"
+                  step="1"
                   value={price[key] ?? 0}
                   onChange={(event) =>
                     setPrice({ ...price, [key]: Number(event.target.value) })
@@ -313,7 +316,7 @@ export default function StoreMenuPanel() {
               {t("cancel")}
             </Button>
             <Button
-              disabled={!selectedItemId || add.isPending}
+              disabled={!selectedItemId || !isValidPriceMap(price) || add.isPending}
               onClick={() => add.mutate({ itemId: selectedItemId, price })}
             >
               {add.isPending ? (
@@ -341,6 +344,8 @@ export default function StoreMenuPanel() {
                 <Label className="capitalize">{key}</Label>
                 <Input
                   type="number"
+                  min="0"
+                  step="1"
                   value={draftPrice[key] ?? 0}
                   onChange={(event) =>
                     setDraftPrice({
@@ -419,7 +424,7 @@ export default function StoreMenuPanel() {
               {t("cancel")}
             </Button>
             <Button
-              disabled={update.isPending}
+              disabled={update.isPending || !isValidPriceMap(draftPrice)}
               onClick={() =>
                 editing &&
                 update.mutate({
