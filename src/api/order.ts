@@ -56,6 +56,11 @@ export type ExpectedPricing = {
   total: number;
   appliedPromotions: AppliedPromotion[];
 };
+export type PricingConflictData = {
+  items: OrderItem[];
+  pricing: ExpectedPricing;
+  reason?: string;
+};
 
 export interface BaseOrder {
   _id: string;

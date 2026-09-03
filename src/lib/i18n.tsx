@@ -1385,7 +1385,7 @@ Object.assign(posMessages.vi, {
   orderItems: "Các món trong đơn",
   noDiscountApplied: "Chưa áp dụng khuyến mãi",
   promotionPriceChanged:
-    "Khuyến mại hoặc giá vừa thay đổi. Vui lòng kiểm tra lại.",
+    "Khuyến mại hoặc giá vừa thay đổi. Vui lòng kiểm tra lại và thực hiện thanh toán lần nữa.",
 });
 Object.assign(posMessages.en, {
   orderDetailTitle: "Order details",
@@ -1409,7 +1409,7 @@ Object.assign(posMessages.en, {
   orderItems: "Order items",
   noDiscountApplied: "No promotion applied",
   promotionPriceChanged:
-    "The promotion or price changed. Please review the order.",
+    "The promotion or price changed. Please review the order and try the payment again.",
 });
 Object.assign(posMessages["zh-TW"], {
   orderDetailTitle: "訂單詳情",
@@ -1432,7 +1432,7 @@ Object.assign(posMessages["zh-TW"], {
   amountDue: "應付金額",
   orderItems: "訂單商品",
   noDiscountApplied: "尚未套用優惠",
-  promotionPriceChanged: "優惠或價格已變更，請重新確認訂單。",
+  promotionPriceChanged: "優惠或價格已變更，請重新確認訂單後再次付款。",
 });
 
 Object.assign(promotionMessages.vi as Record<string, string>, {

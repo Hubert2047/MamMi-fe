@@ -238,7 +238,15 @@ const POSPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       const code = isAxiosError(error) ? error.response?.data?.code : undefined;
-      if (code === "PROMOTION_PRICE_CHANGED") {
+      if (code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED") {
+        const data = isAxiosError(error) ? error.response?.data?.data : undefined;
+        if (data?.items && data.pricing) {
+          setCurrentOrder((previous) => ({
+            ...previous,
+            items: data.items,
+            expectedPricing: data.pricing,
+          }));
+        }
         void queryClient.invalidateQueries({ queryKey: ["promotions"] });
         toast.error(t("promotionPriceChanged"));
         return;

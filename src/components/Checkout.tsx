@@ -4,7 +4,7 @@ import {
   PAYMENT_METHOD_ICONS,
   type PaymentMethod,
 } from "@/constants";
-import { type BaseOrder, createOrder } from "@/api/order.ts";
+import { type BaseOrder, createOrder, type PricingConflictData } from "@/api/order.ts";
 import React, { useMemo, useState } from "react";
 import { capitalize } from "@/lib/utils.ts";
 import { previewPromotions, type Promotion } from "@/api/promotion.ts";
@@ -101,13 +101,27 @@ function Checkout({
     },
     onError: (error) => {
       const code = isAxiosError(error) ? error.response?.data?.code : undefined;
-      if (code === "PROMOTION_PRICE_CHANGED") onPromotionPriceChanged?.();
+      if (code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED") {
+        const data = isAxiosError(error)
+          ? (error.response?.data?.data as PricingConflictData | undefined)
+          : undefined;
+        if (data?.items && data.pricing) {
+          setCurrentOrder((previous) => ({
+            ...previous,
+            items: data.items,
+            expectedPricing: data.pricing,
+          }));
+          setCash(0);
+          setCashDenominations({});
+        }
+        onPromotionPriceChanged?.();
+      }
       toast.error(
         code === "ITEM_NOT_AVAILABLE"
           ? t("itemNotAvailable")
           : code === "ADDON_NOT_AVAILABLE"
             ? t("addonNotAvailable")
-            : code === "PROMOTION_PRICE_CHANGED"
+            : code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED"
               ? t("promotionPriceChanged")
               : t("createOrderFailure"),
       );
