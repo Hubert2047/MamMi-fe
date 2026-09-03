@@ -101,6 +101,15 @@ function Checkout({
     },
     onError: (error) => {
       const code = isAxiosError(error) ? error.response?.data?.code : undefined;
+      if (
+        code === "ITEM_NOT_AVAILABLE" ||
+        code === "ITEM_STORE_CONFIG_NOT_FOUND" ||
+        code === "ITEM_CATALOG_NOT_FOUND" ||
+        code === "ITEM_PRICE_NOT_CONFIGURED" ||
+        code === "ADDON_NOT_AVAILABLE"
+      ) {
+        void queryClient.invalidateQueries({ queryKey: ["items"] });
+      }
       if (code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED") {
         const data = isAxiosError(error)
           ? (error.response?.data?.data as PricingConflictData | undefined)
@@ -119,13 +128,25 @@ function Checkout({
       toast.error(
         code === "ITEM_NOT_AVAILABLE"
           ? t("itemNotAvailable")
+          : code === "ITEM_STORE_CONFIG_NOT_FOUND"
+            ? t("itemStoreConfigNotFound")
+            : code === "ITEM_CATALOG_NOT_FOUND"
+              ? t("itemCatalogNotFound")
+              : code === "ITEM_PRICE_NOT_CONFIGURED"
+                ? t("itemPriceNotConfigured")
           : code === "ADDON_NOT_AVAILABLE"
             ? t("addonNotAvailable")
-            : code === "INSUFFICIENT_CASH"
-              ? t("insufficientCash")
-            : code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED"
-              ? t("promotionPriceChanged")
-              : t("createOrderFailure"),
+            : code === "ITEM_QUANTITY_INVALID"
+              ? t("itemQuantityInvalid")
+              : code === "ADDON_QUANTITY_INVALID"
+                ? t("addonQuantityInvalid")
+                : code === "INVALID_OPTION"
+                  ? t("invalidOption")
+                  : code === "INSUFFICIENT_CASH"
+                    ? t("insufficientCash")
+                    : code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED"
+                      ? t("promotionPriceChanged")
+                      : t("createOrderFailure"),
       );
     },
   });

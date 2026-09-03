@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import {
   getDailyClosings,
   voidDailyClosing,
   type IDailyClosing,
 } from "@/api/daily-closing";
+import { getEmployees, type Employee } from "@/api/employee";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
@@ -92,9 +93,16 @@ export default function DailyClosingHistory() {
   const [selectedDetail, setSelectedDetail] = useState<IDailyClosing | null>(
     null,
   );
+  const [selectedEmployeeClosing, setSelectedEmployeeClosing] =
+    useState<IDailyClosing | null>(null);
   const [selectedVoid, setSelectedVoid] = useState<IDailyClosing | null>(null);
   const [reason, setReason] = useState("");
   const isAdmin = user?.role === "Admin" || user?.role === "SuperAdmin";
+  const employees = useQuery({
+    queryKey: ["employees"],
+    queryFn: getEmployees,
+    enabled: isAdmin,
+  });
   const history = useQuery({
     queryKey: [
       "daily-closing-history",
@@ -111,6 +119,12 @@ export default function DailyClosingHistory() {
   });
   const records = history.data?.data ?? [];
   const latestConfirmedId = history.data?.summary.latestConfirmedId;
+  const selectedEmployee = selectedEmployeeClosing?.confirmedByEmployee
+    ? employees.data?.find(
+        (employee) =>
+          employee._id === selectedEmployeeClosing.confirmedByEmployee?.employeeId,
+      )
+    : undefined;
 
   const voidMutation = useMutation({
     mutationFn: voidDailyClosing,
@@ -266,6 +280,7 @@ export default function DailyClosingHistory() {
                 <TableRow>
                   <TableHead>{t("closingPeriod")}</TableHead>
                   <TableHead>{t("closingStatus")}</TableHead>
+                  <TableHead>{t("closingEmployee")}</TableHead>
                   <TableHead className="text-right">
                     {t("closingSystemAmount")}
                   </TableHead>
@@ -308,6 +323,31 @@ export default function DailyClosingHistory() {
                             ? t("closingConfirmed")
                             : t("closingVoided")}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {closing.confirmedByEmployee ? (
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <div className="font-medium">
+                                {closing.confirmedByEmployee.name}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              aria-label={t("closingEmployeeView")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setSelectedEmployeeClosing(closing);
+                              }}
+                            >
+                              <Eye className="size-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatAmount(closing.systemAmount)}
@@ -411,7 +451,7 @@ export default function DailyClosingHistory() {
               </div>
               <div className="rounded-lg border bg-muted/30 p-4">
                 <p className="mb-2 text-sm font-semibold">
-                  {t("closingSnapshot")}
+                  {t("closingAtClosingTime")}
                 </p>
                 <div className="grid gap-2 text-sm sm:grid-cols-2">
                   <Detail
@@ -419,8 +459,12 @@ export default function DailyClosingHistory() {
                     value={formatDate(selectedDetail.confirmedAt)}
                   />
                   <Detail
-                    label={t("closingConfirmedBy")}
-                    value={selectedDetail.confirmedBy ?? "-"}
+                    label={t("closingEmployee")}
+                    value={
+                      selectedDetail.confirmedByEmployee
+                        ? `${selectedDetail.confirmedByEmployee.name} (${selectedDetail.confirmedByEmployee.numberId})`
+                        : "-"
+                    }
                   />
                   {selectedDetail.status === "voided" && (
                     <>
@@ -450,6 +494,78 @@ export default function DailyClosingHistory() {
                     {t("voidClosing")}
                   </Button>
                 )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(selectedEmployeeClosing)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedEmployeeClosing(null);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          {selectedEmployeeClosing?.confirmedByEmployee && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t("closingEmployeeDetailsTitle")}</DialogTitle>
+                <DialogDescription>
+                  {t("closingEmployeeDetailsDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="mb-3 text-sm font-semibold">
+                  {t("closingEmployeeAtClosing")}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Detail
+                    label={t("closingEmployeeName")}
+                    value={selectedEmployeeClosing.confirmedByEmployee.name}
+                  />
+                  <Detail
+                    label={t("closingEmployeeNumberId")}
+                    value={selectedEmployeeClosing.confirmedByEmployee.numberId}
+                  />
+                </div>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="mb-3 text-sm font-semibold">
+                  {t("closingEmployeeCurrent")}
+                </p>
+                {selectedEmployee ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Detail
+                      label={t("closingEmployeeName")}
+                      value={selectedEmployee.name}
+                    />
+                    <Detail
+                      label={t("closingEmployeeNumberId")}
+                      value={selectedEmployee.numberId}
+                    />
+                    <Detail
+                      label={t("closingEmployeeStatus")}
+                      value={
+                        selectedEmployee.active
+                          ? t("closingEmployeeActive")
+                          : t("closingEmployeeInactive")
+                      }
+                    />
+                    <Detail
+                      label={t("closingEmployeeRole")}
+                      value={
+                        selectedEmployee.role === "manager"
+                          ? t("closingEmployeeManager")
+                          : t("closingEmployeeStaff")
+                      }
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {t("closingEmployeeUnavailable")}
+                  </p>
+                )}
+              </div>
             </>
           )}
         </DialogContent>

@@ -30,7 +30,7 @@ export default function NumPad({
     let value = currentValue;
     if (num === "clear") {
       value = clearAll ? "" : Math.floor(Number(value) / 10).toString();
-      if (clearAll) setIsFirst(true);
+      setIsFirst(clearAll || value === "0");
     } else {
       if (isFirst) {
         value = num;

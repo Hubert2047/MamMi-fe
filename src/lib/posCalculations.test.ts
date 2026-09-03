@@ -61,7 +61,7 @@ describe("POS selected item synchronization", () => {
     expect(getUnavailableAddonIds(item(10), ["addon-1"])).toEqual([]);
   });
 
-  it("updates the total-price snapshot for an addon already active in the draft order", () => {
+  it("updates the total-price data for an addon already active in the draft order", () => {
     const draft = {
       ...item(10),
       id: "item-1",
@@ -82,7 +82,7 @@ describe("POS selected item synchronization", () => {
     ).toBe(35);
   });
 
-  it("does not change addon snapshots that are no longer present in the catalog", () => {
+  it("does not change addon data that is no longer present in the catalog", () => {
     const draft = {
       ...item(10),
       id: "item-1",

@@ -84,7 +84,7 @@ const POSPage: React.FC = () => {
   const [promotionInfoOpen, setPromotionInfoOpen] = useState(false);
   const [openTemporaryAvailability, setOpenTemporaryAvailability] =
     useState(false);
-  const { data: items = [], isLoading: isItemsLoading } = useItems();
+  const { data: items = [], isLoading: isItemsLoading } = useItems(true);
   const { data: storeAddons = [] } = useStoreAddons();
   const { data: promotions = [], isLoading: isPromotionsLoading } =
     usePromotions();

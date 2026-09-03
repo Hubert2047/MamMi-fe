@@ -151,7 +151,7 @@ const finalizePromotionPreview = (
   };
 };
 
-/** Fast POS-only preview. The backend recalculates and validates this snapshot before accepting an order. */
+/** Fast POS-only preview. The backend recalculates and validates this pricing data before accepting an order. */
 export const calculatePromotionPreview = ({
   items,
   promotions,

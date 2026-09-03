@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowLeft, Info } from "lucide-react";
@@ -20,6 +20,8 @@ import {
 import { useI18n } from "@/lib/i18n";
 import Loading from "../Loading";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { getEmployees } from "@/api/employee";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +65,10 @@ function DailyClosingStep2({
 }: Props) {
   const queryClient = useQueryClient();
   const { t } = useI18n();
+  const { data: employees = [], isLoading: isEmployeesLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: getEmployees,
+  });
   const [cash, setCash] = useState<CashData>({
     2000: "0",
     1000: "0",
@@ -75,7 +81,23 @@ function DailyClosingStep2({
     1: "0",
   });
   const [reason, setReason] = useState("");
-  const [focusedDenom, setFocusedDenom] = useState<number | null>(null);
+  const [employeeNumberId, setEmployeeNumberId] = useState("");
+  const [verifiedNumberId, setVerifiedNumberId] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
+  const [lockRemaining, setLockRemaining] = useState(0);
+  const [focusedInput, setFocusedInput] = useState<number | "employee" | null>(
+    null,
+  );
+  const matchedEmployee = employees.find(
+    (employee) => employee.numberId === employeeNumberId,
+  );
+  const verifiedEmployee =
+    matchedEmployee &&
+    verifiedNumberId === employeeNumberId &&
+    matchedEmployee.active !== false
+      ? matchedEmployee
+      : null;
   const createDailyClosingMutation = useMutation({
     mutationFn: createDailyClosing,
     onSuccess: () => {
@@ -95,7 +117,44 @@ function DailyClosingStep2({
   const actualTotal = calculateActualCash(cash);
   const diff = calculateCashDifference(actualTotal, systemAmount);
 
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const updateRemaining = () => {
+      const remaining = Math.max(0, lockedUntil - Date.now());
+      setLockRemaining(Math.ceil(remaining / 1000));
+      if (!remaining) setLockedUntil(0);
+    };
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 250);
+    return () => window.clearInterval(timer);
+  }, [lockedUntil]);
+
+  function verifyEmployee() {
+    if (!employeeNumberId || isEmployeesLoading || lockedUntil) return;
+    if (!matchedEmployee || matchedEmployee.active === false) {
+      toast.error(
+        matchedEmployee?.active === false
+          ? t("employeeInactive")
+          : t("employeeNotFound"),
+      );
+      setVerifiedNumberId(null);
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      if (nextAttempts >= 3) {
+        setLockedUntil(Date.now() + 60_000);
+        setFailedAttempts(0);
+      }
+      return;
+    }
+    setVerifiedNumberId(employeeNumberId);
+    setFailedAttempts(0);
+  }
+
   async function handleConfirm() {
+    if (!verifiedEmployee) {
+      toast.error(t("closingEmployeeRequired"));
+      return;
+    }
     if (requiresClosingReason(diff, reason)) {
       toast.error(t("closingReasonRequired"));
       return;
@@ -105,6 +164,7 @@ function DailyClosingStep2({
       systemAmount,
       cash,
       reason,
+      employeeNumberId: verifiedEmployee.numberId,
     };
     await createDailyClosingMutation.mutateAsync(newDailyClosing);
     toast.success(t("closeSuccess"));
@@ -128,13 +188,24 @@ function DailyClosingStep2({
           <NumPad
             large
             columns={4}
-            currentValue={focusedDenom ? cash[focusedDenom] : "0"}
+            resetKey={focusedInput ?? "none"}
+            currentValue={
+              focusedInput === "employee"
+                ? employeeNumberId
+                : typeof focusedInput === "number"
+                  ? cash[focusedInput]
+                  : "0"
+            }
             onChange={(val) => {
-              if (focusedDenom === null) return;
-              setCash((prev) => ({
-                ...prev,
-                [focusedDenom]: String(val),
-              }));
+              if (focusedInput === "employee") {
+                setEmployeeNumberId(val);
+                setVerifiedNumberId(null);
+              } else if (typeof focusedInput === "number") {
+                setCash((prev) => ({
+                  ...prev,
+                  [focusedInput]: String(val),
+                }));
+              }
             }}
           />
         </div>
@@ -148,27 +219,61 @@ function DailyClosingStep2({
                 className="variant flex justify-start items-center gap-4 pl-2"
               >
                 <Label
-                  className={`block w-12 font-semibold ${focusedDenom === denom ? "text-primary" : ""}`}
-                  onClick={() => setFocusedDenom(denom)}
+                  className={`block w-12 font-semibold ${focusedInput === denom ? "text-primary" : ""}`}
+                  onClick={() => setFocusedInput(denom)}
                 >
                   {denom}
                 </Label>
                 <Input
                   type="number"
                   value={Number(cash[denom])}
-                  onFocus={() => setFocusedDenom(denom)}
+                  onFocus={() => setFocusedInput(denom)}
                   onChange={(e) =>
                     setCash((prev) => ({
                       ...prev,
                       [denom]: e.target.value,
                     }))
                   }
-                  className={`w-20 text-center ${focusedDenom === denom ? "border-primary ring-1 ring-primary/30" : ""}`}
+                  className={`w-20 text-center ${focusedInput === denom ? "border-primary ring-1 ring-primary/30" : ""}`}
                 />
               </div>
             ))}
         </div>
         <div className="flex gap-2 flex-1 flex-col">
+          <div className="variant rounded border p-2">
+            <Label className="font-semibold">{t("closingEmployeeId")}</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <Input
+                value={employeeNumberId}
+                onFocus={() => setFocusedInput("employee")}
+                onChange={(event) => {
+                  setEmployeeNumberId(event.target.value);
+                  setVerifiedNumberId(null);
+                }}
+                className={`min-w-0 flex-1 ${focusedInput === "employee" ? "border-primary ring-1 ring-primary/30" : ""}`}
+                placeholder={t("closingEmployeeIdPlaceholder")}
+              />
+              <Button
+                type="button"
+                onClick={verifyEmployee}
+                disabled={!employeeNumberId || isEmployeesLoading || Boolean(lockedUntil)}
+                className="shrink-0"
+              >
+                {t("closingEmployeeVerify")}
+              </Button>
+            </div>
+            <div className="min-h-6 pt-1 text-sm">
+              {verifiedEmployee ? (
+                <span className="font-semibold text-emerald-600">
+                  {t("employeeName")}: {verifiedEmployee.name}
+                </span>
+              ) : employeeNumberId ? (
+                <span className="text-muted-foreground">
+                  {t("closingEmployeeNotVerified")}
+                </span>
+              ) : null}
+            </div>
+          </div>
           <div className="variant flex justify-start items-center gap-4 pl-2">
             <Label className="block w-30 font-semibold">{t("actual")}</Label>
             <Input
@@ -263,7 +368,10 @@ function DailyClosingStep2({
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="ml-2 mt-4 min-h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                disabled={!verifiedEmployee || Boolean(lockedUntil)}
+                className="ml-2 mt-4 min-h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 {t("closing")}
               </Button>
             </AlertDialogTrigger>
@@ -283,7 +391,11 @@ function DailyClosingStep2({
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleConfirm}
-                  disabled={createDailyClosingMutation.isPending}
+                  disabled={
+                    createDailyClosingMutation.isPending ||
+                    !verifiedEmployee ||
+                    Boolean(lockedUntil)
+                  }
                   className="min-h-11 bg-primary! text-primary-foreground! hover:bg-primary/90!"
                 >
                   {createDailyClosingMutation.isPending
@@ -293,6 +405,11 @@ function DailyClosingStep2({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {lockedUntil > 0 && (
+            <p className="text-center text-sm font-semibold text-red-600">
+              {t("employeeLocked")} ({lockRemaining}s)
+            </p>
+          )}
         </div>
       </div>
       {createDailyClosingMutation.isPending && <Loading />}

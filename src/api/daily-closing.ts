@@ -22,6 +22,11 @@ export interface IDailyClosing {
   difference: number;
   confirmedAt: string;
   confirmedBy?: string;
+  confirmedByEmployee?: {
+    employeeId: string;
+    numberId: string;
+    name: string;
+  };
   voidedAt?: string;
   voidedBy?: string;
   voidReason?: string;
@@ -34,6 +39,7 @@ export interface ICreateDailyClosing {
   systemAmount: number;
   cash: CashData;
   reason: string;
+  employeeNumberId: string;
 }
 
 export interface DailyClosingSummary {

@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { enrollPosDevice } from "@/api/pos-device";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const labels = {
   vi: {
@@ -24,6 +25,7 @@ const labels = {
     description: "Nhập mã một lần do Admin tạo cho iPad này.",
     code: "Mã đăng ký",
     submit: "Đăng ký thiết bị",
+    registering: "Đang đăng ký...",
     success: "Thiết bị đã được đăng ký",
   },
   en: {
@@ -32,6 +34,7 @@ const labels = {
       "Enter the one-time code created by an administrator for this iPad.",
     code: "Enrollment code",
     submit: "Register device",
+    registering: "Registering...",
     success: "Device registered",
   },
   "zh-TW": {
@@ -39,6 +42,7 @@ const labels = {
     description: "輸入管理員為此 iPad 建立的一次性代碼。",
     code: "註冊代碼",
     submit: "註冊裝置",
+    registering: "註冊中...",
     success: "裝置已註冊",
   },
 } as const;
@@ -57,7 +61,6 @@ export default function PosDeviceEnrollment() {
       window.localStorage.setItem("activeStoreId", session.storeId);
       window.sessionStorage.setItem("pos-device-enrolled", "true");
       toast.success(t.success);
-      await new Promise((resolve) => window.setTimeout(resolve, 180));
       router.replace("/pos");
     } catch (error) {
       toast.error(
@@ -105,7 +108,14 @@ export default function PosDeviceEnrollment() {
                 className="h-10 w-full"
                 disabled={loading || code.length !== 6}
               >
-                {t.submit}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t.registering}
+                  </span>
+                ) : (
+                  t.submit
+                )}
               </Button>
               <Button
                 asChild

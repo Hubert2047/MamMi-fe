@@ -6,6 +6,16 @@ export const isValidPriceMap = (price: Record<string, number | undefined>) =>
     (amount) => amount === undefined || isNonNegativeTwd(amount),
   );
 
+export const normalizePriceMap = (price: {
+  base?: number;
+  uber?: number;
+  foodpanda?: number;
+}) => ({
+  base: price.base ?? 0,
+  uber: price.uber ?? 0,
+  foodpanda: price.foodpanda ?? 0,
+});
+
 export const isValidPromotionAmount = (
   type: "percent" | "value",
   amount: number,

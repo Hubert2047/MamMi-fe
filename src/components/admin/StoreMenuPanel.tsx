@@ -24,7 +24,7 @@ import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
 import { useStorePricingEmbedded } from "@/app/admin/store-pricing/store-pricing-context";
 import { Loader2 } from "lucide-react";
-import { isValidPriceMap } from "@/lib/money";
+import { isValidPriceMap, normalizePriceMap } from "@/lib/money";
 import {
   Dialog,
   DialogContent,
@@ -116,7 +116,7 @@ export default function StoreMenuPanel() {
   );
   const startEdit = (item: Item) => {
     setEditing(item);
-    setDraftPrice(item.price);
+    setDraftPrice(normalizePriceMap(item.price));
     setDraftPermanentlyActive(item.permanentlyActive);
     setDraftTemporarilyUnavailable(
       item.permanentlyActive && item.temporarilyUnavailable,
@@ -317,7 +317,12 @@ export default function StoreMenuPanel() {
             </Button>
             <Button
               disabled={!selectedItemId || !isValidPriceMap(price) || add.isPending}
-              onClick={() => add.mutate({ itemId: selectedItemId, price })}
+              onClick={() =>
+                add.mutate({
+                  itemId: selectedItemId,
+                  price: normalizePriceMap(price),
+                })
+              }
             >
               {add.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -430,7 +435,7 @@ export default function StoreMenuPanel() {
                 update.mutate({
                   itemId: editing._id,
                   data: {
-                    price: draftPrice,
+                    price: normalizePriceMap(draftPrice),
                     visibility: draftVisibility,
                     addonDisplayMode: draftAddonDisplayMode,
                     ...(canChangePermanentAvailability

@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import { Eye, EyeOff, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Dices,
+  Eye,
+  EyeOff,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -72,6 +80,19 @@ const emptyForm = (): EmployeeForm => ({
   endDate: "",
 });
 
+function generateEmployeeNumberId(employees: Employee[]) {
+  const used = new Set(employees.map((employee) => employee.numberId));
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const candidate = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+    if (!used.has(candidate)) return candidate;
+  }
+  for (let value = 0; value <= 9999; value += 1) {
+    const candidate = String(value).padStart(4, "0");
+    if (!used.has(candidate)) return candidate;
+  }
+  return "";
+}
+
 export default function EmployeesPage() {
   const { t } = useI18n();
   const { activeStore } = useStoreContext();
@@ -111,12 +132,19 @@ export default function EmployeesPage() {
       reset();
     },
     onError: (error) => {
-      const message = isAxiosError<{ message?: string }>(error)
+      const message = isAxiosError<{ code?: string; message?: string }>(
+        error,
+      )
         ? error.response?.data?.message
+        : undefined;
+      const code = isAxiosError<{ code?: string }>(error)
+        ? error.response?.data?.code
         : undefined;
       toast.error(
         message === "Employee already exists"
           ? t("employeeDuplicate")
+          : code === "EMPLOYEE_NUMBER_ID_INVALID"
+            ? t("employeeNumberIdInvalid")
           : t("employeeSaveError"),
       );
     },
@@ -130,7 +158,7 @@ export default function EmployeesPage() {
     onError: () => toast.error(t("employeeDeleteError")),
   });
   const beginCreate = () => {
-    setForm(emptyForm());
+    setForm({ ...emptyForm(), numberId: generateEmployeeNumberId(employees) });
     setEditing(null);
     setOpen(true);
   };
@@ -359,13 +387,41 @@ export default function EmployeesPage() {
             </div>
             <div className="space-y-1.5">
               <Label>{t("employeeNumberId")}</Label>
-              <Input
-                value={form.numberId}
-                onChange={(event) =>
-                  setForm({ ...form, numberId: event.target.value })
-                }
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={form.numberId}
+                  inputMode="numeric"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      numberId: event.target.value.replace(/\D/g, "").slice(0, 4),
+                    })
+                  }
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      numberId: generateEmployeeNumberId(employees),
+                    })
+                  }
+                  aria-label={t("employeeGenerateNumberId")}
+                  title={t("employeeGenerateNumberId")}
+                >
+                  <Dices className="size-4" />
+                  <span className="hidden sm:inline">
+                    {t("employeeGenerateNumberId")}
+                  </span>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("employeeNumberIdHint")}
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>{t("employeeStatus")}</Label>
@@ -494,7 +550,7 @@ export default function EmployeesPage() {
             </Button>
             <Button
               disabled={
-                !form.name.trim() || !form.numberId.trim() || save.isPending
+                !form.name.trim() || !/^\d{4}$/.test(form.numberId) || save.isPending
               }
               onClick={() => save.mutate()}
             >
