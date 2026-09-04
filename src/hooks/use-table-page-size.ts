@@ -13,13 +13,19 @@ export function useTablePageSize(
   const [pageSize, setPageSize] = useState(() =>
     typeof window === "undefined"
       ? 5
-      : Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
+      : Math.max(
+          minimumPageSize,
+          Math.floor((window.innerHeight - 300) / rowHeight),
+        ),
   );
 
   useEffect(() => {
     const updateFromViewport = () => {
       setPageSize(
-        Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
+        Math.max(
+          minimumPageSize,
+          Math.floor((window.innerHeight - 300) / rowHeight),
+        ),
       );
     };
     updateFromViewport();

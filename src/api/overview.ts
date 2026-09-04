@@ -21,12 +21,17 @@ export type SuperAdminOverviewStore = {
 export type SuperAdminOverview = {
   from: string;
   to: string;
-  totals: Pick<SuperAdminOverviewStore, "revenue" | "expenses" | "profit" | "orders" | "closingDifference">;
+  totals: Pick<
+    SuperAdminOverviewStore,
+    "revenue" | "expenses" | "profit" | "orders" | "closingDifference"
+  >;
   stores: SuperAdminOverviewStore[];
 };
 
-export const getSuperAdminOverview = async (params: {
-  from?: string;
-  to?: string;
-} = {}): Promise<SuperAdminOverview> =>
+export const getSuperAdminOverview = async (
+  params: {
+    from?: string;
+    to?: string;
+  } = {},
+): Promise<SuperAdminOverview> =>
   (await api.get("overview", { params })).data.data;

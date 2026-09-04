@@ -26,6 +26,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   createAddon,
   deleteAddon,
   getAddons,
@@ -61,14 +68,6 @@ export default function AddonsPage() {
     () => setPage((current) => Math.min(current, totalPages)),
     [totalPages],
   );
-  useEffect(() => {
-    if (!isFormOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [isFormOpen]);
   const closeForm = () => {
     setForm(initial);
     setEditing(null);
@@ -144,17 +143,16 @@ export default function AddonsPage() {
           {t("createAddon")}
         </Button>
       </div>
-      <Card
-        className={
-          isFormOpen
-            ? "fixed inset-4 z-50 m-0 max-h-[calc(100svh-2rem)] overflow-y-auto bg-card shadow-xl md:inset-8 md:max-h-[calc(100svh-4rem)]"
-            : "hidden"
-        }
-      >
-        <CardHeader>
-          <CardTitle>{editing ? t("editAddon") : t("createAddon")}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-h-[85vh] max-w-lg overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? t("editAddon") : t("createAddon")}
+            </DialogTitle>
+          </DialogHeader>
           <form className="space-y-4" onSubmit={submit}>
             {(["vi", "en", "zh-TW"] as const).map((language) => (
               <div className="space-y-2" key={language}>
@@ -173,17 +171,17 @@ export default function AddonsPage() {
                 />
               </div>
             ))}
-            <div className="flex gap-2">
+            <DialogFooter>
               <Button type="submit" disabled={save.isPending}>
                 {t("save")}
               </Button>
               <Button type="button" variant="outline" onClick={closeForm}>
                 {t("cancel")}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
       <Card className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">

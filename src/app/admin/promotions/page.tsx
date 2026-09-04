@@ -182,8 +182,8 @@ export default function PromotionsPage() {
   const savePromotion = async () => {
     if (
       (form.minSubtotal !== undefined && !isNonNegativeTwd(form.minSubtotal)) ||
-      form.rules.some((rule) =>
-        !isValidPromotionAmount(rule.reward.type, rule.reward.amount),
+      form.rules.some(
+        (rule) => !isValidPromotionAmount(rule.reward.type, rule.reward.amount),
       )
     ) {
       toast.error(t("promotionSaveError"));
@@ -267,7 +267,10 @@ export default function PromotionsPage() {
           }
         }}
       >
-        <DialogContent className="flex h-[min(92dvh,60rem)] w-[min(96vw,72rem)] max-w-none flex-col overflow-hidden p-0 sm:max-w-none">
+        <DialogContent
+          aria-describedby={undefined}
+          className="flex h-[min(92dvh,60rem)] w-[min(96vw,72rem)] max-w-none flex-col overflow-hidden p-0 sm:max-w-none"
+        >
           <Card className="flex min-h-0 flex-1 flex-col border-0 shadow-none">
             <CardHeader className="shrink-0 border-b pb-4">
               <DialogTitle>
@@ -591,8 +594,14 @@ export default function PromotionsPage() {
                               <Input
                                 type="number"
                                 min="0"
-                                max={rule.reward.type === "percent" ? "100" : undefined}
-                                step={rule.reward.type === "percent" ? "0.01" : "1"}
+                                max={
+                                  rule.reward.type === "percent"
+                                    ? "100"
+                                    : undefined
+                                }
+                                step={
+                                  rule.reward.type === "percent" ? "0.01" : "1"
+                                }
                                 value={rule.reward.amount}
                                 onChange={(event) =>
                                   setRule(index, {
@@ -822,7 +831,10 @@ export default function PromotionsPage() {
         open={Boolean(previewing)}
         onOpenChange={(open) => !open && setPreviewing(null)}
       >
-        <DialogContent className="w-[min(94vw,48rem)] max-w-none sm:max-w-none max-h-[88dvh] overflow-y-auto">
+        <DialogContent
+          aria-describedby={undefined}
+          className="w-[min(94vw,48rem)] max-w-none sm:max-w-none max-h-[88dvh] overflow-y-auto"
+        >
           {previewing && (
             <div className="space-y-5">
               <div>

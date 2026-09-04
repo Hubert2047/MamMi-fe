@@ -4,7 +4,11 @@ import {
   PAYMENT_METHOD_ICONS,
   type PaymentMethod,
 } from "@/constants";
-import { type BaseOrder, createOrder, type PricingConflictData } from "@/api/order.ts";
+import {
+  type BaseOrder,
+  createOrder,
+  type PricingConflictData,
+} from "@/api/order.ts";
 import React, { useMemo, useState } from "react";
 import { capitalize } from "@/lib/utils.ts";
 import { previewPromotions, type Promotion } from "@/api/promotion.ts";
@@ -110,7 +114,10 @@ function Checkout({
       ) {
         void queryClient.invalidateQueries({ queryKey: ["items"] });
       }
-      if (code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED") {
+      if (
+        code === "ORDER_PRICING_CHANGED" ||
+        code === "PROMOTION_PRICE_CHANGED"
+      ) {
         const data = isAxiosError(error)
           ? (error.response?.data?.data as PricingConflictData | undefined)
           : undefined;
@@ -134,19 +141,20 @@ function Checkout({
               ? t("itemCatalogNotFound")
               : code === "ITEM_PRICE_NOT_CONFIGURED"
                 ? t("itemPriceNotConfigured")
-          : code === "ADDON_NOT_AVAILABLE"
-            ? t("addonNotAvailable")
-            : code === "ITEM_QUANTITY_INVALID"
-              ? t("itemQuantityInvalid")
-              : code === "ADDON_QUANTITY_INVALID"
-                ? t("addonQuantityInvalid")
-                : code === "INVALID_OPTION"
-                  ? t("invalidOption")
-                  : code === "INSUFFICIENT_CASH"
-                    ? t("insufficientCash")
-                    : code === "ORDER_PRICING_CHANGED" || code === "PROMOTION_PRICE_CHANGED"
-                      ? t("promotionPriceChanged")
-                      : t("createOrderFailure"),
+                : code === "ADDON_NOT_AVAILABLE"
+                  ? t("addonNotAvailable")
+                  : code === "ITEM_QUANTITY_INVALID"
+                    ? t("itemQuantityInvalid")
+                    : code === "ADDON_QUANTITY_INVALID"
+                      ? t("addonQuantityInvalid")
+                      : code === "INVALID_OPTION"
+                        ? t("invalidOption")
+                        : code === "INSUFFICIENT_CASH"
+                          ? t("insufficientCash")
+                          : code === "ORDER_PRICING_CHANGED" ||
+                              code === "PROMOTION_PRICE_CHANGED"
+                            ? t("promotionPriceChanged")
+                            : t("createOrderFailure"),
       );
     },
   });

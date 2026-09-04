@@ -9,5 +9,7 @@ export default function InventoryPurchaseDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  return <AddExpenseDialog open={open} onClose={onClose} mode="inventory_purchase" />;
+  return (
+    <AddExpenseDialog open={open} onClose={onClose} mode="inventory_purchase" />
+  );
 }

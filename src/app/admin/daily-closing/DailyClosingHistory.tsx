@@ -134,7 +134,8 @@ export default function DailyClosingHistory() {
   const selectedEmployee = selectedEmployeeClosing?.confirmedByEmployee
     ? employees.data?.find(
         (employee) =>
-          employee._id === selectedEmployeeClosing.confirmedByEmployee?.employeeId,
+          employee._id ===
+          selectedEmployeeClosing.confirmedByEmployee?.employeeId,
       )
     : undefined;
 
@@ -440,23 +441,36 @@ export default function DailyClosingHistory() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("closingLineGroupConfig")}</DialogTitle>
-            <DialogDescription>{t("closingLineGroupConfigDescription")}</DialogDescription>
+            <DialogDescription>
+              {t("closingLineGroupConfigDescription")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={lineGroupEnabled}
-                onCheckedChange={(checked) => setLineGroupEnabled(checked === true)}
+                onCheckedChange={(checked) =>
+                  setLineGroupEnabled(checked === true)
+                }
               />
               {t("closingLineGroupEnabled")}
             </label>
             {lineGroupEnabled && (
               <div className="space-y-2">
                 <Label>{t("closingLineGroupSelect")}</Label>
-                <Select value={lineGroupId || "none"} onValueChange={(value) => setLineGroupId(value === "none" ? "" : value)}>
-                  <SelectTrigger><SelectValue placeholder={t("closingLineGroupSelect")} /></SelectTrigger>
+                <Select
+                  value={lineGroupId || "none"}
+                  onValueChange={(value) =>
+                    setLineGroupId(value === "none" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("closingLineGroupSelect")} />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">{t("closingLineGroupNone")}</SelectItem>
+                    <SelectItem value="none">
+                      {t("closingLineGroupNone")}
+                    </SelectItem>
                     {(lineGroupConfig.data?.groups ?? []).map((group) => (
                       <SelectItem key={group._id} value={group._id}>
                         {group.name}
@@ -468,10 +482,23 @@ export default function DailyClosingHistory() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLineGroupConfigOpen(false)}>{t("cancel")}</Button>
             <Button
-              disabled={lineGroupMutation.isPending || (lineGroupEnabled && !lineGroupId)}
-              onClick={() => lineGroupMutation.mutate({ enabled: lineGroupEnabled && Boolean(lineGroupId), lineGroupId: lineGroupEnabled ? lineGroupId || null : null })}
+              variant="outline"
+              onClick={() => setLineGroupConfigOpen(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              disabled={
+                lineGroupMutation.isPending ||
+                (lineGroupEnabled && !lineGroupId)
+              }
+              onClick={() =>
+                lineGroupMutation.mutate({
+                  enabled: lineGroupEnabled && Boolean(lineGroupId),
+                  lineGroupId: lineGroupEnabled ? lineGroupId || null : null,
+                })
+              }
             >
               {t("save")}
             </Button>

@@ -172,9 +172,15 @@ export default function UnitManagement() {
   const [editing, setEditing] = useState<ExpenseUnit | null>(null);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
-  // Let the hook measure the actual table row height. A fixed 73px minimum
-  // made the page size too small even though the table card had free space.
-  const { containerRef, pageSize } = useTablePageSize(50, 100, 40);
+  // Use the actual card/table headers so the last row is not clipped.
+  const { containerRef, pageSize } = useTablePageSize(
+    38,
+    100,
+    undefined,
+    true,
+    5,
+    true,
+  );
   const reset = () => {
     setForm(empty);
     setEditing(null);

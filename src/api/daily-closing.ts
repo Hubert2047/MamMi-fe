@@ -98,8 +98,9 @@ export const getDailyClosingSummary =
     return res.data.data;
   };
 
-export const getDailyClosingLineGroup = async (): Promise<DailyClosingLineGroupConfig> =>
-  (await api.get("daily-closing/line-group")).data.data;
+export const getDailyClosingLineGroup =
+  async (): Promise<DailyClosingLineGroupConfig> =>
+    (await api.get("daily-closing/line-group")).data.data;
 
 export const updateDailyClosingLineGroup = async (data: {
   enabled: boolean;

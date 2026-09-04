@@ -37,7 +37,8 @@ const messages: Record<Locale, Record<string, string>> = {
     orders: "Đơn Hàng",
     dailyClosing: "Kết Sổ",
     closingLineGroupConfig: "Cấu hình LINE kết toán",
-    closingLineGroupConfigDescription: "Chọn group LINE nhận thông báo khi kết toán hoàn tất.",
+    closingLineGroupConfigDescription:
+      "Chọn group LINE nhận thông báo khi kết toán hoàn tất.",
     closingLineGroupEnabled: "Gửi thông báo kết toán qua LINE",
     closingLineGroupSelect: "Group LINE",
     closingLineGroupNone: "Không chọn group",
@@ -58,7 +59,8 @@ const messages: Record<Locale, Record<string, string>> = {
     lineGroupSaveError: "Không thể cập nhật group LINE",
     lineGroupNameExists: "Tên group LINE đã tồn tại.",
     lineGroupDeleteError: "Không thể xóa group LINE",
-    lineGroupInUse: "Group đang được sử dụng, cần release trước khi sửa hoặc xóa.",
+    lineGroupInUse:
+      "Group đang được sử dụng, cần release trước khi sửa hoặc xóa.",
     lineGroupsRefresh: "Làm mới",
     lineGroupsEmpty: "Chưa phát hiện group LINE nào.",
     lineGroupId: "Group ID",
@@ -110,13 +112,15 @@ const messages: Record<Locale, Record<string, string>> = {
     orders: "Orders",
     dailyClosing: "Daily closing",
     closingLineGroupConfig: "Closing LINE configuration",
-    closingLineGroupConfigDescription: "Choose the LINE group that receives closing notifications.",
+    closingLineGroupConfigDescription:
+      "Choose the LINE group that receives closing notifications.",
     closingLineGroupEnabled: "Send closing notifications through LINE",
     closingLineGroupSelect: "LINE group",
     closingLineGroupNone: "No group selected",
     closingLineGroupSaved: "Closing LINE configuration saved",
     closingLineGroupSaveError: "Unable to save closing LINE configuration",
-    closingLineGroupRequired: "Choose a LINE group when notifications are enabled.",
+    closingLineGroupRequired:
+      "Choose a LINE group when notifications are enabled.",
     lineGroups: "LINE groups",
     lineGroupConfiguredTab: "Configured",
     lineGroupPendingTab: "Pending setup",
@@ -131,7 +135,8 @@ const messages: Record<Locale, Record<string, string>> = {
     lineGroupSaveError: "Unable to update LINE group",
     lineGroupNameExists: "This LINE group name already exists.",
     lineGroupDeleteError: "Unable to delete LINE group",
-    lineGroupInUse: "This group is in use. Release it before editing or deleting.",
+    lineGroupInUse:
+      "This group is in use. Release it before editing or deleting.",
     lineGroupsRefresh: "Refresh",
     lineGroupsEmpty: "No LINE groups discovered yet.",
     lineGroupId: "Group ID",
@@ -1015,7 +1020,8 @@ const storeProductMessages = {
     currentStoreGroup: "Store hiện tại",
     switchStore: "Chuyển cửa hàng",
     overviewHint: "Xem dữ liệu tổng hợp của các cửa hàng.",
-    overviewDescription: "Tổng quan doanh thu, chi phí và kết toán toàn hệ thống.",
+    overviewDescription:
+      "Tổng quan doanh thu, chi phí và kết toán toàn hệ thống.",
     overviewFrom: "Từ",
     overviewTo: "Đến",
     overviewStores: "Cửa hàng hoạt động",
@@ -1336,9 +1342,11 @@ const orderErrorMessages = {
     cancelNotFound: "Không tìm thấy đơn hàng.",
     itemNotAvailable:
       "Sản phẩm đã tạm dừng bán. Vui lòng bỏ món này trước khi tiếp tục.",
-    itemStoreConfigNotFound: "Sản phẩm chưa được cấu hình cho cửa hàng hiện tại.",
+    itemStoreConfigNotFound:
+      "Sản phẩm chưa được cấu hình cho cửa hàng hiện tại.",
     itemCatalogNotFound: "Sản phẩm không còn tồn tại trong danh mục.",
-    itemPriceNotConfigured: "Sản phẩm chưa có giá cơ bản hợp lệ cho loại đơn này.",
+    itemPriceNotConfigured:
+      "Sản phẩm chưa có giá cơ bản hợp lệ cho loại đơn này.",
     addonNotAvailable:
       "Topping đã tạm dừng bán. Vui lòng bỏ topping này trước khi tiếp tục.",
     itemQuantityInvalid: "Số lượng sản phẩm không hợp lệ.",
@@ -1351,9 +1359,11 @@ const orderErrorMessages = {
     cancelAlreadyCancelled: "This order has already been cancelled.",
     cancelNotFound: "Order not found.",
     itemNotAvailable: "This product was paused. Remove it before continuing.",
-    itemStoreConfigNotFound: "This product is not configured for the current store.",
+    itemStoreConfigNotFound:
+      "This product is not configured for the current store.",
     itemCatalogNotFound: "This product no longer exists in the catalog.",
-    itemPriceNotConfigured: "This product has no valid base price for this order type.",
+    itemPriceNotConfigured:
+      "This product has no valid base price for this order type.",
     addonNotAvailable: "This add-on was paused. Remove it before continuing.",
     itemQuantityInvalid: "One or more product quantities are invalid.",
     addonQuantityInvalid: "An add-on can only be selected once per item.",
@@ -1366,14 +1376,19 @@ const orderErrorMessages = {
     cancelNotFound: "\u627e\u4e0d\u5230\u8a02\u55ae\u3002",
     itemNotAvailable:
       "\u6b64\u5546\u54c1\u5df2\u66ab\u505c\u8ca9\u552e\uff0c\u8acb\u79fb\u9664\u5f8c\u518d\u7e7c\u7e8c\u3002",
-    itemStoreConfigNotFound: "\u6b64\u5546\u54c1\u5c1a\u672a\u70ba\u7576\u524d\u5e97\u92ea\u8a2d\u5b9a\u3002",
-    itemCatalogNotFound: "\u6b64\u5546\u54c1\u5df2\u4e0d\u5b58\u5728\u65bc\u5546\u54c1\u76ee\u9304\u4e2d\u3002",
-    itemPriceNotConfigured: "\u6b64\u5546\u54c1\u6c92\u6709\u9069\u7528\u65bc\u6b64\u8a02\u55ae\u985e\u578b\u7684\u6709\u6548\u57fa\u672c\u50f9\u683c\u3002",
+    itemStoreConfigNotFound:
+      "\u6b64\u5546\u54c1\u5c1a\u672a\u70ba\u7576\u524d\u5e97\u92ea\u8a2d\u5b9a\u3002",
+    itemCatalogNotFound:
+      "\u6b64\u5546\u54c1\u5df2\u4e0d\u5b58\u5728\u65bc\u5546\u54c1\u76ee\u9304\u4e2d\u3002",
+    itemPriceNotConfigured:
+      "\u6b64\u5546\u54c1\u6c92\u6709\u9069\u7528\u65bc\u6b64\u8a02\u55ae\u985e\u578b\u7684\u6709\u6548\u57fa\u672c\u50f9\u683c\u3002",
     addonNotAvailable:
       "\u6b64\u52a0\u6599\u5df2\u66ab\u505c\u8ca9\u552e\uff0c\u8acb\u79fb\u9664\u5f8c\u518d\u7e7c\u7e8c\u3002",
     itemQuantityInvalid: "\u5546\u54c1\u6578\u91cf\u7121\u6548\u3002",
-    addonQuantityInvalid: "\u6bcf\u500b\u5546\u54c1\u7684\u52a0\u6599\u53ea\u80fd\u9078\u64c7\u4e00\u6b21\u3002",
-    invalidOption: "\u4e00\u6216\u591a\u500b\u9078\u9805\u5df2\u7121\u6548\u3002",
+    addonQuantityInvalid:
+      "\u6bcf\u500b\u5546\u54c1\u7684\u52a0\u6599\u53ea\u80fd\u9078\u64c7\u4e00\u6b21\u3002",
+    invalidOption:
+      "\u4e00\u6216\u591a\u500b\u9078\u9805\u5df2\u7121\u6548\u3002",
   },
 } as const;
 
@@ -2344,8 +2359,10 @@ const closingAdminMessages = {
     closingFilterReset: "X\u00f3a b\u1ed9 l\u1ecdc",
     closingDetailsTitle: "Chi ti\u1ebft k\u1ebft to\u00e1n",
     closingEmployeeView: "Xem th\u00f4ng tin nh\u00e2n vi\u00ean",
-    closingEmployeeDetailsTitle: "Th\u00f4ng tin nh\u00e2n vi\u00ean k\u1ebft to\u00e1n",
-    closingEmployeeDetailsDescription: "\u0110\u1ed1i chi\u1ebfu th\u00f4ng tin k\u1ebft to\u00e1n v\u00e0 th\u00f4ng tin hi\u1ec7n t\u1ea1i.",
+    closingEmployeeDetailsTitle:
+      "Th\u00f4ng tin nh\u00e2n vi\u00ean k\u1ebft to\u00e1n",
+    closingEmployeeDetailsDescription:
+      "\u0110\u1ed1i chi\u1ebfu th\u00f4ng tin k\u1ebft to\u00e1n v\u00e0 th\u00f4ng tin hi\u1ec7n t\u1ea1i.",
     closingEmployeeAtClosing: "Th\u00f4ng tin l\u00fac k\u1ebft to\u00e1n",
     closingEmployeeCurrent: "Th\u00f4ng tin hi\u1ec7n t\u1ea1i",
     closingEmployeeName: "T\u00ean",
@@ -2356,8 +2373,10 @@ const closingAdminMessages = {
     closingEmployeeRole: "Vai tr\u00f2",
     closingEmployeeManager: "Qu\u1ea3n l\u00fd",
     closingEmployeeStaff: "Nh\u00e2n vi\u00ean",
-    closingEmployeeUnavailable: "Kh\u00f4ng c\u00f2n h\u1ed3 s\u01a1 nh\u00e2n vi\u00ean hi\u1ec7n t\u1ea1i.",
-    closingAtClosingTime: "Th\u00f4ng tin t\u1ea1i th\u1eddi \u0111i\u1ec3m k\u1ebft to\u00e1n",
+    closingEmployeeUnavailable:
+      "Kh\u00f4ng c\u00f2n h\u1ed3 s\u01a1 nh\u00e2n vi\u00ean hi\u1ec7n t\u1ea1i.",
+    closingAtClosingTime:
+      "Th\u00f4ng tin t\u1ea1i th\u1eddi \u0111i\u1ec3m k\u1ebft to\u00e1n",
     closingCashSales:
       "Doanh thu ti\u1ec1n m\u1eb7t t\u1eeb \u0111\u01a1n h\u00e0ng",
     closingOtherRevenue: "Thu nh\u1eadp kh\u00e1c",
@@ -2392,7 +2411,8 @@ const closingAdminMessages = {
     closingDetailsTitle: "Closing details",
     closingEmployeeView: "View employee information",
     closingEmployeeDetailsTitle: "Closing employee information",
-    closingEmployeeDetailsDescription: "Compare the closing information with the current employee information.",
+    closingEmployeeDetailsDescription:
+      "Compare the closing information with the current employee information.",
     closingEmployeeAtClosing: "Information at closing time",
     closingEmployeeCurrent: "Current information",
     closingEmployeeName: "Name",
@@ -2403,7 +2423,8 @@ const closingAdminMessages = {
     closingEmployeeRole: "Role",
     closingEmployeeManager: "Manager",
     closingEmployeeStaff: "Staff",
-    closingEmployeeUnavailable: "The current employee record is no longer available.",
+    closingEmployeeUnavailable:
+      "The current employee record is no longer available.",
     closingAtClosingTime: "Information at closing time",
     closingCashSales: "Cash sales from orders",
     closingOtherRevenue: "Other revenue",
@@ -2512,18 +2533,21 @@ const dailyClosingMessages = {
   vi: {
     closingReasonRequired:
       "Có chênh lệch nên phải điền nguyên nhân mới kết toán được",
-    closingAlreadyCreated: "Kỳ kết toán đã được thiết bị khác xác nhận. Vui lòng tải lại.",
+    closingAlreadyCreated:
+      "Kỳ kết toán đã được thiết bị khác xác nhận. Vui lòng tải lại.",
     closingEmployeeId: "Mã nhân viên kết toán",
     closingEmployeeIdPlaceholder: "Nhập mã nhân viên",
     closingEmployeeVerify: "Kiểm tra",
     closingEmployeeNotVerified: "Chưa xác thực nhân viên",
-    closingEmployeeRequired: "Vui lòng kiểm tra mã nhân viên trước khi kết toán",
+    closingEmployeeRequired:
+      "Vui lòng kiểm tra mã nhân viên trước khi kết toán",
     closingEmployee: "Nhân viên kết toán",
   },
   en: {
     closingReasonRequired:
       "A reason is required for the difference before closing the day",
-    closingAlreadyCreated: "This closing period was confirmed by another device. Please reload.",
+    closingAlreadyCreated:
+      "This closing period was confirmed by another device. Please reload.",
     closingEmployeeId: "Closing employee ID",
     closingEmployeeIdPlaceholder: "Enter employee ID",
     closingEmployeeVerify: "Verify",
@@ -2531,7 +2555,16 @@ const dailyClosingMessages = {
     closingEmployeeRequired: "Please verify the employee ID before closing",
     closingEmployee: "Closing employee",
   },
-  "zh-TW": { closingReasonRequired: "有差異時必須填寫原因才能結算", closingAlreadyCreated: "此結算期間已由其他裝置確認，請重新載入。", closingEmployeeId: "結算員工編號", closingEmployeeIdPlaceholder: "輸入員工編號", closingEmployeeVerify: "驗證", closingEmployeeNotVerified: "尚未驗證員工", closingEmployeeRequired: "結算前請先驗證員工編號", closingEmployee: "結算員工" },
+  "zh-TW": {
+    closingReasonRequired: "有差異時必須填寫原因才能結算",
+    closingAlreadyCreated: "此結算期間已由其他裝置確認，請重新載入。",
+    closingEmployeeId: "結算員工編號",
+    closingEmployeeIdPlaceholder: "輸入員工編號",
+    closingEmployeeVerify: "驗證",
+    closingEmployeeNotVerified: "尚未驗證員工",
+    closingEmployeeRequired: "結算前請先驗證員工編號",
+    closingEmployee: "結算員工",
+  },
 } as const;
 
 type MessageKey = string;

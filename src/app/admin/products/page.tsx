@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   type Item,
   type ItemInput,
@@ -239,6 +240,11 @@ export default function ProductsPage() {
     setIsFormOpen(false);
   }
 
+  function closeForm() {
+    setIsFormOpen(false);
+    setConfirmAction(null);
+  }
+
   function itemForm(item: Item): ItemInput {
     const categoryId =
       typeof item.categoryId === "string"
@@ -357,658 +363,658 @@ export default function ProductsPage() {
         </Button>
       </div>
       <div>
-        {isFormOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden overscroll-contain bg-black/40 p-4 md:p-8">
-            <Card className="flex h-[calc(100svh-2rem)] max-h-[calc(100svh-2rem)] w-full max-w-5xl flex-col overflow-hidden md:h-[calc(100svh-4rem)] md:max-h-[calc(100svh-4rem)]">
-              <CardHeader className="sticky top-0 z-10 shrink-0 border-b bg-card py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle>
-                    {editing ? t("editProduct") : t("createProduct")}
-                  </CardTitle>
-                  <div className="flex shrink-0 gap-2">
-                    <Button
-                      className="min-w-24"
-                      type="submit"
-                      form="product-form"
-                      size="sm"
-                      disabled={save.isPending}
-                    >
-                      {save.isPending
-                        ? t("saving")
-                        : editing
-                          ? t("update")
-                          : t("createProduct")}
-                    </Button>
-                    <Button
-                      className="min-w-20"
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={reset}
-                      disabled={save.isPending}
-                    >
-                      {t("cancel")}
-                    </Button>
-                  </div>
+        <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
+          <DialogContent
+            aria-describedby={undefined}
+            className="flex max-h-[92vh] !max-w-2xl flex-col overflow-hidden p-0"
+          >
+            <DialogTitle className="sr-only">
+              {editing ? t("editProduct") : t("createProduct")}
+            </DialogTitle>
+            <CardHeader className="sticky top-0 z-10 shrink-0 border-b bg-card py-3">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>
+                  {editing ? t("editProduct") : t("createProduct")}
+                </CardTitle>
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    className="min-w-24"
+                    type="submit"
+                    form="product-form"
+                    size="sm"
+                    disabled={save.isPending}
+                  >
+                    {save.isPending
+                      ? t("saving")
+                      : editing
+                        ? t("update")
+                        : t("createProduct")}
+                  </Button>
+                  <Button
+                    className="min-w-20"
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={closeForm}
+                    disabled={save.isPending}
+                  >
+                    {t("cancel")}
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="min-h-0 overflow-y-auto">
-                <form id="product-form" onSubmit={submit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t("productName")} (VI)</Label>
-                    <Input
-                      value={form.names.vi}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          names: { ...form.names, vi: event.target.value },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("productName")} (EN)</Label>
-                    <Input
-                      value={form.names.en}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          names: { ...form.names, en: event.target.value },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("productName")} (繁中)</Label>
-                    <Input
-                      value={form.names["zh-TW"]}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          names: { ...form.names, "zh-TW": event.target.value },
-                        })
-                      }
-                    />
-                  </div>
-                  <ImageUploadField
-                    label={t("productImage")}
-                    hint={t("imageUploadHint")}
-                    chooseLabel={t("chooseImage")}
-                    removeLabel={t("removeImage")}
-                    value={form.imageUrl}
-                    pendingFile={pendingImage}
-                    onChange={(imageUrl) =>
+              </div>
+            </CardHeader>
+            <CardContent className="min-h-0 overflow-y-auto">
+              <form id="product-form" onSubmit={submit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t("productName")} (VI)</Label>
+                  <Input
+                    value={form.names.vi}
+                    onChange={(event) =>
                       setForm({
                         ...form,
-                        imageUrl,
-                        imagePublicId: imageUrl ? form.imagePublicId : "",
+                        names: { ...form.names, vi: event.target.value },
                       })
                     }
-                    onFileChange={setPendingImage}
-                    onError={() => toast.error(t("imageUploadError"))}
                   />
-                  <div className="space-y-2">
-                    <Label>{t("categories")}</Label>
-                    <select
-                      className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
-                      value={form.categoryId}
-                      onChange={(event) =>
-                        setForm({ ...form, categoryId: event.target.value })
-                      }
-                    >
-                      <option value="">{t("chooseCategory")}</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.names[locale] ||
-                            category.names.vi ||
-                            category.names.en ||
-                            category.names["zh-TW"]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("productType")}</Label>
-                    <select
-                      className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
-                      value={form.type || "product"}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          type: event.target.value as ItemInput["type"],
-                          components:
-                            event.target.value === "combo"
-                              ? form.components || []
-                              : [],
-                        })
-                      }
-                    >
-                      <option value="product">{t("regularProduct")}</option>
-                      <option value="combo">{t("comboProduct")}</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={form.recommended === true}
-                        onCheckedChange={(checked) =>
-                          setForm({ ...form, recommended: checked === true })
-                        }
-                      />
-                      {t("recommended")}
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={form.popular === true}
-                        onCheckedChange={(checked) =>
-                          setForm({ ...form, popular: checked === true })
-                        }
-                      />
-                      {t("popular")}
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={form.new === true}
-                        onCheckedChange={(checked) =>
-                          setForm({ ...form, new: checked === true })
-                        }
-                      />
-                      {t("newProduct")}
-                    </label>
-                  </div>
-                  {form.type === "combo" && (
-                    <div className="space-y-2">
-                      <Label>{t("comboComponents")}</Label>
-                      <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-3 sm:grid-cols-2">
-                        {allItems
-                          .filter((item) => item._id !== editing?._id)
-                          .map((item) => {
-                            const selected = (form.components || []).some(
-                              (component) => component.itemId === item._id,
-                            );
-                            return (
-                              <label
-                                key={item._id}
-                                className="flex min-w-0 items-center gap-2 text-sm"
-                              >
-                                <Checkbox
-                                  checked={selected}
-                                  onCheckedChange={(checked) =>
-                                    setForm({
-                                      ...form,
-                                      components: checked
-                                        ? [
-                                            ...(form.components || []),
-                                            { itemId: item._id, quantity: 1 },
-                                          ]
-                                        : (form.components || []).filter(
-                                            (component) =>
-                                              component.itemId !== item._id,
-                                          ),
-                                    })
-                                  }
-                                />
-                                <span className="truncate">{item.name}</span>
-                              </label>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label>
-                      {t("variants")}{" "}
-                      <span className="font-normal text-muted-foreground">
-                        {t("commaSeparated")}
-                      </span>
-                    </Label>
-                    <Input
-                      value={variantInputs.vi}
-                      onChange={(event) =>
-                        setVariantInputs({
-                          ...variantInputs,
-                          vi: event.target.value,
-                        })
-                      }
-                      placeholder={`${t("variantPlaceholder")} (VI)`}
-                    />
-                    <Input
-                      value={variantInputs.en}
-                      onChange={(event) =>
-                        setVariantInputs({
-                          ...variantInputs,
-                          en: event.target.value,
-                        })
-                      }
-                      placeholder={`${t("variantPlaceholder")} (EN)`}
-                    />
-                    <Input
-                      value={variantInputs["zh-TW"]}
-                      onChange={(event) =>
-                        setVariantInputs({
-                          ...variantInputs,
-                          "zh-TW": event.target.value,
-                        })
-                      }
-                      placeholder={`${t("variantPlaceholder")} (繁中)`}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>
-                      {t("notes")}{" "}
-                      <span className="font-normal text-muted-foreground">
-                        {t("commaSeparated")}
-                      </span>
-                    </Label>
-                    <Input
-                      value={noteOptionInputs.vi}
-                      onChange={(event) =>
-                        setNoteOptionInputs({
-                          ...noteOptionInputs,
-                          vi: event.target.value,
-                        })
-                      }
-                      placeholder={`${t("notePlaceholder")} (VI)`}
-                    />
-                    <Input
-                      value={noteOptionInputs.en}
-                      onChange={(event) =>
-                        setNoteOptionInputs({
-                          ...noteOptionInputs,
-                          en: event.target.value,
-                        })
-                      }
-                      placeholder={`${t("notePlaceholder")} (EN)`}
-                    />
-                    <Input
-                      value={noteOptionInputs["zh-TW"]}
-                      onChange={(event) =>
-                        setNoteOptionInputs({
-                          ...noteOptionInputs,
-                          "zh-TW": event.target.value,
-                        })
-                      }
-                      placeholder={`${t("notePlaceholder")} (繁中)`}
-                    />
-                  </div>
-                  <div className="space-y-3 rounded-lg border p-3">
-                    <div className="flex items-center justify-between">
-                      <Label>{t("optionGroups")}</Label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setOptionGroupInputs((groups) => [
-                            ...groups,
-                            emptyGroup(),
-                          ])
-                        }
-                      >
-                        {t("addOptionGroup")}
-                      </Button>
-                    </div>
-                    {optionGroupInputs.map((group, index) => (
-                      <div
-                        key={group.id}
-                        className="space-y-2 rounded border p-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium">
-                            {t("optionGroups")} {index + 1}
-                          </span>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            onClick={() =>
-                              setOptionGroupInputs((groups) =>
-                                groups.filter(
-                                  (_, groupIndex) => groupIndex !== index,
-                                ),
-                              )
-                            }
-                          >
-                            {t("removeOptionGroup")}
-                          </Button>
-                        </div>
-                        <Input
-                          value={group.names.vi}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      names: {
-                                        ...entry.names,
-                                        vi: event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupName")} (VI)`}
-                        />
-                        <Input
-                          value={group.names.en}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      names: {
-                                        ...entry.names,
-                                        en: event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupName")} (EN)`}
-                        />
-                        <Input
-                          value={group.names["zh-TW"]}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      names: {
-                                        ...entry.names,
-                                        "zh-TW": event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupName")} (繁中)`}
-                        />
-                        <Input
-                          value={group.options.vi}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      options: {
-                                        ...entry.options,
-                                        vi: event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupOptions")} (VI)`}
-                        />
-                        <Input
-                          value={group.options.en}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      options: {
-                                        ...entry.options,
-                                        en: event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupOptions")} (EN)`}
-                        />
-                        <Input
-                          value={group.options["zh-TW"]}
-                          onChange={(event) =>
-                            setOptionGroupInputs((groups) =>
-                              groups.map((entry, groupIndex) =>
-                                groupIndex === index
-                                  ? {
-                                      ...entry,
-                                      options: {
-                                        ...entry.options,
-                                        "zh-TW": event.target.value,
-                                      },
-                                    }
-                                  : entry,
-                              ),
-                            )
-                          }
-                          placeholder={`${t("optionGroupOptions")} (繁中)`}
-                        />
-                        <div className="flex gap-2">
-                          <select
-                            className="h-8 rounded border px-2 text-sm"
-                            value={group.selection}
-                            onChange={(event) =>
-                              setOptionGroupInputs((groups) =>
-                                groups.map((entry, groupIndex) =>
-                                  groupIndex === index
-                                    ? {
-                                        ...entry,
-                                        selection: event.target.value as
-                                          "single" | "multiple",
-                                      }
-                                    : entry,
-                                ),
-                              )
-                            }
-                          >
-                            <option value="single">
-                              {t("optionGroupSingle")}
-                            </option>
-                            <option value="multiple">
-                              {t("optionGroupMultiple")}
-                            </option>
-                          </select>
-                          <select
-                            className="h-8 min-w-32 rounded border px-2 text-sm"
-                            value={group.defaultOptionId}
-                            onChange={(event) =>
-                              setOptionGroupInputs((groups) =>
-                                groups.map((entry, groupIndex) =>
-                                  groupIndex === index
-                                    ? {
-                                        ...entry,
-                                        defaultOptionId: event.target.value,
-                                      }
-                                    : entry,
-                                ),
-                              )
-                            }
-                          >
-                            <option value="">{t("optionGroupDefault")}</option>
-                            {buildOptions(
-                              group.options,
-                              `group-${index + 1}-option`,
-                            ).map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.names[locale] ||
-                                  option.names.vi ||
-                                  option.names.en ||
-                                  option.names["zh-TW"]}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("productName")} (EN)</Label>
+                  <Input
+                    value={form.names.en}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        names: { ...form.names, en: event.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("productName")} (繁中)</Label>
+                  <Input
+                    value={form.names["zh-TW"]}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        names: { ...form.names, "zh-TW": event.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <ImageUploadField
+                  label={t("productImage")}
+                  hint={t("imageUploadHint")}
+                  chooseLabel={t("chooseImage")}
+                  removeLabel={t("removeImage")}
+                  value={form.imageUrl}
+                  pendingFile={pendingImage}
+                  onChange={(imageUrl) =>
+                    setForm({
+                      ...form,
+                      imageUrl,
+                      imagePublicId: imageUrl ? form.imagePublicId : "",
+                    })
+                  }
+                  onFileChange={setPendingImage}
+                  onError={() => toast.error(t("imageUploadError"))}
+                />
+                <div className="space-y-2">
+                  <Label>{t("categories")}</Label>
+                  <select
+                    className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                    value={form.categoryId}
+                    onChange={(event) =>
+                      setForm({ ...form, categoryId: event.target.value })
+                    }
+                  >
+                    <option value="">{t("chooseCategory")}</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.names[locale] ||
+                          category.names.vi ||
+                          category.names.en ||
+                          category.names["zh-TW"]}
+                      </option>
                     ))}
-                  </div>
-                  {form.type !== "combo" && (
-                    <div className="space-y-2">
-                      <Label>{t("addons")}</Label>
-                      <div className="space-y-2 rounded-lg border p-3">
-                        {addons.map((addon) => {
-                          const selected = form.addons.includes(addon._id);
-                          const config = form.addonConfigs.find(
-                            (entry) => entry.addonId === addon._id,
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("productType")}</Label>
+                  <select
+                    className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm"
+                    value={form.type || "product"}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        type: event.target.value as ItemInput["type"],
+                        components:
+                          event.target.value === "combo"
+                            ? form.components || []
+                            : [],
+                      })
+                    }
+                  >
+                    <option value="product">{t("regularProduct")}</option>
+                    <option value="combo">{t("comboProduct")}</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.recommended === true}
+                      onCheckedChange={(checked) =>
+                        setForm({ ...form, recommended: checked === true })
+                      }
+                    />
+                    {t("recommended")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.popular === true}
+                      onCheckedChange={(checked) =>
+                        setForm({ ...form, popular: checked === true })
+                      }
+                    />
+                    {t("popular")}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.new === true}
+                      onCheckedChange={(checked) =>
+                        setForm({ ...form, new: checked === true })
+                      }
+                    />
+                    {t("newProduct")}
+                  </label>
+                </div>
+                {form.type === "combo" && (
+                  <div className="space-y-2">
+                    <Label>{t("comboComponents")}</Label>
+                    <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto rounded-lg border p-3 sm:grid-cols-2">
+                      {allItems
+                        .filter((item) => item._id !== editing?._id)
+                        .map((item) => {
+                          const selected = (form.components || []).some(
+                            (component) => component.itemId === item._id,
                           );
-                          const maxQuantity =
-                            config?.maxQuantity === null
-                              ? null
-                              : (config?.maxQuantity ?? 1);
-                          const updateConfig = (
-                            nextMaxQuantity: number | null,
-                          ) =>
-                            setForm({
-                              ...form,
-                              addonConfigs: form.addonConfigs.map((entry) =>
-                                entry.addonId === addon._id
-                                  ? { ...entry, maxQuantity: nextMaxQuantity }
+                          return (
+                            <label
+                              key={item._id}
+                              className="flex min-w-0 items-center gap-2 text-sm"
+                            >
+                              <Checkbox
+                                checked={selected}
+                                onCheckedChange={(checked) =>
+                                  setForm({
+                                    ...form,
+                                    components: checked
+                                      ? [
+                                          ...(form.components || []),
+                                          { itemId: item._id, quantity: 1 },
+                                        ]
+                                      : (form.components || []).filter(
+                                          (component) =>
+                                            component.itemId !== item._id,
+                                        ),
+                                  })
+                                }
+                              />
+                              <span className="truncate">{item.name}</span>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>
+                    {t("variants")}{" "}
+                    <span className="font-normal text-muted-foreground">
+                      {t("commaSeparated")}
+                    </span>
+                  </Label>
+                  <Input
+                    value={variantInputs.vi}
+                    onChange={(event) =>
+                      setVariantInputs({
+                        ...variantInputs,
+                        vi: event.target.value,
+                      })
+                    }
+                    placeholder={`${t("variantPlaceholder")} (VI)`}
+                  />
+                  <Input
+                    value={variantInputs.en}
+                    onChange={(event) =>
+                      setVariantInputs({
+                        ...variantInputs,
+                        en: event.target.value,
+                      })
+                    }
+                    placeholder={`${t("variantPlaceholder")} (EN)`}
+                  />
+                  <Input
+                    value={variantInputs["zh-TW"]}
+                    onChange={(event) =>
+                      setVariantInputs({
+                        ...variantInputs,
+                        "zh-TW": event.target.value,
+                      })
+                    }
+                    placeholder={`${t("variantPlaceholder")} (繁中)`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t("notes")}{" "}
+                    <span className="font-normal text-muted-foreground">
+                      {t("commaSeparated")}
+                    </span>
+                  </Label>
+                  <Input
+                    value={noteOptionInputs.vi}
+                    onChange={(event) =>
+                      setNoteOptionInputs({
+                        ...noteOptionInputs,
+                        vi: event.target.value,
+                      })
+                    }
+                    placeholder={`${t("notePlaceholder")} (VI)`}
+                  />
+                  <Input
+                    value={noteOptionInputs.en}
+                    onChange={(event) =>
+                      setNoteOptionInputs({
+                        ...noteOptionInputs,
+                        en: event.target.value,
+                      })
+                    }
+                    placeholder={`${t("notePlaceholder")} (EN)`}
+                  />
+                  <Input
+                    value={noteOptionInputs["zh-TW"]}
+                    onChange={(event) =>
+                      setNoteOptionInputs({
+                        ...noteOptionInputs,
+                        "zh-TW": event.target.value,
+                      })
+                    }
+                    placeholder={`${t("notePlaceholder")} (繁中)`}
+                  />
+                </div>
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="flex items-center justify-between">
+                    <Label>{t("optionGroups")}</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setOptionGroupInputs((groups) => [
+                          ...groups,
+                          emptyGroup(),
+                        ])
+                      }
+                    >
+                      {t("addOptionGroup")}
+                    </Button>
+                  </div>
+                  {optionGroupInputs.map((group, index) => (
+                    <div
+                      key={group.id}
+                      className="space-y-2 rounded border p-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium">
+                          {t("optionGroups")} {index + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            setOptionGroupInputs((groups) =>
+                              groups.filter(
+                                (_, groupIndex) => groupIndex !== index,
+                              ),
+                            )
+                          }
+                        >
+                          {t("removeOptionGroup")}
+                        </Button>
+                      </div>
+                      <Input
+                        value={group.names.vi}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    names: {
+                                      ...entry.names,
+                                      vi: event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupName")} (VI)`}
+                      />
+                      <Input
+                        value={group.names.en}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    names: {
+                                      ...entry.names,
+                                      en: event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupName")} (EN)`}
+                      />
+                      <Input
+                        value={group.names["zh-TW"]}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    names: {
+                                      ...entry.names,
+                                      "zh-TW": event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupName")} (繁中)`}
+                      />
+                      <Input
+                        value={group.options.vi}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    options: {
+                                      ...entry.options,
+                                      vi: event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupOptions")} (VI)`}
+                      />
+                      <Input
+                        value={group.options.en}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    options: {
+                                      ...entry.options,
+                                      en: event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupOptions")} (EN)`}
+                      />
+                      <Input
+                        value={group.options["zh-TW"]}
+                        onChange={(event) =>
+                          setOptionGroupInputs((groups) =>
+                            groups.map((entry, groupIndex) =>
+                              groupIndex === index
+                                ? {
+                                    ...entry,
+                                    options: {
+                                      ...entry.options,
+                                      "zh-TW": event.target.value,
+                                    },
+                                  }
+                                : entry,
+                            ),
+                          )
+                        }
+                        placeholder={`${t("optionGroupOptions")} (繁中)`}
+                      />
+                      <div className="flex gap-2">
+                        <select
+                          className="h-8 rounded border px-2 text-sm"
+                          value={group.selection}
+                          onChange={(event) =>
+                            setOptionGroupInputs((groups) =>
+                              groups.map((entry, groupIndex) =>
+                                groupIndex === index
+                                  ? {
+                                      ...entry,
+                                      selection: event.target.value as
+                                        "single" | "multiple",
+                                    }
                                   : entry,
                               ),
-                            });
-                          return (
-                            <div
-                              key={addon._id}
-                              className="flex flex-wrap items-center gap-3 rounded border px-3 py-2"
-                            >
-                              <label className="flex min-w-44 flex-1 items-center gap-2 text-sm">
-                                <Checkbox
-                                  checked={selected}
-                                  onCheckedChange={(checked) =>
-                                    setForm({
-                                      ...form,
-                                      addons: checked
-                                        ? [...form.addons, addon._id]
-                                        : form.addons.filter(
-                                            (id) => id !== addon._id,
-                                          ),
-                                      addonConfigs: checked
-                                        ? [
-                                            ...form.addonConfigs.filter(
-                                              (entry) =>
-                                                entry.addonId !== addon._id,
-                                            ),
-                                            {
-                                              addonId: addon._id,
-                                              maxQuantity: 1,
-                                            },
-                                          ]
-                                        : form.addonConfigs.filter(
+                            )
+                          }
+                        >
+                          <option value="single">
+                            {t("optionGroupSingle")}
+                          </option>
+                          <option value="multiple">
+                            {t("optionGroupMultiple")}
+                          </option>
+                        </select>
+                        <select
+                          className="h-8 min-w-32 rounded border px-2 text-sm"
+                          value={group.defaultOptionId}
+                          onChange={(event) =>
+                            setOptionGroupInputs((groups) =>
+                              groups.map((entry, groupIndex) =>
+                                groupIndex === index
+                                  ? {
+                                      ...entry,
+                                      defaultOptionId: event.target.value,
+                                    }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="">{t("optionGroupDefault")}</option>
+                          {buildOptions(
+                            group.options,
+                            `group-${index + 1}-option`,
+                          ).map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.names[locale] ||
+                                option.names.vi ||
+                                option.names.en ||
+                                option.names["zh-TW"]}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {form.type !== "combo" && (
+                  <div className="space-y-2">
+                    <Label>{t("addons")}</Label>
+                    <div className="space-y-2 rounded-lg border p-3">
+                      {addons.map((addon) => {
+                        const selected = form.addons.includes(addon._id);
+                        const config = form.addonConfigs.find(
+                          (entry) => entry.addonId === addon._id,
+                        );
+                        const maxQuantity =
+                          config?.maxQuantity === null
+                            ? null
+                            : (config?.maxQuantity ?? 1);
+                        const updateConfig = (nextMaxQuantity: number | null) =>
+                          setForm({
+                            ...form,
+                            addonConfigs: form.addonConfigs.map((entry) =>
+                              entry.addonId === addon._id
+                                ? { ...entry, maxQuantity: nextMaxQuantity }
+                                : entry,
+                            ),
+                          });
+                        return (
+                          <div
+                            key={addon._id}
+                            className="flex flex-wrap items-center gap-3 rounded border px-3 py-2"
+                          >
+                            <label className="flex min-w-44 flex-1 items-center gap-2 text-sm">
+                              <Checkbox
+                                checked={selected}
+                                onCheckedChange={(checked) =>
+                                  setForm({
+                                    ...form,
+                                    addons: checked
+                                      ? [...form.addons, addon._id]
+                                      : form.addons.filter(
+                                          (id) => id !== addon._id,
+                                        ),
+                                    addonConfigs: checked
+                                      ? [
+                                          ...form.addonConfigs.filter(
                                             (entry) =>
                                               entry.addonId !== addon._id,
                                           ),
-                                    })
-                                  }
-                                />
-                                <span className="truncate">
-                                  {addon.names[locale] ||
-                                    addon.names.vi ||
-                                    addon.names.en ||
-                                    addon.names["zh-TW"]}
-                                </span>
-                              </label>
-                              {selected && (
-                                <div className="flex items-center gap-2">
-                                  <label className="flex items-center gap-2 text-sm">
-                                    <Checkbox
-                                      checked={maxQuantity === null}
-                                      onCheckedChange={(checked) =>
-                                        updateConfig(
-                                          checked === true ? null : 1,
-                                        )
-                                      }
-                                    />
-                                    {t("addonUnlimited")}
-                                  </label>
-                                  <Label className="text-sm">
-                                    {t("addonMaxQuantity")}
-                                  </Label>
-                                  <Input
-                                    className="h-8 w-20"
-                                    type="number"
-                                    min={1}
-                                    disabled={maxQuantity === null}
-                                    placeholder={
-                                      maxQuantity === null ? "∞" : undefined
-                                    }
-                                    value={maxQuantity ?? ""}
-                                    onChange={(event) =>
-                                      updateConfig(
-                                        Math.max(
-                                          1,
-                                          Math.floor(
-                                            Number(event.target.value) || 1,
-                                          ),
+                                          {
+                                            addonId: addon._id,
+                                            maxQuantity: 1,
+                                          },
+                                        ]
+                                      : form.addonConfigs.filter(
+                                          (entry) =>
+                                            entry.addonId !== addon._id,
                                         ),
-                                      )
+                                  })
+                                }
+                              />
+                              <span className="truncate">
+                                {addon.names[locale] ||
+                                  addon.names.vi ||
+                                  addon.names.en ||
+                                  addon.names["zh-TW"]}
+                              </span>
+                            </label>
+                            {selected && (
+                              <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-2 text-sm">
+                                  <Checkbox
+                                    checked={maxQuantity === null}
+                                    onCheckedChange={(checked) =>
+                                      updateConfig(checked === true ? null : 1)
                                     }
                                   />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                                  {t("addonUnlimited")}
+                                </label>
+                                <Label className="text-sm">
+                                  {t("addonMaxQuantity")}
+                                </Label>
+                                <Input
+                                  className="h-8 w-20"
+                                  type="number"
+                                  min={1}
+                                  disabled={maxQuantity === null}
+                                  placeholder={
+                                    maxQuantity === null ? "∞" : undefined
+                                  }
+                                  value={maxQuantity ?? ""}
+                                  onChange={(event) =>
+                                    updateConfig(
+                                      Math.max(
+                                        1,
+                                        Math.floor(
+                                          Number(event.target.value) || 1,
+                                        ),
+                                      ),
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label>{t("description")} (VI)</Label>
-                    <Textarea
-                      className="min-h-12 resize-none"
-                      placeholder={t("descriptionPlaceholder")}
-                      value={form.description.vi}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          description: {
-                            ...form.description,
-                            vi: event.target.value,
-                          },
-                        })
-                      }
-                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t("description")} (EN)</Label>
-                    <Textarea
-                      className="min-h-12 resize-none"
-                      placeholder={t("descriptionPlaceholder")}
-                      value={form.description.en}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          description: {
-                            ...form.description,
-                            en: event.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("description")} (繁中)</Label>
-                    <Textarea
-                      className="min-h-12 resize-none"
-                      placeholder={t("descriptionPlaceholder")}
-                      value={form.description["zh-TW"]}
-                      onChange={(event) =>
-                        setForm({
-                          ...form,
-                          description: {
-                            ...form.description,
-                            "zh-TW": event.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                )}
+                <div className="space-y-2">
+                  <Label>{t("description")} (VI)</Label>
+                  <Textarea
+                    className="min-h-12 resize-none"
+                    placeholder={t("descriptionPlaceholder")}
+                    value={form.description.vi}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        description: {
+                          ...form.description,
+                          vi: event.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("description")} (EN)</Label>
+                  <Textarea
+                    className="min-h-12 resize-none"
+                    placeholder={t("descriptionPlaceholder")}
+                    value={form.description.en}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        description: {
+                          ...form.description,
+                          en: event.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("description")} (繁中)</Label>
+                  <Textarea
+                    className="min-h-12 resize-none"
+                    placeholder={t("descriptionPlaceholder")}
+                    value={form.description["zh-TW"]}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        description: {
+                          ...form.description,
+                          "zh-TW": event.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </form>
+            </CardContent>
+          </DialogContent>
+        </Dialog>
         <Card
           ref={containerRef}
           className={`flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden [&>div:last-child]:flex-1 [&>div:last-child]:min-h-0 [&>div:last-child]:overflow-hidden [&>div:last-child>div]:h-full [&>div:last-child>div]:!max-h-none ${isFormOpen ? "hidden" : ""}`}

@@ -36,6 +36,13 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 const emptyNames: CategoryNames = { vi: "", en: "", "zh-TW": "" };
 export default function CategoriesPage() {
   const client = useQueryClient();
@@ -54,14 +61,6 @@ export default function CategoriesPage() {
   const totalPages = Math.max(1, Math.ceil(categories.length / pageSize));
   const visible = categories.slice((page - 1) * pageSize, page * pageSize);
   useEffect(() => setPage((p) => Math.min(p, totalPages)), [totalPages]);
-  useEffect(() => {
-    if (!isFormOpen) return;
-    const old = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = old;
-    };
-  }, [isFormOpen]);
   const close = () => {
     setNames(emptyNames);
     setSortOrder(0);
@@ -130,19 +129,16 @@ export default function CategoriesPage() {
           {t("createCategory")}
         </Button>
       </div>
-      <Card
-        className={
-          isFormOpen
-            ? "fixed inset-4 z-50 max-h-[calc(100svh-2rem)] overflow-y-auto bg-card shadow-xl md:inset-8 md:max-h-[calc(100svh-4rem)]"
-            : "hidden"
-        }
-      >
-        <CardHeader>
-          <CardTitle>
-            {editing ? t("editCategory") : t("createCategory")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Dialog open={isFormOpen} onOpenChange={(open) => !open && close()}>
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-h-[85vh] max-w-lg overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? t("editCategory") : t("createCategory")}
+            </DialogTitle>
+          </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             {(["vi", "en", "zh-TW"] as const).map((l) => (
               <div className="space-y-2" key={l}>
@@ -167,17 +163,17 @@ export default function CategoriesPage() {
                 }
               />
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={save.isPending}>
-                {t("save")}
-              </Button>
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={close}>
                 {t("cancel")}
               </Button>
-            </div>
+              <Button type="submit" disabled={save.isPending}>
+                {t("save")}
+              </Button>
+            </DialogFooter>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
       <Card className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">

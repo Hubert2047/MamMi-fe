@@ -32,6 +32,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const emptyPrice: PriceType = { base: 0, uber: 0, foodpanda: 0 };
 const priceKeys = ["base", "uber", "foodpanda"] as const;
@@ -60,7 +68,14 @@ export default function StoreMenuPanel() {
     "named" | "merged"
   >("named");
   const [page, setPage] = useState(1);
-  const { containerRef, pageSize } = useTablePageSize(70, 100);
+  const { containerRef, pageSize } = useTablePageSize(
+    70,
+    100,
+    undefined,
+    true,
+    5,
+    true,
+  );
   const [categoryFilter, setCategoryFilter] = useState("all");
   const { data: catalog = [] } = useQuery({
     queryKey: ["catalog-items", locale],
@@ -206,70 +221,85 @@ export default function StoreMenuPanel() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="min-h-0 flex-1 overflow-hidden space-y-2 px-4 pt-0 pb-0">
-          {paginated.map((item) => {
-            return (
-              <div
-                data-store-row="true"
-                className="grid min-h-[70px] gap-2 rounded-lg border border-slate-300 p-2 shadow-sm md:grid-cols-[1fr_repeat(3,96px)_minmax(230px,auto)] md:items-end"
-                key={item._id}
-              >
-                <div>
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {item.categoryName}
-                  </div>
-                </div>
+        <CardContent className="min-h-0 flex-1 overflow-hidden px-4 pt-0 pb-0">
+          <Table className="min-w-[980px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-full">{t("products")}</TableHead>
                 {priceKeys.map((key) => (
-                  <div className="space-y-1" key={key}>
-                    <Label className="capitalize">{key}</Label>
-                    <div className="h-7 rounded-md border px-2 py-1 text-sm">
-                      {(item.price[key] ?? 0).toLocaleString()}
-                    </div>
-                  </div>
+                  <TableHead className="w-24 text-right capitalize" key={key}>
+                    {key}
+                  </TableHead>
                 ))}
-                <div className="flex min-h-8 flex-wrap items-center gap-1">
-                  <>
-                    <span className="shrink-0 text-sm">
-                      {item.permanentlyActive
-                        ? t("permanentSelling")
-                        : t("permanentHidden")}
-                    </span>
-                    {item.permanentlyActive && (
-                      <span className="shrink-0 text-sm">
-                        {item.temporarilyUnavailable
-                          ? t("temporaryUnavailable")
-                          : t("temporaryAvailable")}
+                <TableHead className="min-w-[300px]">{t("status")}</TableHead>
+                <TableHead className="w-24 text-right">
+                  {t("actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((item) => (
+                <TableRow
+                  data-store-row="true"
+                  className="h-[70px]"
+                  key={item._id}
+                >
+                  <TableCell>
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {item.categoryName}
+                    </div>
+                  </TableCell>
+                  {priceKeys.map((key) => (
+                    <TableCell className="text-right" key={key}>
+                      {(item.price[key] ?? 0).toLocaleString()}
+                    </TableCell>
+                  ))}
+                  <TableCell className="min-w-[300px] whitespace-normal">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm">
+                        {item.permanentlyActive
+                          ? t("permanentSelling")
+                          : t("permanentHidden")}
                       </span>
-                    )}
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {[
-                        item.visibility?.pos !== false &&
-                          t("storeVisibilityPos"),
-                        item.visibility?.qr !== false && t("storeVisibilityQr"),
-                        item.visibility?.online !== false &&
-                          t("storeVisibilityOnline"),
-                      ]
-                        .filter(Boolean)
-                        .join(" / ")}
-                    </span>
+                      {item.permanentlyActive && (
+                        <span className="text-sm">
+                          {item.temporarilyUnavailable
+                            ? t("temporaryUnavailable")
+                            : t("temporaryAvailable")}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {[
+                          item.visibility?.pos !== false &&
+                            t("storeVisibilityPos"),
+                          item.visibility?.qr !== false &&
+                            t("storeVisibilityQr"),
+                          item.visibility?.online !== false &&
+                            t("storeVisibilityOnline"),
+                        ]
+                          .filter(Boolean)
+                          .join(" / ")}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
                     <Button
-                      className="shrink-0"
                       size="sm"
                       variant="outline"
                       onClick={() => startEdit(item)}
                     >
                       {t("edit")}
                     </Button>
-                  </>
-                </div>
-              </div>
-            );
-          })}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent aria-describedby={undefined} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t("createProduct")}</DialogTitle>
           </DialogHeader>
@@ -316,7 +346,9 @@ export default function StoreMenuPanel() {
               {t("cancel")}
             </Button>
             <Button
-              disabled={!selectedItemId || !isValidPriceMap(price) || add.isPending}
+              disabled={
+                !selectedItemId || !isValidPriceMap(price) || add.isPending
+              }
               onClick={() =>
                 add.mutate({
                   itemId: selectedItemId,
@@ -337,7 +369,7 @@ export default function StoreMenuPanel() {
         open={Boolean(editing)}
         onOpenChange={(open) => !open && setEditing(null)}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editing?.name ? `${t("edit")}: ${editing.name}` : t("edit")}

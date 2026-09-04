@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -21,6 +22,8 @@ import {
   updateStoreAddon,
 } from "@/api/store-addon";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/hooks/auth";
+import { useTablePageSize } from "@/hooks/use-table-page-size";
 import { useStorePricingEmbedded } from "@/app/admin/store-pricing/store-pricing-context";
 import { isNonNegativeTwd } from "@/lib/money";
 import {
@@ -30,19 +33,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function StoreAddonsPanel() {
   const { locale, t } = useI18n();
+  const { user } = useAuth();
+  const canChangePermanentAvailability =
+    user?.role === "Admin" || user?.role === "SuperAdmin";
   const embedded = useStorePricingEmbedded();
   const client = useQueryClient();
-  const listRef = useRef<HTMLDivElement>(null);
   const [addonId, setAddonId] = useState("");
   const [priceExtra, setPriceExtra] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftPrice, setDraftPrice] = useState(0);
+  const [draftPermanentlyActive, setDraftPermanentlyActive] = useState(true);
+  const [draftTemporarilyUnavailable, setDraftTemporarilyUnavailable] =
+    useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const { containerRef, pageSize } = useTablePageSize(
+    52,
+    100,
+    undefined,
+    true,
+    5,
+    true,
+  );
   const { data: addons = [] } = useQuery({
     queryKey: ["addons", locale],
     queryFn: () => getAddons(locale),
@@ -81,24 +104,20 @@ export default function StoreAddonsPanel() {
       storeAddons.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [currentPage, pageSize, storeAddons],
   );
-  useEffect(() => {
-    const element = listRef.current;
-    if (!element) return;
-    const resize = () => {
-      const columns =
-        window.innerWidth >= 1280 ? 3 : window.innerWidth >= 768 ? 2 : 1;
-      const rows = Math.max(1, Math.floor((element.clientHeight + 8) / 52));
-      setPageSize(columns * rows);
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(element);
-    window.addEventListener("resize", resize);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
+  const editing = storeAddons.find((addon) => addon._id === editingId) ?? null;
+  const startEdit = (addon: Addon) => {
+    setEditingId(addon._id);
+    setDraftPrice(addon.priceExtra);
+    setDraftPermanentlyActive(addon.permanentlyActive !== false);
+    setDraftTemporarilyUnavailable(
+      addon.permanentlyActive !== false &&
+        addon.temporarilyUnavailable === true,
+    );
+  };
+  useEffect(
+    () => setPage((current) => Math.min(current, totalPages)),
+    [totalPages],
+  );
   return (
     <div
       className={`flex h-full min-h-0 flex-col gap-3 overflow-hidden ${embedded ? "px-1 pb-0" : "p-6 md:p-8"}`}
@@ -144,80 +163,62 @@ export default function StoreAddonsPanel() {
           </div>
         </CardHeader>
         <CardContent
-          ref={listRef}
-          className="min-h-0 flex-1 overflow-auto px-4 pt-0 pb-2"
+          ref={containerRef}
+          className="min-h-0 flex-1 overflow-hidden px-4 pt-0 pb-2"
         >
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {paginated.map((addon) => {
-              const isEditing = editingId === addon._id;
-              return (
-                <div
-                  key={addon._id}
-                  className="flex min-h-[48px] min-w-0 items-center justify-between gap-2 rounded-lg border border-slate-300 p-2 shadow-sm"
-                >
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {name(addon)}
-                  </span>
-                  {isEditing ? (
-                    <>
-                      <Input
-                        className="h-7 w-24"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={draftPrice}
-                        onChange={(event) =>
-                          setDraftPrice(Number(event.target.value))
-                        }
-                      />
-                      <Button
-                        size="sm"
-                        className="h-7"
-                        disabled={!isNonNegativeTwd(draftPrice)}
-                        onClick={() =>
-                          update.mutate({
-                            addonId: addon._id,
-                            data: { priceExtra: draftPrice },
-                          })
-                        }
-                      >
-                        {t("save")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-7"
-                        variant="outline"
-                        onClick={() => setEditingId(null)}
-                      >
-                        {t("cancel")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="shrink-0 text-sm">
-                        {addon.priceExtra.toLocaleString()}
+          <Table className="min-w-[760px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-full">{t("name")}</TableHead>
+                <TableHead className="w-32 text-right">
+                  {t("extraPrice")}
+                </TableHead>
+                <TableHead className="min-w-[280px]">{t("status")}</TableHead>
+                <TableHead className="w-24 text-right">
+                  {t("actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((addon) => (
+                <TableRow key={addon._id} className="h-[52px]">
+                  <TableCell className="font-medium">{name(addon)}</TableCell>
+                  <TableCell className="text-right">
+                    {addon.priceExtra.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="min-w-[280px] whitespace-normal">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                      <span>
+                        {addon.permanentlyActive !== false
+                          ? t("permanentSelling")
+                          : t("permanentHidden")}
                       </span>
-                      <Button
-                        size="sm"
-                        className="h-7"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingId(addon._id);
-                          setDraftPrice(addon.priceExtra);
-                        }}
-                      >
-                        {t("edit")}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                      {addon.permanentlyActive !== false && (
+                        <span>
+                          {addon.temporarilyUnavailable
+                            ? t("temporaryUnavailable")
+                            : t("temporaryAvailable")}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEdit(addon)}
+                    >
+                      {t("edit")}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("createAddon")}</DialogTitle>
           </DialogHeader>
@@ -246,7 +247,7 @@ export default function StoreAddonsPanel() {
             <div className="space-y-2">
               <Label>{t("extraPrice")}</Label>
               <Input
-              type="number"
+                type="number"
                 min="0"
                 step="1"
                 value={priceExtra}
@@ -259,7 +260,9 @@ export default function StoreAddonsPanel() {
               {t("cancel")}
             </Button>
             <Button
-              disabled={!addonId || !isNonNegativeTwd(priceExtra) || add.isPending}
+              disabled={
+                !addonId || !isNonNegativeTwd(priceExtra) || add.isPending
+              }
               onClick={() =>
                 add.mutate({ addonId, priceExtra, permanentlyActive: true })
               }
@@ -268,6 +271,85 @@ export default function StoreAddonsPanel() {
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 t("createAddon")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(editing)}
+        onOpenChange={(open) => !open && setEditingId(null)}
+      >
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editing?.name ? `${t("edit")}: ${editing.name}` : t("editAddon")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>{t("extraPrice")}</Label>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                value={draftPrice}
+                onChange={(event) => setDraftPrice(Number(event.target.value))}
+              />
+            </div>
+            <div className="space-y-3 rounded-lg border p-3">
+              {canChangePermanentAvailability && (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={draftPermanentlyActive}
+                    onCheckedChange={(value) => {
+                      setDraftPermanentlyActive(value === true);
+                      if (value !== true) setDraftTemporarilyUnavailable(false);
+                    }}
+                  />
+                  {t("permanentSelling")}
+                </label>
+              )}
+              {draftPermanentlyActive && (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={draftTemporarilyUnavailable}
+                    onCheckedChange={(value) =>
+                      setDraftTemporarilyUnavailable(value === true)
+                    }
+                  />
+                  {t("temporaryUnavailable")}
+                </label>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingId(null)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              disabled={
+                update.isPending || !isNonNegativeTwd(draftPrice) || !editing
+              }
+              onClick={() =>
+                editing &&
+                update.mutate({
+                  addonId: editing._id,
+                  data: {
+                    priceExtra: draftPrice,
+                    ...(canChangePermanentAvailability
+                      ? { permanentlyActive: draftPermanentlyActive }
+                      : {}),
+                    temporarilyUnavailable:
+                      draftPermanentlyActive && draftTemporarilyUnavailable,
+                  },
+                })
+              }
+            >
+              {update.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                t("save")
               )}
             </Button>
           </DialogFooter>

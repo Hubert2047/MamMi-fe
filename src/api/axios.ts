@@ -23,7 +23,8 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const isPosRoute =
-      typeof window !== "undefined" && window.location.pathname.startsWith("/pos");
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/pos");
     const token =
       typeof window !== "undefined" && !isPosRoute
         ? (await getSession())?.accessToken
