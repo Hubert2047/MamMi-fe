@@ -39,7 +39,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     if (!isAuthenticated || !isAdmin || !canAccessRoute) {
-      void signOut({ callbackUrl: "/login" });
+      void (async () => {
+        await signOut({ redirect: false, callbackUrl: "/login" });
+        window.location.replace("/login");
+      })();
     }
   }, [canAccessRoute, hydrated, isAdmin, isAuthenticated, pathname]);
 

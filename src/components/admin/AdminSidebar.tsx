@@ -71,7 +71,8 @@ export default function AdminSidebar() {
   const isSuperAdmin = user?.role === "SuperAdmin";
 
   async function logout() {
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ redirect: false, callbackUrl: "/login" });
+    window.location.replace("/login");
   }
   const linkClass = (href: string) =>
     cn(
