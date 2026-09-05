@@ -23,7 +23,7 @@ export const DEFAULT_ORDER: BaseOrder = {
   paymentMethod: "cash",
   selectedPromotionIds: [],
   appliedPromotions: [],
-  type: "dine_in",
+  type: "takeaway",
   customer: null,
   checkoutPending: false,
   source: "pos",

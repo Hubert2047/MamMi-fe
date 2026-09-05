@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,8 @@ const initial: AddonInput = {
   priceExtra: 0,
   active: true,
 };
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
 export default function AddonsPage() {
   const client = useQueryClient();
   const { user } = useAuth();
@@ -50,26 +52,39 @@ export default function AddonsPage() {
   const [form, setForm] = useState<AddonInput>(initial);
   const [editing, setEditing] = useState<Addon | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const { pageSize } = useTablePageSize();
+  const { containerRef, pageSize } = useTablePageSize(
+    51,
+    100,
+    undefined,
+    true,
+    5,
+    true,
+    true,
+  );
   const { data: addons = [], isLoading } = useQuery({
     queryKey: ["addons", locale],
     queryFn: () => getAddons(locale),
   });
-  const totalPages = Math.max(1, Math.ceil(addons.length / pageSize));
-  const visible = addons.slice((page - 1) * pageSize, page * pageSize);
+  const name = (addon: Addon) =>
+    addon.names[locale] ||
+    addon.names.vi ||
+    addon.names.en ||
+    addon.names["zh-TW"] ||
+    addon.name;
+  const filteredAddons = useMemo(() => {
+    const query = normalizeSearchText(search.trim());
+    if (!query) return addons;
+    return addons.filter((addon) => normalizeSearchText(name(addon)).includes(query));
+  }, [addons, locale, search]);
+  const totalPages = Math.max(1, Math.ceil(filteredAddons.length / pageSize));
+  const visible = filteredAddons.slice((page - 1) * pageSize, page * pageSize);
   useEffect(
     () => setPage((current) => Math.min(current, totalPages)),
     [totalPages],
   );
-  useEffect(() => {
-    if (!isFormOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [isFormOpen]);
+  useEffect(() => setPage(1), [search]);
   const closeForm = () => {
     setForm(initial);
     setEditing(null);
@@ -98,12 +113,6 @@ export default function AddonsPage() {
     },
     onError: () => toast.error(t("addonDeleteError")),
   });
-  const name = (addon: Addon) =>
-    addon.names[locale] ||
-    addon.names.vi ||
-    addon.names.en ||
-    addon.names["zh-TW"] ||
-    addon.name;
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (
@@ -204,10 +213,23 @@ export default function AddonsPage() {
           </form>
         </CardContent>
       </Card>
-      <Card className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden">
+      <Card
+        ref={containerRef}
+        data-table-header-align="left"
+        className="flex h-[calc(100svh-180px)] min-h-0 flex-col overflow-hidden"
+      >
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>{t("addonList")}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>{t("addonList")}</CardTitle>
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("searchAddon")}
+                aria-label={t("searchAddon")}
+                className="h-8 w-36 sm:w-52"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {page}/{totalPages}

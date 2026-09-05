@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -171,10 +171,17 @@ export default function UnitManagement() {
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<ExpenseUnit | null>(null);
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  // Let the hook measure the actual table row height. A fixed 73px minimum
-  // made the page size too small even though the table card had free space.
-  const { containerRef, pageSize } = useTablePageSize(50, 100, 40);
+  // Use the actual card/table headers so the last row is not clipped.
+  const { containerRef, pageSize } = useTablePageSize(
+    38,
+    100,
+    undefined,
+    true,
+    5,
+    true,
+  );
   const reset = () => {
     setForm(empty);
     setEditing(null);
@@ -228,15 +235,27 @@ export default function UnitManagement() {
       void client.invalidateQueries({ queryKey: ["expense-units-all"] });
     },
   });
-  const totalPages = Math.max(1, Math.ceil(units.length / pageSize));
+  const normalizeSearchText = (value: string) =>
+    value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+  const filteredUnits = useMemo(() => {
+    const query = normalizeSearchText(search.trim());
+    if (!query) return units;
+    return units.filter((unit) =>
+      normalizeSearchText(
+        `${unit.names[locale] || unit.names.vi || unit.code} ${unit.code}`,
+      ).includes(query),
+    );
+  }, [locale, search, units]);
+  const totalPages = Math.max(1, Math.ceil(filteredUnits.length / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const visible = units.slice(
+  const visible = filteredUnits.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
   useEffect(() => {
     setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
+  useEffect(() => setPage(1), [search]);
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-6 md:p-8">
       <div className="flex shrink-0 items-center justify-between gap-3">
@@ -253,10 +272,18 @@ export default function UnitManagement() {
       </div>
       <Card
         ref={containerRef}
+        data-table-header-align="left"
         className="flex h-[calc(100svh-5rem)] min-h-0 flex-1 flex-col overflow-hidden"
       >
         <CardHeader>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t.nameHeader}
+              aria-label={t.nameHeader}
+              className="h-8 w-36 sm:w-52"
+            />
             <div className="flex items-center gap-2">
               <span className="text-sm font-normal text-muted-foreground">
                 {t.total}: {units.length} · {currentPage}/{totalPages}

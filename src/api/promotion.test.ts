@@ -157,7 +157,12 @@ describe("POS promotion preview", () => {
     });
 
     expect(result.total).toBe(126);
-    expect(result.appliedPromotions.map((entry) => [entry.promotionId, entry.discountAmount])).toEqual([
+    expect(
+      result.appliedPromotions.map((entry) => [
+        entry.promotionId,
+        entry.discountAmount,
+      ]),
+    ).toEqual([
       ["mixed", 24],
       ["addon", 50],
     ]);
@@ -170,14 +175,44 @@ describe("POS promotion preview", () => {
     });
     const single = calculatePromotionPreview({
       items: [
-        { id: "tea", itemId: "tea", name: "Tea", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
+        {
+          id: "tea",
+          itemId: "tea",
+          name: "Tea",
+          basePrice: 95,
+          quantity: 1,
+          variant: "",
+          noteOptions: [],
+          note: "",
+          addons: [],
+        },
       ] as OrderItem[],
       promotions: [tenPercent],
     });
     const split = calculatePromotionPreview({
       items: [
-        { id: "tea", itemId: "tea", name: "Tea", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
-        { id: "coffee", itemId: "coffee", name: "Coffee", basePrice: 95, quantity: 1, variant: "", noteOptions: [], note: "", addons: [] },
+        {
+          id: "tea",
+          itemId: "tea",
+          name: "Tea",
+          basePrice: 95,
+          quantity: 1,
+          variant: "",
+          noteOptions: [],
+          note: "",
+          addons: [],
+        },
+        {
+          id: "coffee",
+          itemId: "coffee",
+          name: "Coffee",
+          basePrice: 95,
+          quantity: 1,
+          variant: "",
+          noteOptions: [],
+          note: "",
+          addons: [],
+        },
       ] as OrderItem[],
       promotions: [tenPercent],
     });

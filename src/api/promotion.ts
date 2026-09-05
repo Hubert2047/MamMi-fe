@@ -89,7 +89,11 @@ const finalizePromotionPreview = (
 ) => {
   const total = roundTwd(exactTotal);
   const targetDiscount = roundTwd(grossSubtotal) - total;
-  const entries: { amount: number; index: number; set(amount: number): void }[] = [];
+  const entries: {
+    amount: number;
+    index: number;
+    set(amount: number): void;
+  }[] = [];
 
   appliedPromotions.forEach((promotion) =>
     promotion.allocations.forEach((allocation) => {
@@ -120,7 +124,8 @@ const finalizePromotionPreview = (
     fraction: entry.amount - Math.floor(entry.amount + Number.EPSILON),
   }));
   let remainingUnits =
-    targetDiscount - roundedEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    targetDiscount -
+    roundedEntries.reduce((sum, entry) => sum + entry.amount, 0);
   const byLargestFraction = [...roundedEntries].sort(
     (a, b) => b.fraction - a.fraction || a.index - b.index,
   );
@@ -282,83 +287,85 @@ export const calculatePromotionPreview = ({
       for (const rule of promotion.rules.filter(
         (candidate) => candidate.target === target,
       )) {
-      items.forEach((item, itemIndex) => {
-        if (rule.productIds?.length && !rule.productIds.includes(item.id))
-          return;
-        if (rule.target === "product") {
-          const discount = promotionDiscount(remainingProduct[itemIndex]!, {
-            ...rule.reward,
-            amount:
-              rule.reward.type === "value"
-                ? rule.reward.amount * item.quantity
-                : rule.reward.amount,
-          });
-          remainingProduct[itemIndex]! -= discount;
-          allocations[itemIndex]!.productDiscountAmount += discount;
-        } else if (rule.target === "line") {
-          let remainingDiscount = promotionDiscount(
-            remainingProduct[itemIndex]! +
-              remainingAddon[itemIndex]!.reduce(
-                (sum, amount) => sum + amount,
-                0,
-              ),
-            {
+        items.forEach((item, itemIndex) => {
+          if (rule.productIds?.length && !rule.productIds.includes(item.id))
+            return;
+          if (rule.target === "product") {
+            const discount = promotionDiscount(remainingProduct[itemIndex]!, {
               ...rule.reward,
               amount:
                 rule.reward.type === "value"
                   ? rule.reward.amount * item.quantity
                   : rule.reward.amount,
-            },
-          );
-          const productDiscount = Math.min(
-            remainingProduct[itemIndex]!,
-            remainingDiscount,
-          );
-          remainingProduct[itemIndex]! -= productDiscount;
-          remainingDiscount -= productDiscount;
-          allocations[itemIndex]!.productDiscountAmount += productDiscount;
-          item.addons.forEach((addon, addonIndex) => {
-            const discount = Math.min(
-              remainingAddon[itemIndex]![addonIndex]!,
-              remainingDiscount,
-            );
-            remainingAddon[itemIndex]![addonIndex]! -= discount;
-            remainingDiscount -= discount;
-            if (discount)
-              allocations[itemIndex]!.addonDiscounts.push({
-                addonId: addon.id,
-                discountAmount: discount,
-              });
-          });
-        } else
-          item.addons.forEach((addon, addonIndex) => {
-            if (rule.addonIds?.length && !rule.addonIds.includes(addon.id))
-              return;
-            const discount = promotionDiscount(
-              remainingAddon[itemIndex]![addonIndex]!,
+            });
+            remainingProduct[itemIndex]! -= discount;
+            allocations[itemIndex]!.productDiscountAmount += discount;
+          } else if (rule.target === "line") {
+            let remainingDiscount = promotionDiscount(
+              remainingProduct[itemIndex]! +
+                remainingAddon[itemIndex]!.reduce(
+                  (sum, amount) => sum + amount,
+                  0,
+                ),
               {
                 ...rule.reward,
                 amount:
                   rule.reward.type === "value"
-                    ? rule.reward.amount * item.quantity * addon.amount
+                    ? rule.reward.amount * item.quantity
                     : rule.reward.amount,
               },
             );
-            remainingAddon[itemIndex]![addonIndex]! -= discount;
-            if (discount)
-              allocations[itemIndex]!.addonDiscounts.push({
-                addonId: addon.id,
-                discountAmount: discount,
-              });
-          });
-      });
-    }
+            const productDiscount = Math.min(
+              remainingProduct[itemIndex]!,
+              remainingDiscount,
+            );
+            remainingProduct[itemIndex]! -= productDiscount;
+            remainingDiscount -= productDiscount;
+            allocations[itemIndex]!.productDiscountAmount += productDiscount;
+            item.addons.forEach((addon, addonIndex) => {
+              const discount = Math.min(
+                remainingAddon[itemIndex]![addonIndex]!,
+                remainingDiscount,
+              );
+              remainingAddon[itemIndex]![addonIndex]! -= discount;
+              remainingDiscount -= discount;
+              if (discount)
+                allocations[itemIndex]!.addonDiscounts.push({
+                  addonId: addon.id,
+                  discountAmount: discount,
+                });
+            });
+          } else
+            item.addons.forEach((addon, addonIndex) => {
+              if (rule.addonIds?.length && !rule.addonIds.includes(addon.id))
+                return;
+              const discount = promotionDiscount(
+                remainingAddon[itemIndex]![addonIndex]!,
+                {
+                  ...rule.reward,
+                  amount:
+                    rule.reward.type === "value"
+                      ? rule.reward.amount * item.quantity * addon.amount
+                      : rule.reward.amount,
+                },
+              );
+              remainingAddon[itemIndex]![addonIndex]! -= discount;
+              if (discount)
+                allocations[itemIndex]!.addonDiscounts.push({
+                  addonId: addon.id,
+                  discountAmount: discount,
+                });
+            });
+        });
       }
     }
+  }
 
   for (const promotion of accepted) {
     const allocations = allocationsByPromotion.get(promotion._id)!;
-    const rule = promotion.rules.find((candidate) => candidate.target === "order");
+    const rule = promotion.rules.find(
+      (candidate) => candidate.target === "order",
+    );
     if (rule) {
       const subtotal =
         remainingProduct.reduce((sum, amount) => sum + amount, 0) +

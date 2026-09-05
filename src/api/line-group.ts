@@ -17,9 +17,7 @@ export async function updateLineGroup({
   data,
 }: {
   id: string;
-  data: Partial<
-    Pick<LineGroup, "name" | "storeId">
-  >;
+  data: Partial<Pick<LineGroup, "name" | "storeId">>;
 }): Promise<LineGroup> {
   return (await api.patch(`line-groups/${id}`, data)).data.data;
 }

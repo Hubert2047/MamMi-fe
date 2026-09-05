@@ -34,11 +34,7 @@ type Props = {
   mode?: "expense" | "inventory_purchase";
 };
 
-export function AddExpenseDialog({
-  open,
-  onClose,
-  mode = "expense",
-}: Props) {
+export function AddExpenseDialog({ open, onClose, mode = "expense" }: Props) {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
   const { data: units = [] } = useQuery<ExpenseUnit[]>({
@@ -68,7 +64,9 @@ export function AddExpenseDialog({
   const inventorySearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setEntryType(mode === "inventory_purchase" ? "inventory_purchase" : "other");
+    setEntryType(
+      mode === "inventory_purchase" ? "inventory_purchase" : "other",
+    );
   }, [mode, open]);
 
   useEffect(() => {
@@ -280,8 +278,10 @@ export function AddExpenseDialog({
         <form onSubmit={handleSubmit}>
           <div className="mb-3 flex flex-wrap items-center justify-start gap-3">
             <DialogHeader className="shrink-0 self-center">
-            <DialogTitle className="text-black! font-bold! text-xl">
-                {mode === "inventory_purchase" ? t("posInventoryPurchase") : t("expenseAddTitle")}
+              <DialogTitle className="text-black! font-bold! text-xl">
+                {mode === "inventory_purchase"
+                  ? t("posInventoryPurchase")
+                  : t("expenseAddTitle")}
               </DialogTitle>
             </DialogHeader>
           </div>
@@ -659,9 +659,19 @@ export function AddExpenseDialog({
             <Button
               className="h-10 min-w-24 px-4"
               type="submit"
-              disabled={entryType === "inventory_purchase" ? receiptMutation.isPending : createMutation.isPending}
+              disabled={
+                entryType === "inventory_purchase"
+                  ? receiptMutation.isPending
+                  : createMutation.isPending
+              }
             >
-              {(entryType === "inventory_purchase" ? receiptMutation.isPending : createMutation.isPending) ? t("saving") : t("save")}
+              {(
+                entryType === "inventory_purchase"
+                  ? receiptMutation.isPending
+                  : createMutation.isPending
+              )
+                ? t("saving")
+                : t("save")}
             </Button>
           </DialogFooter>
         </form>

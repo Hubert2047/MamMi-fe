@@ -215,7 +215,9 @@ export default function InventoryPanel({
     queryFn: getSuppliers,
   });
   const filteredSuppliers = suppliers.filter((supplier) =>
-    supplier.name.toLocaleLowerCase().includes(supplierSearch.trim().toLocaleLowerCase()),
+    supplier.name
+      .toLocaleLowerCase()
+      .includes(supplierSearch.trim().toLocaleLowerCase()),
   );
   const { data: stock = [] } = useQuery({
     queryKey: ["inventory-stock"],
@@ -749,24 +751,41 @@ export default function InventoryPanel({
                 {filteredSuppliers.map((supplier) => {
                   const checked = supplierIds.includes(supplier._id);
                   return (
-                    <label key={supplier._id} className="flex min-h-9 cursor-pointer items-center gap-2 rounded px-1 text-sm hover:bg-muted/50">
+                    <label
+                      key={supplier._id}
+                      className="flex min-h-9 cursor-pointer items-center gap-2 rounded px-1 text-sm hover:bg-muted/50"
+                    >
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(value) => {
-                          const next = value === true
-                            ? [...supplierIds, supplier._id]
-                            : supplierIds.filter((id) => id !== supplier._id);
+                          const next =
+                            value === true
+                              ? [...supplierIds, supplier._id]
+                              : supplierIds.filter((id) => id !== supplier._id);
                           setSupplierIds(next);
-                          if (!defaultSupplierId && next.length) setDefaultSupplierId(next[0]);
-                          else if (defaultSupplierId && !next.includes(defaultSupplierId)) setDefaultSupplierId(next[0] ?? "");
+                          if (!defaultSupplierId && next.length)
+                            setDefaultSupplierId(next[0]);
+                          else if (
+                            defaultSupplierId &&
+                            !next.includes(defaultSupplierId)
+                          )
+                            setDefaultSupplierId(next[0] ?? "");
                         }}
                       />
                       <span>{supplier.name}</span>
                     </label>
                   );
                 })}
-                {!suppliers.length && <p className="px-1 py-1 text-sm text-muted-foreground">{t.noSupplier}</p>}
-                {suppliers.length > 0 && !filteredSuppliers.length && <p className="px-1 py-1 text-sm text-muted-foreground">{t.noSupplier}</p>}
+                {!suppliers.length && (
+                  <p className="px-1 py-1 text-sm text-muted-foreground">
+                    {t.noSupplier}
+                  </p>
+                )}
+                {suppliers.length > 0 && !filteredSuppliers.length && (
+                  <p className="px-1 py-1 text-sm text-muted-foreground">
+                    {t.noSupplier}
+                  </p>
+                )}
               </div>
               <Label>{t.defaultSupplier}</Label>
               <select
@@ -776,9 +795,13 @@ export default function InventoryPanel({
                 disabled={supplierIds.length === 0}
               >
                 <option value="">{t.noSupplier}</option>
-                {suppliers.filter((supplier) => supplierIds.includes(supplier._id)).map((supplier) => (
-                  <option key={supplier._id} value={supplier._id}>{supplier.name}</option>
-                ))}
+                {suppliers
+                  .filter((supplier) => supplierIds.includes(supplier._id))
+                  .map((supplier) => (
+                    <option key={supplier._id} value={supplier._id}>
+                      {supplier.name}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>

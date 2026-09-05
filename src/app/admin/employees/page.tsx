@@ -83,7 +83,10 @@ const emptyForm = (): EmployeeForm => ({
 function generateEmployeeNumberId(employees: Employee[]) {
   const used = new Set(employees.map((employee) => employee.numberId));
   for (let attempt = 0; attempt < 100; attempt += 1) {
-    const candidate = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+    const candidate = String(Math.floor(Math.random() * 10000)).padStart(
+      4,
+      "0",
+    );
     if (!used.has(candidate)) return candidate;
   }
   for (let value = 0; value <= 9999; value += 1) {
@@ -132,9 +135,7 @@ export default function EmployeesPage() {
       reset();
     },
     onError: (error) => {
-      const message = isAxiosError<{ code?: string; message?: string }>(
-        error,
-      )
+      const message = isAxiosError<{ code?: string; message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
       const code = isAxiosError<{ code?: string }>(error)
@@ -145,7 +146,7 @@ export default function EmployeesPage() {
           ? t("employeeDuplicate")
           : code === "EMPLOYEE_NUMBER_ID_INVALID"
             ? t("employeeNumberIdInvalid")
-          : t("employeeSaveError"),
+            : t("employeeSaveError"),
       );
     },
   });
@@ -396,7 +397,9 @@ export default function EmployeesPage() {
                   onChange={(event) =>
                     setForm({
                       ...form,
-                      numberId: event.target.value.replace(/\D/g, "").slice(0, 4),
+                      numberId: event.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 4),
                     })
                   }
                   required
@@ -550,7 +553,9 @@ export default function EmployeesPage() {
             </Button>
             <Button
               disabled={
-                !form.name.trim() || !/^\d{4}$/.test(form.numberId) || save.isPending
+                !form.name.trim() ||
+                !/^\d{4}$/.test(form.numberId) ||
+                save.isPending
               }
               onClick={() => save.mutate()}
             >

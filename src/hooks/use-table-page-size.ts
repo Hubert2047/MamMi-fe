@@ -8,18 +8,25 @@ export function useTablePageSize(
   forceViewportHeight = true,
   minimumPageSize = 5,
   accountForTableHeader = false,
+  allowContentScroll = false,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(() =>
     typeof window === "undefined"
       ? 5
-      : Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
+      : Math.max(
+          minimumPageSize,
+          Math.floor((window.innerHeight - 300) / rowHeight),
+        ),
   );
 
   useEffect(() => {
     const updateFromViewport = () => {
       setPageSize(
-        Math.max(minimumPageSize, Math.floor((window.innerHeight - 300) / rowHeight)),
+        Math.max(
+          minimumPageSize,
+          Math.floor((window.innerHeight - 300) / rowHeight),
+        ),
       );
     };
     updateFromViewport();
@@ -63,8 +70,11 @@ export function useTablePageSize(
           if (child.dataset.slot === "card-content") {
             child.style.flex = "1 1 0%";
             child.style.minHeight = "0";
-            child.style.overflow = "visible";
-          } else if (child.className.toString().includes("overflow-auto"))
+            child.style.overflow = allowContentScroll ? "auto" : "visible";
+          } else if (
+            !allowContentScroll &&
+            child.className.toString().includes("overflow-auto")
+          )
             child.style.overflow = "visible";
         });
         const measuredRowHeight =
@@ -151,6 +161,7 @@ export function useTablePageSize(
     minimumPageSize,
     reservedHeight,
     rowHeight,
+    allowContentScroll,
   ]);
 
   return { containerRef, pageSize };

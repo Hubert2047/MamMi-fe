@@ -108,7 +108,8 @@ function DailyClosingStep2({
     },
     onError: (error) => {
       toast.error(
-        isAxiosError(error) && error.response?.data?.code === "CLOSING_ALREADY_CREATED"
+        isAxiosError(error) &&
+          error.response?.data?.code === "CLOSING_ALREADY_CREATED"
           ? t("closingAlreadyCreated")
           : t("closeFailure"),
       );
@@ -256,7 +257,11 @@ function DailyClosingStep2({
               <Button
                 type="button"
                 onClick={verifyEmployee}
-                disabled={!employeeNumberId || isEmployeesLoading || Boolean(lockedUntil)}
+                disabled={
+                  !employeeNumberId ||
+                  isEmployeesLoading ||
+                  Boolean(lockedUntil)
+                }
                 className="shrink-0"
               >
                 {t("closingEmployeeVerify")}
