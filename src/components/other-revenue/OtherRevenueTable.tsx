@@ -31,12 +31,17 @@ import {
 import { EditOtherRevenue } from "@/components/other-revenue/EditOtherRevenue.tsx";
 import { AddOtherRevenue } from "@/components/other-revenue/AddOtherRevenue.tsx";
 import { useI18n } from "@/lib/i18n";
+import {
+  RevenueRangeControls,
+  type RevenueRangeMode,
+} from "@/components/other-revenue/RevenueRangeControls";
 
 type Props = {
   revenues: Revenue[];
   showOnly?: boolean;
   range?: RevenueRange;
   onRangeChange?: (range: RevenueRange) => void;
+  rangeMode?: RevenueRangeMode;
 };
 
 const revenuePaymentMethodMessageKeys = {
@@ -50,6 +55,7 @@ export function OtherRevenueTable({
   showOnly = false,
   range,
   onRangeChange,
+  rangeMode = "pos",
 }: Props) {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
@@ -167,7 +173,7 @@ export function OtherRevenueTable({
             disabled
             className="w-48"
           />
-          {range && (
+          {rangeMode === "pos" && range && (
             <span className="whitespace-nowrap text-xs text-muted-foreground">
               {locale === "en"
                 ? "Period:"
@@ -203,7 +209,7 @@ export function OtherRevenueTable({
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {range && (
+          {rangeMode === "pos" && range && (
             <>
               <span className="text-xs text-muted-foreground">
                 {locale === "en" ? "From" : locale === "zh-TW" ? "從" : "Từ"}
@@ -244,6 +250,13 @@ export function OtherRevenueTable({
                     : "Tìm"}
               </Button>
             </>
+          )}
+          {rangeMode === "admin" && (
+            <RevenueRangeControls
+              mode={rangeMode}
+              range={range}
+              onRangeChange={onRangeChange}
+            />
           )}
           <div className="ml-auto flex items-center gap-2">
             <span className="whitespace-nowrap text-sm text-gray-500">

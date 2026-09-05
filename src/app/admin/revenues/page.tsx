@@ -2,17 +2,28 @@
 
 import type { RevenueRange } from "@/api/other-revenue";
 import { OtherRevenueTable } from "@/components/other-revenue/OtherRevenueTable";
-import { useDailyClosingSummary, useRevenues } from "@/hooks/queries";
+import { useRevenues } from "@/hooks/queries";
 import { useI18n } from "@/lib/i18n";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export default function RevenuesPage() {
   const { t } = useI18n();
-  const { data: summary } = useDailyClosingSummary();
-  const [selectedRange, setSelectedRange] = useState<RevenueRange | null>(null);
-  const defaultRange = summary ? { from: summary.periodStart } : undefined;
-  const range = selectedRange ?? defaultRange;
+  const [selectedRange, setSelectedRange] = useState<RevenueRange>(() => {
+    const now = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Taipei",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .format(new Date())
+      .replace(" ", "T");
+    return { from: `${now.slice(0, 10)}T00:00`, to: now };
+  });
+  const range = selectedRange;
   const { data: revenues = [], isLoading, isFetching } = useRevenues(range);
 
   return (
@@ -42,6 +53,7 @@ export default function RevenuesPage() {
             revenues={revenues}
             range={range}
             onRangeChange={setSelectedRange}
+            rangeMode="admin"
           />
         )}
       </div>

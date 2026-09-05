@@ -34,12 +34,14 @@ import { EditExpenses } from "@/components/expense/EditExpenses.tsx";
 import { toast } from "sonner";
 import { AddExpenseDialog } from "@/components/expense/AddExpenseDialog.tsx";
 import { useI18n } from "@/lib/i18n";
+import { RevenueRangeControls } from "@/components/other-revenue/RevenueRangeControls";
 
 type Props = {
   expenses: Expense[];
   showOnly?: boolean;
   range?: ExpenseRange;
   onRangeChange?: (range: ExpenseRange) => void;
+  rangeMode?: "admin" | "pos";
 };
 
 export function ExpenseTable({
@@ -47,6 +49,7 @@ export function ExpenseTable({
   showOnly = false,
   range,
   onRangeChange,
+  rangeMode = "pos",
 }: Props) {
   const { t, locale } = useI18n();
   const { data: units = [] } = useQuery<ExpenseUnit[]>({
@@ -221,7 +224,13 @@ export function ExpenseTable({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {range && (
+          {rangeMode === "admin" ? (
+            <RevenueRangeControls
+              mode="admin"
+              range={range}
+              onRangeChange={onRangeChange}
+            />
+          ) : range ? (
             <>
               <span className="text-xs text-muted-foreground">
                 {locale === "en" ? "From" : locale === "zh-TW" ? "從" : "Từ"}
@@ -262,7 +271,7 @@ export function ExpenseTable({
                     : "Tìm"}
               </Button>
             </>
-          )}
+          ) : null}
           <div className="ml-auto flex items-center gap-2">
             <span className="whitespace-nowrap text-sm text-gray-500">
               {filteredOrders.length} {t("expenseCount")} • {t("page")}{" "}

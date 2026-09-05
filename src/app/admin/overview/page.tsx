@@ -6,6 +6,8 @@ import {
   AlertTriangle,
   CircleDollarSign,
   ClipboardList,
+  ChevronLeft,
+  ChevronRight,
   Info,
   Landmark,
   Store,
@@ -15,6 +17,7 @@ import {
   type SuperAdminOverviewStore,
 } from "@/api/overview";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +51,17 @@ const taipeiNow = () =>
 
 function amount(value: number) {
   return `${value.toLocaleString()} TWD`;
+}
+
+function shiftDayRange(value: string, days: number) {
+  const [date] = value.split("T");
+  const [year, month, day] = date.split("-").map(Number);
+  const start = new Date(year, month - 1, day + days, 0, 0);
+  const end = new Date(year, month - 1, day + days + 1, 0, 0);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const format = (value: Date) =>
+    `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T00:00`;
+  return { from: format(start), to: format(end) };
 }
 
 type OverviewMetric = "revenue" | "expenses" | "orders" | "difference";
@@ -87,6 +101,8 @@ export default function AdminOverviewPage() {
   const initialNow = taipeiNow();
   const [from, setFrom] = useState(`${initialNow.slice(0, 10)}T00:00`);
   const [to, setTo] = useState(initialNow);
+  const [draftFrom, setDraftFrom] = useState(`${initialNow.slice(0, 10)}T00:00`);
+  const [draftTo, setDraftTo] = useState(initialNow);
   const [selectedMetric, setSelectedMetric] = useState<{
     store: SuperAdminOverviewStore;
     metric: OverviewMetric;
@@ -94,7 +110,30 @@ export default function AdminOverviewPage() {
   const overview = useQuery({
     queryKey: ["superadmin-overview", from, to],
     queryFn: () => getSuperAdminOverview({ from, to }),
+    placeholderData: (previousData) => previousData,
   });
+  const shiftDay = (days: number) => {
+    const next = shiftDayRange(from, days);
+    setFrom(next.from);
+    setTo(next.to);
+    setDraftFrom(next.from);
+    setDraftTo(next.to);
+  };
+  const applyDateRange = () => {
+    setFrom(draftFrom);
+    setTo(draftTo);
+  };
+  const resetDateRange = () => {
+    const now = taipeiNow();
+    const todayFrom = `${now.slice(0, 10)}T00:00`;
+    setFrom(todayFrom);
+    setTo(now);
+    setDraftFrom(todayFrom);
+    setDraftTo(now);
+  };
+  const todayNow = taipeiNow();
+  const defaultFrom = `${todayNow.slice(0, 10)}T00:00`;
+  const isDefaultDateRange = from === defaultFrom && to === todayNow;
   const data = overview.data;
   const cards = data
     ? [
@@ -123,18 +162,27 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="h-full overflow-auto p-6 md:p-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("overview")}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-8 pb-2">
+        <h1 className="text-3xl font-bold">{t("overview")}</h1>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-8"
+            onClick={() => shiftDay(-1)}
+            aria-label={t("overviewPreviousDay")}
+            title={t("overviewPreviousDay")}
+          >
+            <ChevronLeft />
+          </Button>
           <label className="text-sm text-muted-foreground">
             {t("overviewFrom")}
           </label>
           <Input
             type="datetime-local"
-            value={from}
-            onChange={(event) => setFrom(event.target.value)}
+            value={draftFrom}
+            onChange={(event) => setDraftFrom(event.target.value)}
             className="w-52"
           />
           <label className="text-sm text-muted-foreground">
@@ -142,19 +190,34 @@ export default function AdminOverviewPage() {
           </label>
           <Input
             type="datetime-local"
-            value={to}
-            onChange={(event) => setTo(event.target.value)}
+            value={draftTo}
+            onChange={(event) => setDraftTo(event.target.value)}
             className="w-52"
           />
+          {draftFrom !== from || draftTo !== to ? (
+            <Button type="button" size="sm" className="h-8" onClick={applyDateRange}>
+              {t("overviewApplyFilter")}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-8"
+            onClick={() => shiftDay(1)}
+            aria-label={t("overviewNextDay")}
+            title={t("overviewNextDay")}
+          >
+            <ChevronRight />
+          </Button>
+          {!isDefaultDateRange || draftFrom !== from || draftTo !== to ? (
+            <Button type="button" variant="ghost" size="sm" className="h-8" onClick={resetDateRange}>
+              {t("overviewFilterReset")}
+            </Button>
+          ) : null}
         </div>
       </div>
-      {overview.isLoading ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            {t("loading")}
-          </CardContent>
-        </Card>
-      ) : overview.isError ? (
+      {overview.isError ? (
         <Card>
           <CardContent className="p-6 text-sm text-destructive">
             {t("overviewLoadError")}
@@ -342,7 +405,44 @@ export default function AdminOverviewPage() {
             </DialogContent>
           </Dialog>
         </>
-      ) : null}
+      ) : (
+        <OverviewSkeleton />
+      )}
+    </div>
+  );
+}
+
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={index} className="py-2">
+            <CardContent className="flex items-center justify-between gap-3 px-5 py-2">
+              <div className="space-y-3">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                <div className="h-6 w-32 animate-pulse rounded bg-muted" />
+              </div>
+              <div className="size-7 animate-pulse rounded-full bg-muted" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardHeader>
+          <div className="h-6 w-40 animate-pulse rounded bg-muted" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="flex items-center justify-between gap-4">
+              <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

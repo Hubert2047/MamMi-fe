@@ -47,9 +47,10 @@ function OtherRevenue({ open, onClose }: Props) {
           <div className="relative flex min-h-0 flex-1">
             <OtherRevenueTable
               revenues={revenues}
-              range={range}
-              onRangeChange={setSelectedRange}
-            />
+            range={range}
+            onRangeChange={setSelectedRange}
+            rangeMode="pos"
+          />
             {isFetching && (
               <div className="pointer-events-none absolute right-2 top-2 flex items-center gap-2 rounded-md bg-background/85 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
                 <Loader2 className="size-3.5 animate-spin text-primary" />

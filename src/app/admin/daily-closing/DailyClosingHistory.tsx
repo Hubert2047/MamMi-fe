@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, Search, Settings2 } from "lucide-react";
+import { Eye, Settings2 } from "lucide-react";
 import {
   getDailyClosings,
   getDailyClosingLineGroup,
@@ -11,13 +11,13 @@ import {
   voidDailyClosing,
   type IDailyClosing,
 } from "@/api/daily-closing";
-import { getEmployees, type Employee } from "@/api/employee";
+import { getEmployees } from "@/api/employee";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/auth";
 import { useTablePageSize } from "@/hooks/use-table-page-size";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RevenueRangeControls } from "@/components/other-revenue/RevenueRangeControls";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -86,13 +86,32 @@ function getDifference(closing: IDailyClosing) {
   return closing.difference ?? closing.actualTotal - closing.systemAmount;
 }
 
+function getTodayRange() {
+  const now = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .format(new Date())
+    .replace(" ", "T");
+
+  return { from: `${now.slice(0, 10)}T00:00`, to: now };
+}
+
 export default function DailyClosingHistory() {
   const { t } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [dateRange, setDateRange] = useState<{ from?: string; to?: string }>({});
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setDateRange(getTodayRange()));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const [page, setPage] = useState(1);
   const { containerRef, pageSize } = useTablePageSize(60, 100);
   const [selectedDetail, setSelectedDetail] = useState<IDailyClosing | null>(
@@ -118,16 +137,17 @@ export default function DailyClosingHistory() {
   const history = useQuery({
     queryKey: [
       "daily-closing-history",
-      { fromDate, toDate, status, page, pageSize },
+      { fromDate: dateRange.from, toDate: dateRange.to, status, page, pageSize },
     ],
     queryFn: () =>
       getDailyClosings({
-        from: fromDate || undefined,
-        to: toDate || undefined,
+        from: dateRange.from || undefined,
+        to: dateRange.to || undefined,
         status: status === "all" ? undefined : status,
         page,
         limit: pageSize,
       }),
+    placeholderData: (previousData) => previousData,
   });
   const records = history.data?.data ?? [];
   const latestConfirmedId = history.data?.summary.latestConfirmedId;
@@ -157,14 +177,17 @@ export default function DailyClosingHistory() {
       setLineGroupConfigOpen(false);
       toast.success(t("closingLineGroupSaved"));
     },
-    onError: (error: any) =>
+    onError: (error: unknown) => {
+      const code = (error as { response?: { data?: { code?: string } } })
+        ?.response?.data?.code;
       toast.error(
-        error?.response?.data?.code === "LINE_GROUP_IN_USE"
+        code === "LINE_GROUP_IN_USE"
           ? t("lineGroupInUse")
-          : error?.response?.data?.code === "DAILY_CLOSING_LINE_GROUP_REQUIRED"
+          : code === "DAILY_CLOSING_LINE_GROUP_REQUIRED"
             ? t("closingLineGroupRequired")
             : t("closingLineGroupSaveError"),
-      ),
+      );
+    },
   });
 
   function openLineGroupConfig() {
@@ -180,10 +203,8 @@ export default function DailyClosingHistory() {
     setReason("");
   }
 
-  function clearFilters() {
+  function clearStatusFilter() {
     setStatus("all");
-    setFromDate("");
-    setToDate("");
     setPage(1);
   }
 
@@ -225,49 +246,24 @@ export default function DailyClosingHistory() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {t("closingFilterFrom")}
-                </span>
-                <Input
-                  type="datetime-local"
-                  value={fromDate}
-                  aria-label={t("closingFilterFrom")}
-                  onChange={(event) => {
-                    setFromDate(event.target.value);
-                    setPage(1);
-                  }}
-                  className="h-8 w-52"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {t("closingFilterTo")}
-                </span>
-                <Input
-                  type="datetime-local"
-                  value={toDate}
-                  aria-label={t("closingFilterTo")}
-                  onChange={(event) => {
-                    setToDate(event.target.value);
-                    setPage(1);
-                  }}
-                  className="h-8 w-52"
-                />
-              </div>
-              <Button
-                size="sm"
-                className="h-8 w-8 p-0"
-                aria-label={t("closingSearch")}
-                onClick={() => {
+              <RevenueRangeControls
+                mode="admin"
+                range={dateRange}
+                onRangeChange={(nextRange) => {
+                  setDateRange(nextRange);
                   setPage(1);
-                  void history.refetch();
                 }}
-              >
-                <Search className="size-4" />
-              </Button>
-              {(status !== "all" || fromDate || toDate) && (
-                <Button variant="ghost" onClick={clearFilters}>
+                messageKeys={{
+                  from: "closingFilterFrom",
+                  to: "closingFilterTo",
+                  apply: "closingApplyFilter",
+                  reset: "closingFilterReset",
+                  previous: "closingPreviousDay",
+                  next: "closingNextDay",
+                }}
+              />
+              {status !== "all" && (
+                <Button variant="ghost" size="sm" className="h-8" onClick={clearStatusFilter}>
                   {t("closingFilterReset")}
                 </Button>
               )}

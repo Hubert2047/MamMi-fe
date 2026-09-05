@@ -33,6 +33,7 @@ export function useTablePageSize(
     window.addEventListener("resize", updateFromViewport);
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
+    let mutationObserver: MutationObserver | undefined;
     const attach = () => {
       if (cancelled) return;
       const element =
@@ -86,22 +87,11 @@ export function useTablePageSize(
                   element.querySelectorAll<HTMLElement>("tbody tr"),
                 ).map((row) => row.getBoundingClientRect().height),
               );
-        // Measure from the card itself. CardContent can report a stale/zero
-        // clientHeight while its scroll wrapper is being laid out, which
-        // incorrectly limits Product to only a couple of rows.
+        // Measure from the card itself. Do not use CardContent's rendered
+        // height here: when the current page already overflows, its intrinsic
+        // height includes those extra rows and creates a feedback loop that
+        // keeps calculating an oversized page.
         const cardHeight = element.getBoundingClientRect().height;
-        // A card can briefly report a collapsed height while its parent is
-        // mounting. Use the viewport in that case instead of producing a
-        // misleading two-row page.
-        const content = element.querySelector<HTMLElement>(
-          '[data-slot="card-content"]',
-        );
-        const contentHeight = content?.clientHeight || 0;
-        const contentStyle = content ? window.getComputedStyle(content) : null;
-        const contentPadding = contentStyle
-          ? (parseFloat(contentStyle.paddingTop) || 0) +
-            (parseFloat(contentStyle.paddingBottom) || 0)
-          : 0;
         const cardStyle = window.getComputedStyle(element);
         const cardPadding =
           (parseFloat(cardStyle.paddingTop) || 0) +
@@ -111,8 +101,6 @@ export function useTablePageSize(
         const headerElement = element.querySelector<HTMLElement>(
           '[data-slot="card-header"]',
         );
-        const measuredCardContentHeight =
-          contentHeight > 0 ? contentHeight - contentPadding : 0;
         const headerHeight =
           headerHeightOverride ??
           headerElement?.getBoundingClientRect().height ??
@@ -121,7 +109,7 @@ export function useTablePageSize(
           cardHeight - cardPadding - cardGap - headerHeight;
         const rawAvailableHeight =
           cardHeight >= 400
-            ? Math.max(measuredCardContentHeight, estimatedCardContentHeight)
+            ? Math.max(0, estimatedCardContentHeight)
             : window.innerHeight - 300;
         const tableHeader = element.querySelector<HTMLElement>("thead");
         const tableHeaderHeight = accountForTableHeader
@@ -147,11 +135,21 @@ export function useTablePageSize(
       resizeObserver.observe(element);
       const table = element.querySelector<HTMLElement>("table");
       if (table) resizeObserver.observe(table);
+      // Loading/error states mount the table after the first measurement. Watch
+      // for that transition so the initial viewport fallback cannot become the
+      // permanent page size.
+      mutationObserver = new MutationObserver(() => {
+        update();
+        const nextTable = element.querySelector<HTMLElement>("table");
+        if (nextTable) resizeObserver?.observe(nextTable);
+      });
+      mutationObserver.observe(element, { childList: true, subtree: true });
     };
     attach();
     return () => {
       cancelled = true;
       resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
       window.removeEventListener("resize", updateFromViewport);
     };
   }, [
